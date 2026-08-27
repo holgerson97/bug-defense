@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Scrap: gray gear with orange core -->
+  <g fill="#8f99a8">
+    <rect x="13" y="2" width="6" height="28" rx="1.5"/>
+    <rect x="13" y="2" width="6" height="28" rx="1.5" transform="rotate(45 16 16)"/>
+    <rect x="13" y="2" width="6" height="28" rx="1.5" transform="rotate(90 16 16)"/>
+    <rect x="13" y="2" width="6" height="28" rx="1.5" transform="rotate(135 16 16)"/>
+  </g>
+  <circle cx="16" cy="16" r="10" fill="#aab4c2"/>
+  <circle cx="16" cy="16" r="6.5" fill="#e08a3c"/>
+  <circle cx="16" cy="16" r="3.2" fill="#2a2620"/>
+  <ellipse cx="12.5" cy="11.5" rx="2.6" ry="1.6" fill="#ffffff" opacity="0.35"/>
+</svg>

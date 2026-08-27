@@ -1,8 +1,14 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/research_panel.tscn" id="2"]
 [ext_resource type="Script" path="res://scripts/hotbar.gd" id="3"]
+[ext_resource type="Texture2D" path="res://assets/icons/wave.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/icons/crit.svg" id="5"]
+[ext_resource type="Texture2D" path="res://assets/icons/xp.svg" id="6"]
+[ext_resource type="Texture2D" path="res://assets/icons/scrap.svg" id="7"]
+[ext_resource type="Texture2D" path="res://assets/icons/crystal.svg" id="8"]
+[ext_resource type="Texture2D" path="res://assets/icons/research.svg" id="9"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
@@ -14,46 +20,127 @@ anchor_right = 1.0
 offset_left = 16.0
 offset_top = 12.0
 offset_right = -16.0
-offset_bottom = 44.0
+offset_bottom = 50.0
 grow_horizontal = 2
-theme_override_constants/separation = 40
+theme_override_constants/separation = 10
 
-[node name="WaveLabel" type="Label" parent="TopRow"]
+[node name="WavePanel" type="PanelContainer" parent="TopRow"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="TopRow/WavePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="TopRow/WavePanel/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="TopRow/WavePanel/HBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
+vertical_alignment = 1
 text = "Survive!"
 
-[node name="ScoreLabel" type="Label" parent="TopRow"]
+[node name="ScorePanel" type="PanelContainer" parent="TopRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Score 0"
 
-[node name="XPLabel" type="Label" parent="TopRow"]
+[node name="HBox" type="HBoxContainer" parent="TopRow/ScorePanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Lv 1  XP 0/100"
+theme_override_constants/separation = 8
 
-[node name="ScrapLabel" type="Label" parent="TopRow"]
+[node name="Icon" type="TextureRect" parent="TopRow/ScorePanel/HBox"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "Scrap 0"
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="CrystalLabel" type="Label" parent="TopRow"]
+[node name="Value" type="Label" parent="TopRow/ScorePanel/HBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "Crystal 0"
+vertical_alignment = 1
+text = "0"
+
+[node name="Spacer" type="Control" parent="TopRow"]
+custom_minimum_size = Vector2(14, 0)
+layout_mode = 2
+
+[node name="XPPanel" type="PanelContainer" parent="TopRow"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="TopRow/XPPanel"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Icon" type="TextureRect" parent="TopRow/XPPanel/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="TopRow/XPPanel/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+text = "Lv 1  0/100"
+
+[node name="ScrapPanel" type="PanelContainer" parent="TopRow"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="TopRow/ScrapPanel"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Icon" type="TextureRect" parent="TopRow/ScrapPanel/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="TopRow/ScrapPanel/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+text = "0"
+
+[node name="CrystalPanel" type="PanelContainer" parent="TopRow"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="TopRow/CrystalPanel"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Icon" type="TextureRect" parent="TopRow/CrystalPanel/HBox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="TopRow/CrystalPanel/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+text = "0"
 
 [node name="ResearchButton" type="Button" parent="."]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -160.0
-offset_top = 8.0
+offset_left = -178.0
+offset_top = 10.0
 offset_right = -16.0
-offset_bottom = 44.0
+offset_bottom = 48.0
 grow_horizontal = 0
 focus_mode = 0
+theme_override_constants/icon_max_width = 20
 text = "Research (T)"
+icon = ExtResource("9")
 
 [node name="Hotbar" type="HBoxContainer" parent="."]
 anchors_preset = 7
@@ -61,14 +148,14 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_top = -88.0
+offset_top = -80.0
 offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 script = ExtResource("3")
 
-[node name="GameOver" type="CenterContainer" parent="."]
+[node name="GameOver" type="Control" parent="."]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -76,24 +163,53 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="GameOver"]
+[node name="Dim" type="ColorRect" parent="GameOver"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="GameOver"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="GameOver/Center"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="GameOver/Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 32
+
+[node name="VBox" type="VBoxContainer" parent="GameOver/Center/Panel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="GameOver/VBox"]
+[node name="Title" type="Label" parent="GameOver/Center/Panel/Margin/VBox"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.28, 0.32, 1)
 theme_override_font_sizes/font_size = 64
 horizontal_alignment = 1
 text = "YOU DIED"
 
-[node name="FinalScore" type="Label" parent="GameOver/VBox"]
+[node name="FinalScore" type="Label" parent="GameOver/Center/Panel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 horizontal_alignment = 1
 text = "You survived to wave 0 — score 0"
 
-[node name="Hint" type="Label" parent="GameOver/VBox"]
+[node name="Hint" type="Label" parent="GameOver/Center/Panel/Margin/VBox"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.68, 0.78, 1)
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 text = "Press R to restart"

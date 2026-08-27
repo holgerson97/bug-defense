@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/research_panel.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/icons/scrap.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icons/crystal.svg" id="3"]
 
 [node name="ResearchPanel" type="Control"]
 visible = false
@@ -42,10 +44,10 @@ layout_mode = 2
 
 [node name="Margin" type="MarginContainer" parent="Center/Panel"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="Center/Panel/Margin"]
 layout_mode = 2
@@ -53,19 +55,49 @@ theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 36
 horizontal_alignment = 1
 text = "RESEARCH"
 
-[node name="ResourcesLabel" type="Label" parent="Center/Panel/Margin/VBox"]
+[node name="ResourcesRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ScrapIcon" type="TextureRect" parent="Center/Panel/Margin/VBox/ResourcesRow"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScrapValue" type="Label" parent="Center/Panel/Margin/VBox/ResourcesRow"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-horizontal_alignment = 1
-text = "Scrap: 0   Crystal: 0"
+vertical_alignment = 1
+text = "0"
+
+[node name="Gap" type="Control" parent="Center/Panel/Margin/VBox/ResourcesRow"]
+custom_minimum_size = Vector2(12, 0)
+layout_mode = 2
+
+[node name="CrystalIcon" type="TextureRect" parent="Center/Panel/Margin/VBox/ResourcesRow"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CrystalValue" type="Label" parent="Center/Panel/Margin/VBox/ResourcesRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+vertical_alignment = 1
+text = "0"
 
 [node name="Branches" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 16
 
 [node name="CloseButton" type="Button" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
