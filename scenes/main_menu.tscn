@@ -1,0 +1,114 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
+
+[node name="MainMenu" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Menu" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Center/Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 72
+horizontal_alignment = 1
+text = "BASE DEFENSE"
+
+[node name="Subtitle" type="Label" parent="Center/Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+text = "Endless survival"
+
+[node name="Play" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 24
+text = "Play"
+
+[node name="SettingsButton" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 24
+text = "Settings"
+
+[node name="Quit" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 24
+text = "Quit"
+
+[node name="SettingsMenu" type="VBoxContainer" parent="Center"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SettingsTitle" type="Label" parent="Center/SettingsMenu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+horizontal_alignment = 1
+text = "SETTINGS"
+
+[node name="GraphicsLabel" type="Label" parent="Center/SettingsMenu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Graphics"
+
+[node name="Fullscreen" type="CheckButton" parent="Center/SettingsMenu"]
+layout_mode = 2
+focus_mode = 0
+text = "Fullscreen"
+
+[node name="Vsync" type="CheckButton" parent="Center/SettingsMenu"]
+layout_mode = 2
+focus_mode = 0
+text = "V-Sync"
+
+[node name="AudioLabel" type="Label" parent="Center/SettingsMenu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Audio"
+
+[node name="VolumeRow" type="HBoxContainer" parent="Center/SettingsMenu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="VolumeLabel" type="Label" parent="Center/SettingsMenu/VolumeRow"]
+layout_mode = 2
+text = "Master volume"
+
+[node name="Volume" type="HSlider" parent="Center/SettingsMenu/VolumeRow"]
+custom_minimum_size = Vector2(220, 24)
+layout_mode = 2
+max_value = 100.0
+step = 5.0
+value = 100.0
+
+[node name="Mute" type="CheckButton" parent="Center/SettingsMenu"]
+layout_mode = 2
+focus_mode = 0
+text = "Mute"
+
+[node name="Back" type="Button" parent="Center/SettingsMenu"]
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Back"

@@ -7,12 +7,13 @@ config_version=5
 [application]
 
 config/name="Base Defense"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.3", "2D")
 
 [autoload]
 
 GameState="*res://scripts/game_state.gd"
+Settings="*res://scripts/settings.gd"
 
 [display]
 

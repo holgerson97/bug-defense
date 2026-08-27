@@ -62,28 +62,31 @@ func _start_wave() -> void:
 	if _alive == 0:
 		_start_next_wave_after_delay()
 
+## Multiplicative health curve: enemies keep pace with unlimited player upgrades.
+func _hp_scale() -> float:
+	return pow(1.12, wave - 1)
+
 @warning_ignore("integer_division")
 func _spawn_kind(kind) -> void:
 	var enemy
 	match kind:
 		"brute":
 			enemy = BRUTE_SCENE.instantiate()
-			# Brutes track grunt HP scaling at 5x, with a gentle speed ramp.
-			enemy.max_health = (3 + wave / 3) * 5
+			enemy.max_health = int(ceil(15.0 * _hp_scale()))
 			enemy.speed += wave * 2.0
 		"healer":
 			enemy = HEALER_SCENE.instantiate()
-			enemy.max_health += wave / 2
+			enemy.max_health = int(ceil(6.0 * _hp_scale()))
 		"mage":
 			enemy = MAGE_SCENE.instantiate()
-			enemy.max_health += wave / 2
+			enemy.max_health = int(ceil(6.0 * _hp_scale()))
 		"boss":
+			var boss_number := wave / 10
 			enemy = BOSS_SCENE.instantiate()
-			enemy.max_health = 250 * (wave / 10)
+			enemy.max_health = int(250.0 * boss_number * pow(1.5, boss_number - 1))
 		_:
 			enemy = enemy_scene.instantiate()
-			# Mild difficulty scaling per wave.
-			enemy.max_health = 3 + wave / 3
+			enemy.max_health = int(ceil(3.0 * _hp_scale()))
 			enemy.speed += wave * 4.0
 			enemy.scrap_value = 4 + wave * 2
 	enemy.global_position = _spawn_position()
