@@ -32,6 +32,7 @@ func _physics_process(delta: float) -> void:
 
 func _on_body_entered(body) -> void:
 	Effects.impact(self, global_position, rotation + PI)
+	Sfx.play("hit", global_position, -12.0)
 	if body.has_method("take_damage"):
 		body.take_damage(damage)
 	queue_free()

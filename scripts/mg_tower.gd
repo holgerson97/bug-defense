@@ -43,3 +43,4 @@ func _fire() -> void:
 	bullet.damage = 1
 	get_tree().current_scene.add_child(bullet)
 	Effects.muzzle_flash(self, _muzzle.global_position, _head.global_rotation)
+	Sfx.play("shoot", _muzzle.global_position, -12.0)

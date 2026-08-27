@@ -133,6 +133,7 @@ func _try_place_miner() -> void:
 	miner.deposit = target
 	target.has_miner = true
 	target.add_child(miner)
+	Sfx.play("place", target.global_position)
 
 func _build_position(id: String) -> Vector2:
 	var pos := get_global_mouse_position()
@@ -160,6 +161,7 @@ func _try_place_building(id: String) -> void:
 	var building = BUILDING_SCENES[id].instantiate()
 	building.global_position = pos
 	get_tree().current_scene.add_child(building)
+	Sfx.play("place", pos)
 
 func _update_ghost(selected: String) -> void:
 	if not BUILDING_SCENES.has(selected):
@@ -201,11 +203,13 @@ func _shoot() -> void:
 	bullet.damage = dmg
 	get_tree().current_scene.add_child(bullet)
 	Effects.muzzle_flash(self, $Muzzle.global_position, rotation)
+	Sfx.play("shoot", $Muzzle.global_position, -6.0)
 	_recoil = (_recoil - transform.x * RECOIL_KICK).limit_length(RECOIL_MAX)
 
 func take_damage(amount: int) -> void:
 	if _dead:
 		return
+	Sfx.play("player_hurt", global_position, -3.0)
 	health = maxi(health - amount, 0)
 	_update_health_bar()
 	health_changed.emit(health, _max_health)

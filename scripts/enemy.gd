@@ -58,6 +58,7 @@ func take_damage(amount) -> void:
 	if health <= 0:
 		_dead = true
 		Effects.blood_death(self, hit_pos, hit_dir)
+		Sfx.play("enemy_die", global_position, -4.0)
 		GameState.add_xp(xp_value)
 		GameState.add_resource("scrap", scrap_value)
 		if crystal_value > 0:

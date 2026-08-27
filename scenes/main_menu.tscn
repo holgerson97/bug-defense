@@ -81,6 +81,19 @@ layout_mode = 2
 focus_mode = 0
 text = "V-Sync"
 
+[node name="ResolutionRow" type="HBoxContainer" parent="Center/SettingsMenu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ResolutionLabel" type="Label" parent="Center/SettingsMenu/ResolutionRow"]
+layout_mode = 2
+text = "Resolution"
+
+[node name="Resolution" type="OptionButton" parent="Center/SettingsMenu/ResolutionRow"]
+custom_minimum_size = Vector2(180, 32)
+layout_mode = 2
+focus_mode = 0
+
 [node name="AudioLabel" type="Label" parent="Center/SettingsMenu"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
@@ -95,6 +108,21 @@ layout_mode = 2
 text = "Master volume"
 
 [node name="Volume" type="HSlider" parent="Center/SettingsMenu/VolumeRow"]
+custom_minimum_size = Vector2(220, 24)
+layout_mode = 2
+max_value = 100.0
+step = 5.0
+value = 100.0
+
+[node name="SfxRow" type="HBoxContainer" parent="Center/SettingsMenu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SfxLabel" type="Label" parent="Center/SettingsMenu/SfxRow"]
+layout_mode = 2
+text = "Effects volume"
+
+[node name="SfxVolume" type="HSlider" parent="Center/SettingsMenu/SfxRow"]
 custom_minimum_size = Vector2(220, 24)
 layout_mode = 2
 max_value = 100.0

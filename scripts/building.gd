@@ -42,6 +42,7 @@ func take_damage(amount: int) -> void:
 	if health == 0:
 		_destroyed = true
 		Effects.debris_burst(self, global_position)
+		Sfx.play("explosion", global_position, -8.0)
 		queue_free()
 
 func heal(amount: int) -> void:
