@@ -150,7 +150,8 @@ func _make_upgrade_button(id: String) -> Button:
 	return btn
 
 func _on_upgrade_pressed(id: String) -> void:
-	GameState.purchase(id)
+	if GameState.purchase(id):
+		Sfx.play("levelup")
 
 func _refresh() -> void:
 	_scrap_value.text = str(GameState.resources.get("scrap", 0))
@@ -160,7 +161,7 @@ func _refresh() -> void:
 		var btn: Button = _buttons[id]
 		var ui: Dictionary = _button_ui[id]
 		btn.remove_theme_stylebox_override("disabled")
-		if GameState.is_purchased(id):
+		if GameState.is_purchased(id) and not GameState.is_repeatable(id):
 			btn.disabled = true
 			btn.add_theme_stylebox_override("disabled", UITheme.owned_style())
 			ui["icon"].texture = _icon(up.get("icon", ""))
@@ -183,11 +184,14 @@ func _refresh() -> void:
 			ui["icon"].texture = _icon(up.get("icon", ""))
 			ui["icon"].modulate = Color(1, 1, 1, 1.0 if not btn.disabled else 0.75)
 			ui["name"].modulate = Color(1, 1, 1, 1)
-			ui["sub"].text = up["desc"]
-			ui["sub"].add_theme_color_override("font_color", UITheme.TEXT_DIM)
+			var lvl := GameState.upgrade_level(id)
+			ui["sub"].text = up["desc"] if lvl == 0 else "%s  —  Lv %d" % [up["desc"], lvl]
+			ui["sub"].add_theme_color_override("font_color", UITheme.TEXT_DIM if lvl == 0 else UITheme.GOOD)
 			ui["cost_row"].visible = true
+			var cost: Dictionary = GameState.upgrade_cost(id)
 			for kind in ui["cost_labels"]:
-				var enough: bool = GameState.resources.get(kind, 0) >= up["cost"][kind]
+				ui["cost_labels"][kind].text = str(cost.get(kind, 0))
+				var enough: bool = GameState.resources.get(kind, 0) >= cost.get(kind, 0)
 				ui["cost_labels"][kind].add_theme_color_override("font_color", UITheme.TEXT_COLOR if enough else UITheme.BAD)
 	# Redraw the connectors after the containers have laid the buttons out,
 	# and shrink the whole panel uniformly if the tree is wider than the view.

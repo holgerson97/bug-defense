@@ -8,7 +8,7 @@ signal health_changed(current: int, total: int)
 
 const Effects = preload("res://scripts/effects.gd")
 
-const MINER_COST := {"scrap": 25}
+const MINER_COST := {"scrap": 40}
 const MINER_PLACE_RANGE := 80.0
 const RECOIL_KICK := 5.0
 const RECOIL_MAX := 14.0

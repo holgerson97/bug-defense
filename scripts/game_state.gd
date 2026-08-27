@@ -35,10 +35,10 @@ const UPGRADES := {
 
 # Per-placement costs, paid directly when the building is placed.
 const BUILDINGS := {
-	"wall": {"icon": "res://assets/icons/wall.svg", "name": "Wall", "cost": {"scrap": 8}, "research": "walls_1"},
-	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"scrap": 60, "crystal": 15}, "research": "mg_tower_1"},
-	"grenade_tower": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "cost": {"scrap": 80, "crystal": 25}, "research": "grenade_tower_1"},
-	"repair_tower": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Tower", "cost": {"scrap": 60, "crystal": 20}, "research": "repair_tower_1"},
+	"wall": {"icon": "res://assets/icons/wall.svg", "name": "Wall", "cost": {"scrap": 15}, "research": "walls_1"},
+	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"scrap": 120, "crystal": 40}, "research": "mg_tower_1"},
+	"grenade_tower": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "cost": {"scrap": 160, "crystal": 60}, "research": "grenade_tower_1"},
+	"repair_tower": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Tower", "cost": {"scrap": 120, "crystal": 50}, "research": "repair_tower_1"},
 }
 
 var xp: int = 0
@@ -103,8 +103,27 @@ func selected_item_id() -> String:
 	var item = hotbar[selected_slot]
 	return item["id"] if item != null else ""
 
+## Player-stat upgrades (Offense/Pilot) can be bought forever; Industry
+## building unlocks are one-time.
+func is_repeatable(id: String) -> bool:
+	return UPGRADES[id]["branch"] != "Industry"
+
+func upgrade_level(id: String) -> int:
+	return int(purchased.get(id, 0))
+
+## Repeatable upgrades get 60% more expensive per level owned.
+func upgrade_cost(id: String) -> Dictionary:
+	var base: Dictionary = UPGRADES[id]["cost"]
+	var lvl := upgrade_level(id)
+	if lvl == 0 or not is_repeatable(id):
+		return base
+	var scaled := {}
+	for kind in base:
+		scaled[kind] = int(ceil(base[kind] * pow(1.6, lvl)))
+	return scaled
+
 func is_purchased(id: String) -> bool:
-	return purchased.has(id)
+	return upgrade_level(id) > 0
 
 func is_unlocked(id: String) -> bool:
 	for req in UPGRADES[id]["requires"]:
@@ -113,13 +132,15 @@ func is_unlocked(id: String) -> bool:
 	return true
 
 func can_purchase(id: String) -> bool:
-	return not is_purchased(id) and is_unlocked(id) and can_afford(UPGRADES[id]["cost"])
+	if not is_repeatable(id) and is_purchased(id):
+		return false
+	return is_unlocked(id) and can_afford(upgrade_cost(id))
 
 func purchase(id: String) -> bool:
 	if not can_purchase(id):
 		return false
-	spend(UPGRADES[id]["cost"])
-	purchased[id] = true
+	spend(upgrade_cost(id))
+	purchased[id] = upgrade_level(id) + 1
 	match id:
 		"miner_1":
 			set_hotbar_item(1, {"id": "miner", "name": "Miner", "icon": "res://assets/icons/miner.svg"})
@@ -140,7 +161,7 @@ func stat(key: String) -> float:
 	for id in purchased:
 		var effects: Dictionary = UPGRADES[id]["effects"]
 		if effects.has(key):
-			total += effects[key]
+			total += effects[key] * upgrade_level(id)
 	return total
 
 # Player stats: research effects plus small per-level bonuses.
@@ -148,13 +169,14 @@ func player_damage() -> int:
 	return 1 + int(stat("damage_bonus")) + int((level - 1) / 4.0)
 
 func player_crit_chance() -> float:
-	return 0.05 + stat("crit_chance")
+	return minf(0.05 + stat("crit_chance"), 0.8)
 
 func player_crit_mult() -> float:
 	return 1.5 + stat("crit_mult")
 
 func player_fire_cooldown(base_cooldown: float) -> float:
-	return maxf(base_cooldown * (1.0 - stat("fire_rate_cut")), 0.05)
+	# Diminishing returns so unlimited fire-rate levels never hit zero.
+	return maxf(base_cooldown / (1.0 + stat("fire_rate_cut")), 0.04)
 
 func player_speed(base_speed: float) -> float:
 	return base_speed * (1.0 + stat("speed_mult") + 0.01 * (level - 1))

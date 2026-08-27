@@ -10,6 +10,7 @@ extends Control
 @onready var _mute: CheckButton = $Center/SettingsMenu/Mute
 
 func _ready() -> void:
+	theme = UITheme.build()
 	$Center/Menu/Play.pressed.connect(_on_play)
 	$Center/Menu/SettingsButton.pressed.connect(_show_settings.bind(true))
 	$Center/Menu/Quit.pressed.connect(func(): get_tree().quit())
