@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Miner: orange rig with drill bit, matches miner.tscn colors -->
+  <rect x="7" y="4" width="18" height="16" rx="2" fill="#ff9a26"/>
+  <rect x="10" y="7" width="12" height="4.5" rx="1" fill="#ffc266"/>
+  <rect x="10" y="14" width="5" height="3" rx="1" fill="#c76c14"/>
+  <polygon points="10.5,20 21.5,20 16,29.5" fill="#d9731a"/>
+  <polygon points="13,20 19,20 16,25.5" fill="#a8540f"/>
+</svg>

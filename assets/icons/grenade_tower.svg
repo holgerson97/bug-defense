@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Grenade Tower: olive mortar hex, matches grenade_tower.tscn colors -->
+  <rect x="4" y="4" width="24" height="24" rx="3" fill="#737f52"/>
+  <polygon points="11,7.5 21,7.5 26.5,16 21,24.5 11,24.5 5.5,16" fill="#99a866"/>
+  <circle cx="16" cy="16" r="4.8" fill="#383f29"/>
+  <circle cx="14.5" cy="14.5" r="1.5" fill="#c2cf8f"/>
+</svg>

@@ -1,21 +1,60 @@
 extends HBoxContainer
 
+const SLOT_SIZE := Vector2(60, 60)
+
 var _slots: Array = []
+var _icon_cache: Dictionary = {}
 
 func _ready() -> void:
 	GameState.hotbar_changed.connect(_refresh)
 	GameState.resources_changed.connect(_on_resources_changed)
 	for i in GameState.HOTBAR_SIZE:
-		var panel := PanelContainer.new()
-		panel.custom_minimum_size = Vector2(72, 64)
-		var label := Label.new()
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 14)
-		panel.add_child(label)
-		add_child(panel)
-		_slots.append(panel)
+		_slots.append(_make_slot(i))
 	_refresh()
+
+func _make_slot(index: int) -> Dictionary:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = SLOT_SIZE
+	panel.pivot_offset = SLOT_SIZE / 2.0
+	panel.add_theme_stylebox_override("panel", UITheme.slot_normal())
+	var inner := Control.new()
+	panel.add_child(inner)
+	# Item icon, centered (nudged up to leave room for the cost line).
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.offset_bottom = -8.0
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_child(center)
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(30, 30)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	center.add_child(icon)
+	# Slot number badge, top-left.
+	var num := Label.new()
+	num.text = str(index + 1)
+	num.position = Vector2(5, 1)
+	num.add_theme_font_size_override("font_size", 11)
+	num.add_theme_color_override("font_color", UITheme.ACCENT)
+	inner.add_child(num)
+	# Cost line, bottom (buildings only).
+	var cost := Label.new()
+	cost.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	cost.offset_top = -15.0
+	cost.offset_bottom = -2.0
+	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cost.add_theme_font_size_override("font_size", 10)
+	inner.add_child(cost)
+	add_child(panel)
+	return {"panel": panel, "icon": icon, "num": num, "cost": cost}
+
+func _get_icon(item: Dictionary) -> Texture2D:
+	var path: String = item.get("icon", "")
+	if path == "":
+		return null
+	if not _icon_cache.has(path):
+		_icon_cache[path] = load(path)
+	return _icon_cache[path]
 
 func _on_resources_changed(_resources: Dictionary) -> void:
 	_refresh()
@@ -34,15 +73,32 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _refresh() -> void:
 	for i in _slots.size():
-		var panel: PanelContainer = _slots[i]
-		var label: Label = panel.get_child(0)
+		var slot: Dictionary = _slots[i]
 		var item = GameState.hotbar[i]
-		var item_name: String = item["name"] if item != null else "-"
-		if item != null and GameState.BUILDINGS.has(item["id"]):
-			item_name += "\n" + _cost_text(GameState.BUILDINGS[item["id"]]["cost"])
-		label.text = "%d\n%s" % [i + 1, item_name]
-		if i == GameState.selected_slot:
-			panel.modulate = Color(1, 1, 0.7, 1)
-			panel.scale = Vector2(1.0, 1.0)
+		var selected: bool = i == GameState.selected_slot
+		# Icon
+		if item != null:
+			slot["icon"].texture = _get_icon(item)
+			slot["icon"].visible = true
+			slot["icon"].modulate = Color(1, 1, 1, 1.0 if selected else 0.85)
 		else:
-			panel.modulate = Color(0.7, 0.7, 0.7, 0.8)
+			slot["icon"].visible = false
+		# Cost (buildings only), red when unaffordable.
+		if item != null and GameState.BUILDINGS.has(item["id"]):
+			var cost: Dictionary = GameState.BUILDINGS[item["id"]]["cost"]
+			slot["cost"].text = _cost_text(cost)
+			slot["cost"].add_theme_color_override("font_color", UITheme.TEXT_DIM if GameState.can_afford(cost) else UITheme.BAD)
+		else:
+			slot["cost"].text = ""
+		# Style: bright border + slight scale-up when selected, dim when empty.
+		var panel: PanelContainer = slot["panel"]
+		if selected:
+			panel.add_theme_stylebox_override("panel", UITheme.slot_selected())
+			panel.scale = Vector2(1.08, 1.08)
+		elif item == null:
+			panel.add_theme_stylebox_override("panel", UITheme.slot_empty())
+			panel.scale = Vector2(1, 1)
+		else:
+			panel.add_theme_stylebox_override("panel", UITheme.slot_normal())
+			panel.scale = Vector2(1, 1)
+		slot["num"].modulate = Color(1, 1, 1, 1.0 if item != null else 0.4)

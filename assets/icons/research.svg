@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Research: flask with glowing cyan liquid -->
+  <path d="M13 3 L19 3 L19 11 L26 23.5 A3.2 3.2 0 0 1 23.2 28.2 L8.8 28.2 A3.2 3.2 0 0 1 6 23.5 L13 11 Z" fill="#cfe3f0" opacity="0.28" stroke="#9fb8cc" stroke-width="1.4"/>
+  <path d="M10.2 16 L6 23.5 A3.2 3.2 0 0 0 8.8 28.2 L23.2 28.2 A3.2 3.2 0 0 0 26 23.5 L21.8 16 Z" fill="#41c7e8"/>
+  <circle cx="16" cy="20.5" r="1.6" fill="#b8ecff"/>
+  <circle cx="12.8" cy="24" r="1" fill="#b8ecff"/>
+  <circle cx="19.3" cy="24.5" r="1.2" fill="#b8ecff"/>
+  <rect x="11" y="2" width="10" height="3" rx="1.5" fill="#9fb8cc"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- MG Tower: slate base, turret, barrel — matches mg_tower.tscn colors -->
+  <rect x="3" y="4" width="24" height="24" rx="3" fill="#596b80"/>
+  <rect x="18" y="14" width="12" height="4" rx="1.5" fill="#333d4d"/>
+  <polygon points="8,9 21,11.5 21,20.5 8,23" fill="#8ca6bf"/>
+  <circle cx="12" cy="16" r="2.2" fill="#c3d5e4"/>
+</svg>
