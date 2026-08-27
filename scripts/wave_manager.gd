@@ -93,9 +93,8 @@ func _spawn_kind(kind) -> void:
 
 func _spawn_position() -> Vector2:
 	var player = get_tree().get_first_node_in_group("player")
-	var center: Vector2 = player.global_position if player != null else GameState.WORLD_SIZE / 2.0
-	var pos := center + Vector2.from_angle(randf() * TAU) * spawn_radius
-	return pos.clamp(Vector2(24, 24), GameState.WORLD_SIZE - Vector2(24, 24))
+	var center: Vector2 = player.global_position if player != null else Vector2.ZERO
+	return center + Vector2.from_angle(randf() * TAU) * spawn_radius
 
 ## Lets summoners (mage, boss) count their spawns toward wave clearing.
 func register_enemy(enemy) -> void:

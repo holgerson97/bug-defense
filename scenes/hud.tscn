@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/research_panel.tscn" id="2"]
 [ext_resource type="Script" path="res://scripts/hotbar.gd" id="3"]
-[ext_resource type="PackedScene" path="res://scenes/store_panel.tscn" id="4"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
@@ -56,18 +55,6 @@ grow_horizontal = 0
 focus_mode = 0
 text = "Research (T)"
 
-[node name="StoreButton" type="Button" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -304.0
-offset_top = 8.0
-offset_right = -168.0
-offset_bottom = 44.0
-grow_horizontal = 0
-focus_mode = 0
-text = "Store (B)"
-
 [node name="Hotbar" type="HBoxContainer" parent="."]
 anchors_preset = 7
 anchor_left = 0.5
@@ -112,5 +99,3 @@ horizontal_alignment = 1
 text = "Press R to restart"
 
 [node name="ResearchPanel" parent="." instance=ExtResource("2")]
-
-[node name="StorePanel" parent="." instance=ExtResource("4")]

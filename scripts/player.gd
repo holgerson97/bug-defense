@@ -141,7 +141,7 @@ func _build_position(id: String) -> Vector2:
 	return pos
 
 func _placement_valid(id: String, pos: Vector2) -> bool:
-	if GameState.inventory.get(id, 0) <= 0:
+	if not GameState.can_afford(GameState.BUILDINGS[id]["cost"]):
 		return false
 	if global_position.distance_to(pos) > BUILD_RANGE:
 		return false
@@ -155,7 +155,7 @@ func _try_place_building(id: String) -> void:
 	var pos := _build_position(id)
 	if not _placement_valid(id, pos):
 		return
-	if not GameState.use_building(id):
+	if not GameState.spend(GameState.BUILDINGS[id]["cost"]):
 		return
 	var building = BUILDING_SCENES[id].instantiate()
 	building.global_position = pos

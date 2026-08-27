@@ -5,7 +5,6 @@ signal xp_changed(xp: int, xp_needed: int, level: int)
 signal resources_changed(resources: Dictionary)
 signal upgrades_changed
 signal hotbar_changed
-signal inventory_changed
 
 const WORLD_SIZE := Vector2(2560, 1440)
 const HOTBAR_SIZE := 6
@@ -34,11 +33,12 @@ const UPGRADES := {
 	"repair_tower_1": {"name": "Repair Beam Tower", "branch": "Industry", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 150, "crystal": 60}, "requires": ["walls_1"], "effects": {}},
 }
 
+# Per-placement costs, paid directly when the building is placed.
 const BUILDINGS := {
-	"wall": {"name": "Wall", "cost": {"scrap": 40}, "pack": 5, "research": "walls_1"},
-	"mg_tower": {"name": "MG Tower", "cost": {"scrap": 60, "crystal": 15}, "pack": 1, "research": "mg_tower_1"},
-	"grenade_tower": {"name": "Grenade Tower", "cost": {"scrap": 80, "crystal": 25}, "pack": 1, "research": "grenade_tower_1"},
-	"repair_tower": {"name": "Repair Tower", "cost": {"scrap": 60, "crystal": 20}, "pack": 1, "research": "repair_tower_1"},
+	"wall": {"name": "Wall", "cost": {"scrap": 8}, "research": "walls_1"},
+	"mg_tower": {"name": "MG Tower", "cost": {"scrap": 60, "crystal": 15}, "research": "mg_tower_1"},
+	"grenade_tower": {"name": "Grenade Tower", "cost": {"scrap": 80, "crystal": 25}, "research": "grenade_tower_1"},
+	"repair_tower": {"name": "Repair Tower", "cost": {"scrap": 60, "crystal": 20}, "research": "repair_tower_1"},
 }
 
 var xp: int = 0
@@ -47,7 +47,6 @@ var resources: Dictionary = {"scrap": 0, "crystal": 0}
 var purchased: Dictionary = {}
 var hotbar: Array = []
 var selected_slot: int = 0
-var inventory: Dictionary = {}
 
 func _ready() -> void:
 	reset()
@@ -59,12 +58,10 @@ func reset() -> void:
 	purchased = {}
 	hotbar = [{"id": "blaster", "name": "Blaster"}, null, null, null, null, null]
 	selected_slot = 0
-	inventory = {}
 	xp_changed.emit(xp, xp_needed(), level)
 	resources_changed.emit(resources)
 	upgrades_changed.emit()
 	hotbar_changed.emit()
-	inventory_changed.emit()
 
 func xp_needed() -> int:
 	return 100 * level
@@ -135,26 +132,6 @@ func purchase(id: String) -> bool:
 		"repair_tower_1":
 			set_hotbar_item(5, {"id": "repair_tower", "name": "Repair Tower"})
 	upgrades_changed.emit()
-	return true
-
-func can_buy_building(id: String) -> bool:
-	var building: Dictionary = BUILDINGS[id]
-	return is_purchased(building["research"]) and can_afford(building["cost"])
-
-func buy_building(id: String) -> bool:
-	if not can_buy_building(id):
-		return false
-	spend(BUILDINGS[id]["cost"])
-	inventory[id] = inventory.get(id, 0) + BUILDINGS[id]["pack"]
-	inventory_changed.emit()
-	return true
-
-## Consume one building from the inventory (returns false if none left).
-func use_building(id: String) -> bool:
-	if inventory.get(id, 0) <= 0:
-		return false
-	inventory[id] -= 1
-	inventory_changed.emit()
 	return true
 
 ## Sum of one effect key across all purchased upgrades.

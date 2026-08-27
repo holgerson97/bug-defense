@@ -4,7 +4,7 @@ var _slots: Array = []
 
 func _ready() -> void:
 	GameState.hotbar_changed.connect(_refresh)
-	GameState.inventory_changed.connect(_refresh)
+	GameState.resources_changed.connect(_on_resources_changed)
 	for i in GameState.HOTBAR_SIZE:
 		var panel := PanelContainer.new()
 		panel.custom_minimum_size = Vector2(72, 64)
@@ -16,6 +16,15 @@ func _ready() -> void:
 		add_child(panel)
 		_slots.append(panel)
 	_refresh()
+
+func _on_resources_changed(_resources: Dictionary) -> void:
+	_refresh()
+
+func _cost_text(cost: Dictionary) -> String:
+	var parts: Array = []
+	for kind in cost:
+		parts.append("%d%s" % [cost[kind], kind.substr(0, 1)])
+	return " ".join(parts)
 
 func _unhandled_input(event: InputEvent) -> void:
 	for i in GameState.HOTBAR_SIZE:
@@ -30,7 +39,7 @@ func _refresh() -> void:
 		var item = GameState.hotbar[i]
 		var item_name: String = item["name"] if item != null else "-"
 		if item != null and GameState.BUILDINGS.has(item["id"]):
-			item_name += " x%d" % GameState.inventory.get(item["id"], 0)
+			item_name += "\n" + _cost_text(GameState.BUILDINGS[item["id"]]["cost"])
 		label.text = "%d\n%s" % [i + 1, item_name]
 		if i == GameState.selected_slot:
 			panel.modulate = Color(1, 1, 0.7, 1)
