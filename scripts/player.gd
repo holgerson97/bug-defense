@@ -26,6 +26,8 @@ const BUILDING_SCENES := {
 }
 const BUILDING_FOOTPRINT := {"wall": 30.0, "mg_tower": 38.0, "grenade_tower": 38.0, "repair_tower": 38.0}
 const GHOST_SIZE := {"wall": 32.0, "mg_tower": 40.0, "grenade_tower": 40.0, "repair_tower": 40.0}
+# Must match the range each tower script actually uses.
+const TOWER_RANGE := {"mg_tower": 350.0, "grenade_tower": 450.0, "repair_tower": 250.0}
 const GHOST_VALID := Color(0.35, 1.0, 0.45, 0.45)
 const GHOST_INVALID := Color(1.0, 0.3, 0.3, 0.45)
 
@@ -39,6 +41,9 @@ var _dead: bool = false
 var _recoil: Vector2 = Vector2.ZERO
 var _ghost
 var _ghost_poly
+var _ghost_range_poly
+var _ghost_range_line
+var _ghost_item: String = ""
 var _place_shape
 var _place_params
 
@@ -46,11 +51,6 @@ var _place_params
 @onready var _camera: Camera2D = $Camera2D
 
 func _ready() -> void:
-	var cam: Camera2D = $Camera2D
-	cam.limit_left = 0
-	cam.limit_top = 0
-	cam.limit_right = int(GameState.WORLD_SIZE.x)
-	cam.limit_bottom = int(GameState.WORLD_SIZE.y)
 	GameState.upgrades_changed.connect(_on_upgrades_changed)
 	_max_health = GameState.player_max_health()
 	health = _max_health
@@ -62,6 +62,14 @@ func _build_ghost() -> void:
 	_ghost.top_level = true
 	_ghost.visible = false
 	_ghost.z_index = 50
+	_ghost_range_poly = Polygon2D.new()
+	_ghost_range_poly.color = Color(0.5, 0.8, 1.0, 0.07)
+	_ghost.add_child(_ghost_range_poly)
+	_ghost_range_line = Line2D.new()
+	_ghost_range_line.width = 2.0
+	_ghost_range_line.default_color = Color(0.5, 0.8, 1.0, 0.35)
+	_ghost_range_line.closed = true
+	_ghost.add_child(_ghost_range_line)
 	_ghost_poly = Polygon2D.new()
 	_ghost.add_child(_ghost_poly)
 	add_child(_ghost)
@@ -86,7 +94,6 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = input_dir * GameState.player_speed(base_speed)
 	move_and_slide()
-	global_position = global_position.clamp(Vector2(16, 16), GameState.WORLD_SIZE - Vector2(16, 16))
 	look_at(get_global_mouse_position())
 
 	var regen := GameState.player_regen()
@@ -158,6 +165,9 @@ func _update_ghost(selected: String) -> void:
 	if not BUILDING_SCENES.has(selected):
 		_ghost.visible = false
 		return
+	if selected != _ghost_item:
+		_ghost_item = selected
+		_update_range_ring(selected)
 	var pos := _build_position(selected)
 	var half: float = GHOST_SIZE[selected] / 2.0
 	_ghost_poly.polygon = PackedVector2Array([
@@ -167,11 +177,28 @@ func _update_ghost(selected: String) -> void:
 	_ghost.global_position = pos
 	_ghost.visible = true
 
+## RTS-style range preview while placing a tower.
+func _update_range_ring(id: String) -> void:
+	if not TOWER_RANGE.has(id):
+		_ghost_range_poly.polygon = PackedVector2Array()
+		_ghost_range_line.points = PackedVector2Array()
+		return
+	var radius: float = TOWER_RANGE[id]
+	var points := PackedVector2Array()
+	for i in 48:
+		points.append(Vector2.from_angle(TAU * i / 48.0) * radius)
+	_ghost_range_poly.polygon = points
+	_ghost_range_line.points = points
+
 func _shoot() -> void:
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = $Muzzle.global_position
 	bullet.rotation = rotation
-	bullet.damage = GameState.player_damage()
+	var dmg := GameState.player_damage()
+	if randf() < GameState.player_crit_chance():
+		dmg = int(ceil(dmg * GameState.player_crit_mult()))
+		bullet.crit = true
+	bullet.damage = dmg
 	get_tree().current_scene.add_child(bullet)
 	Effects.muzzle_flash(self, $Muzzle.global_position, rotation)
 	_recoil = (_recoil - transform.x * RECOIL_KICK).limit_length(RECOIL_MAX)

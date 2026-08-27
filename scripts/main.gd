@@ -1,11 +1,14 @@
 extends Node2D
 
-const DEPOSIT_COUNT := 10
-const DEPOSIT_CENTER_CLEARANCE := 250.0
-const DEPOSIT_EDGE_MARGIN := 100.0
+const CHUNK_SIZE := 1024.0
+const MIN_DEPOSITS_PER_CHUNK := 1
+const MAX_DEPOSITS_PER_CHUNK := 2
+const DEPOSIT_PLAYER_CLEARANCE := 200.0
 
 var score: int = 0
 var deposit_scene: PackedScene = preload("res://scenes/crystal_deposit.tscn")
+
+var _seeded_chunks: Dictionary = {}
 
 @onready var _player = $Player
 @onready var _wave_manager = $WaveManager
@@ -17,17 +20,28 @@ func _ready() -> void:
 	_wave_manager.wave_started.connect(_hud.update_wave)
 	_wave_manager.enemy_killed.connect(_on_enemy_killed)
 	_hud.update_score(score)
-	_spawn_deposits()
 
-func _spawn_deposits() -> void:
-	var center := GameState.WORLD_SIZE / 2.0
-	for i in DEPOSIT_COUNT:
-		var pos := center
-		while pos.distance_to(center) < DEPOSIT_CENTER_CLEARANCE:
-			pos = Vector2(
-				randf_range(DEPOSIT_EDGE_MARGIN, GameState.WORLD_SIZE.x - DEPOSIT_EDGE_MARGIN),
-				randf_range(DEPOSIT_EDGE_MARGIN, GameState.WORLD_SIZE.y - DEPOSIT_EDGE_MARGIN)
-			)
+func _process(_delta: float) -> void:
+	_seed_chunks_around_player()
+
+## Endless map: lazily sprinkle crystal blocks into chunks near the player.
+func _seed_chunks_around_player() -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	var center := Vector2i((_player.global_position / CHUNK_SIZE).floor())
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var chunk := center + Vector2i(dx, dy)
+			if _seeded_chunks.has(chunk):
+				continue
+			_seeded_chunks[chunk] = true
+			_seed_chunk(chunk)
+
+func _seed_chunk(chunk: Vector2i) -> void:
+	for i in randi_range(MIN_DEPOSITS_PER_CHUNK, MAX_DEPOSITS_PER_CHUNK):
+		var pos := Vector2(chunk) * CHUNK_SIZE + Vector2(randf_range(80.0, CHUNK_SIZE - 80.0), randf_range(80.0, CHUNK_SIZE - 80.0))
+		if pos.distance_to(_player.global_position) < DEPOSIT_PLAYER_CLEARANCE:
+			continue
 		var deposit = deposit_scene.instantiate()
 		deposit.global_position = pos
 		add_child(deposit)

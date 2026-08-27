@@ -8,11 +8,18 @@ const TRAIL_LENGTH := 8
 @export var damage: int = 1
 @export var lifetime: float = 1.5
 
+var crit: bool = false
+
 @onready var _trail: Line2D = $Trail
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	_trail.add_point(global_position)
+	if crit:
+		# Crits read as bigger, hotter shots.
+		$Body.color = Color(1, 0.62, 0.2, 1)
+		$Body.scale = Vector2(1.7, 1.7)
+		_trail.width = 5.0
 
 func _physics_process(delta: float) -> void:
 	position += transform.x * speed * delta
