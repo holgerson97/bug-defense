@@ -1,0 +1,59 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/mg_tower.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mg"]
+size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mg_sense"]
+size = Vector2(52, 52)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.3, 0.9, 0.4, 1)
+
+[node name="MGTower" type="StaticBody2D" groups=["buildings"]]
+collision_layer = 32
+collision_mask = 0
+script = ExtResource("1")
+max_health = 120
+health_bar_offset = Vector2(-22, -36)
+
+[node name="Base" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+color = Color(0.35, 0.42, 0.5, 1)
+
+[node name="Head" type="Node2D" parent="."]
+
+[node name="Turret" type="Polygon2D" parent="Head"]
+polygon = PackedVector2Array(-10, -10, 10, -6, 10, 6, -10, 10)
+color = Color(0.55, 0.65, 0.75, 1)
+
+[node name="Barrel" type="Polygon2D" parent="Head"]
+polygon = PackedVector2Array(8, -3, 26, -3, 26, 3, 8, 3)
+color = Color(0.2, 0.24, 0.3, 1)
+
+[node name="Muzzle" type="Marker2D" parent="Head"]
+position = Vector2(28, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_mg")
+
+[node name="Sense" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sense"]
+shape = SubResource("RectangleShape2D_mg_sense")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+top_level = true
+offset_right = 44.0
+offset_bottom = 5.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 120.0
+value = 120.0
+show_percentage = false

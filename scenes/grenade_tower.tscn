@@ -1,0 +1,54 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/grenade_tower.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gren"]
+size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gren_sense"]
+size = Vector2(52, 52)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.3, 0.9, 0.4, 1)
+
+[node name="GrenadeTower" type="StaticBody2D" groups=["buildings"]]
+collision_layer = 32
+collision_mask = 0
+script = ExtResource("1")
+max_health = 120
+health_bar_offset = Vector2(-22, -36)
+
+[node name="Base" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+color = Color(0.45, 0.5, 0.32, 1)
+
+[node name="Mortar" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-10, -10, 10, -10, 14, 0, 10, 10, -10, 10, -14, 0)
+color = Color(0.6, 0.66, 0.4, 1)
+
+[node name="Tube" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-5, -5, 5, -5, 5, 5, -5, 5)
+color = Color(0.22, 0.26, 0.16, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_gren")
+
+[node name="Sense" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sense"]
+shape = SubResource("RectangleShape2D_gren_sense")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+top_level = true
+offset_right = 44.0
+offset_bottom = 5.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 120.0
+value = 120.0
+show_percentage = false

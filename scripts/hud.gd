@@ -9,9 +9,12 @@ extends CanvasLayer
 @onready var _final_score: Label = $GameOver/VBox/FinalScore
 @onready var _research_panel: Control = $ResearchPanel
 @onready var _research_button: Button = $ResearchButton
+@onready var _store_panel: Control = $StorePanel
+@onready var _store_button: Button = $StoreButton
 
 func _ready() -> void:
 	_research_button.pressed.connect(toggle_research)
+	_store_button.pressed.connect(toggle_store)
 	GameState.xp_changed.connect(_on_xp_changed)
 	GameState.resources_changed.connect(_on_resources_changed)
 
@@ -31,11 +34,22 @@ func _on_resources_changed(resources: Dictionary) -> void:
 func toggle_research() -> void:
 	if _game_over.visible:
 		return
-	_research_panel.visible = not _research_panel.visible
-	get_tree().paused = _research_panel.visible
+	var opening := not _research_panel.visible
+	_store_panel.visible = false
+	_research_panel.visible = opening
+	get_tree().paused = opening
+
+func toggle_store() -> void:
+	if _game_over.visible:
+		return
+	var opening := not _store_panel.visible
+	_research_panel.visible = false
+	_store_panel.visible = opening
+	get_tree().paused = opening
 
 func show_game_over(score: int, wave: int) -> void:
 	_research_panel.visible = false
+	_store_panel.visible = false
 	_final_score.text = "You survived to wave %d — score %d" % [wave, score]
 	_game_over.visible = true
 
@@ -47,5 +61,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("research"):
 		toggle_research()
-	elif _research_panel.visible and event.is_action_pressed("ui_cancel"):
-		toggle_research()
+	elif event.is_action_pressed("store"):
+		toggle_store()
+	elif event.is_action_pressed("ui_cancel"):
+		if _research_panel.visible:
+			toggle_research()
+		elif _store_panel.visible:
+			toggle_store()

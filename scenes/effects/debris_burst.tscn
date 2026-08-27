@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/effects/one_shot_effect.gd" id="1"]
+
+[sub_resource type="Gradient" id="Gradient_debris"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.7, 0.72, 0.78, 1, 0.4, 0.42, 0.48, 0)
+
+[node name="DebrisBurst" type="Node2D"]
+script = ExtResource("1")
+life = 0.6
+flash_time = 0.1
+
+[node name="Flash" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(12, 0, 0, 12, -12, 0, 0, -12)
+color = Color(0.85, 0.87, 0.9, 1)
+
+[node name="Debris" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 18
+lifetime = 0.5
+one_shot = true
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 100.0
+initial_velocity_max = 260.0
+damping_min = 300.0
+damping_max = 500.0
+scale_amount_min = 2.0
+scale_amount_max = 5.0
+color_ramp = SubResource("Gradient_debris")

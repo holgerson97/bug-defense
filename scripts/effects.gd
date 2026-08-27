@@ -6,6 +6,8 @@ extends RefCounted
 const MUZZLE_FLASH_SCENE = preload("res://scenes/effects/muzzle_flash.tscn")
 const IMPACT_SCENE = preload("res://scenes/effects/impact.tscn")
 const BLOOD_SCENE = preload("res://scenes/effects/blood_burst.tscn")
+const DEBRIS_SCENE = preload("res://scenes/effects/debris_burst.tscn")
+const EXPLOSION_SCENE = preload("res://scenes/effects/explosion.tscn")
 
 const DEATH_BLOOD_AMOUNT := 26
 const MAX_SPLATTERS := 150
@@ -16,6 +18,14 @@ static func muzzle_flash(node, pos: Vector2, rot: float) -> void:
 
 static func impact(node, pos: Vector2, rot: float) -> void:
 	_spawn(node, IMPACT_SCENE.instantiate(), pos, rot)
+
+## Blood-free destruction burst for buildings.
+static func debris_burst(node, pos: Vector2) -> void:
+	_spawn(node, DEBRIS_SCENE.instantiate(), pos, 0.0)
+
+## Orange explosion burst with a brief light flash.
+static func explosion(node, pos: Vector2) -> void:
+	_spawn(node, EXPLOSION_SCENE.instantiate(), pos, 0.0)
 
 static func blood_hit(node, pos: Vector2, dir: Vector2) -> void:
 	_spawn(node, BLOOD_SCENE.instantiate(), pos, dir.angle())
