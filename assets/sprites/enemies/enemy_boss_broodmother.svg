@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Broodmother boss: massive armored queen, top-down, facing right (+x) -->
+  <!-- legs -->
+  <g stroke="#3d0a14" stroke-width="5" stroke-linecap="round">
+    <path d="M 46 44 Q 30 28 20 22" fill="none"/>
+    <path d="M 46 84 Q 30 100 20 106" fill="none"/>
+    <path d="M 62 40 Q 54 22 48 12" fill="none"/>
+    <path d="M 62 88 Q 54 106 48 116" fill="none"/>
+    <path d="M 78 42 Q 80 26 84 16" fill="none"/>
+    <path d="M 78 86 Q 80 102 84 112" fill="none"/>
+  </g>
+  <!-- crusher mandibles -->
+  <path d="M 96 50 Q 116 40 124 46 Q 114 54 102 60 Z" fill="#5e1020"/>
+  <path d="M 96 78 Q 116 88 124 82 Q 114 74 102 68 Z" fill="#5e1020"/>
+  <!-- brood sac (rear) -->
+  <ellipse cx="34" cy="64" rx="22" ry="19" fill="#7e1b30"/>
+  <!-- egg spots on sac -->
+  <circle cx="26" cy="56" r="4" fill="#e8a0ac" opacity="0.8"/>
+  <circle cx="36" cy="68" r="4.5" fill="#e8a0ac" opacity="0.8"/>
+  <circle cx="25" cy="72" r="3.5" fill="#e8a0ac" opacity="0.8"/>
+  <circle cx="40" cy="56" r="3" fill="#e8a0ac" opacity="0.8"/>
+  <!-- armored thorax -->
+  <ellipse cx="66" cy="64" rx="20" ry="17" fill="#a02540"/>
+  <!-- armor plates -->
+  <path d="M 52 50 Q 56 64 52 78" fill="none" stroke="#3d0a14" stroke-width="3"/>
+  <path d="M 62 47 Q 66 64 62 81" fill="none" stroke="#3d0a14" stroke-width="3"/>
+  <path d="M 72 48 Q 76 64 72 80" fill="none" stroke="#3d0a14" stroke-width="3"/>
+  <!-- crown spikes -->
+  <path d="M 58 47 L 61 38 L 64 47 Z" fill="#5e1020"/>
+  <path d="M 66 46 L 69 36 L 72 46 Z" fill="#5e1020"/>
+  <path d="M 58 81 L 61 90 L 64 81 Z" fill="#5e1020"/>
+  <path d="M 66 82 L 69 92 L 72 82 Z" fill="#5e1020"/>
+  <!-- head -->
+  <circle cx="92" cy="64" r="12" fill="#7e1b30"/>
+  <!-- eyes: two rows, glowing -->
+  <circle cx="96" cy="57" r="2.8" fill="#ffcf5e"/>
+  <circle cx="96" cy="71" r="2.8" fill="#ffcf5e"/>
+  <circle cx="90" cy="59" r="2" fill="#ff9d3d"/>
+  <circle cx="90" cy="69" r="2" fill="#ff9d3d"/>
+  <!-- highlight -->
+  <ellipse cx="60" cy="54" rx="7" ry="4" fill="#d9556e" opacity="0.6"/>
+</svg>

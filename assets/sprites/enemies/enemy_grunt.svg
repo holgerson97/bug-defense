@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Grunt: red beetle, top-down, facing right (+x) -->
+  <g stroke="#7a1622" stroke-width="2.5" stroke-linecap="round">
+    <line x1="26" y1="24" x2="16" y2="14"/>
+    <line x1="26" y1="40" x2="16" y2="50"/>
+    <line x1="34" y1="22" x2="28" y2="11"/>
+    <line x1="34" y1="42" x2="28" y2="53"/>
+    <line x1="41" y1="24" x2="42" y2="13"/>
+    <line x1="41" y1="40" x2="42" y2="51"/>
+  </g>
+  <!-- mandibles -->
+  <path d="M 50 27 Q 58 23 61 26 Q 56 28 52 31 Z" fill="#8f1f2c"/>
+  <path d="M 50 37 Q 58 41 61 38 Q 56 36 52 33 Z" fill="#8f1f2c"/>
+  <!-- abdomen -->
+  <ellipse cx="24" cy="32" rx="15" ry="11" fill="#b02838"/>
+  <!-- abdomen segments -->
+  <path d="M 18 22.5 Q 20 32 18 41.5" fill="none" stroke="#7a1622" stroke-width="1.5"/>
+  <path d="M 25 21.5 Q 27 32 25 42.5" fill="none" stroke="#7a1622" stroke-width="1.5"/>
+  <!-- thorax -->
+  <circle cx="38" cy="32" r="9" fill="#d9394a"/>
+  <!-- head -->
+  <circle cx="48" cy="32" r="6.5" fill="#c22f3f"/>
+  <!-- eyes -->
+  <circle cx="50" cy="28.5" r="1.8" fill="#2a0a10"/>
+  <circle cx="50" cy="35.5" r="1.8" fill="#2a0a10"/>
+  <!-- highlight -->
+  <ellipse cx="36" cy="28" rx="4" ry="2.5" fill="#f07080" opacity="0.7"/>
+</svg>

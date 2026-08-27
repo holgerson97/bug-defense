@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/effects/one_shot_effect.gd" id="1"]
+
+[sub_resource type="Gradient" id="Gradient_spark"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 0.95, 0.6, 1, 1, 0.5, 0.2, 0)
+
+[node name="Impact" type="Node2D"]
+script = ExtResource("1")
+life = 0.45
+
+[node name="Flash" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(6, 0, 0, 6, -6, 0, 0, -6)
+color = Color(1, 0.95, 0.7, 1)
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 10
+lifetime = 0.3
+one_shot = true
+explosiveness = 1.0
+direction = Vector2(1, 0)
+spread = 70.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 120.0
+initial_velocity_max = 280.0
+damping_min = 400.0
+damping_max = 600.0
+scale_amount_min = 2.0
+scale_amount_max = 4.0
+color_ramp = SubResource("Gradient_spark")
