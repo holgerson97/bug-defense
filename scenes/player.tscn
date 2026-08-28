@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player_marine.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/build_controller.gd" id="3"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 14.0
@@ -43,6 +44,9 @@ position = Vector2(30, 0)
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
+
+[node name="BuildController" type="Node2D" parent="."]
+script = ExtResource("3")
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 top_level = true
