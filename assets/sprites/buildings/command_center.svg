@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 54 54">
+  <!-- Command center: fortified tan HQ, 54px footprint. Corner bastions, roof block, antenna with gold flag, beacon. -->
+  <!-- outer walls -->
+  <rect x="1.5" y="1.5" width="51" height="51" rx="3" fill="#7a6a52" stroke="#4a3f2e" stroke-width="2.4"/>
+  <!-- corner bastions -->
+  <rect x="2.5" y="2.5" width="11" height="11" rx="2" fill="#8f7d61" stroke="#4a3f2e" stroke-width="1.8"/>
+  <rect x="40.5" y="2.5" width="11" height="11" rx="2" fill="#8f7d61" stroke="#4a3f2e" stroke-width="1.8"/>
+  <rect x="2.5" y="40.5" width="11" height="11" rx="2" fill="#8f7d61" stroke="#4a3f2e" stroke-width="1.8"/>
+  <rect x="40.5" y="40.5" width="11" height="11" rx="2" fill="#8f7d61" stroke="#4a3f2e" stroke-width="1.8"/>
+  <circle cx="8" cy="8" r="2" fill="#5c503b"/>
+  <circle cx="46" cy="8" r="2" fill="#5c503b"/>
+  <circle cx="8" cy="46" r="2" fill="#5c503b"/>
+  <circle cx="46" cy="46" r="2" fill="#5c503b"/>
+  <!-- courtyard -->
+  <rect x="12" y="12" width="30" height="30" rx="1.5" fill="#6b5c46"/>
+  <!-- main roof block -->
+  <rect x="15" y="15" width="24" height="24" rx="2" fill="#8f7d61" stroke="#4a3f2e" stroke-width="2"/>
+  <path d="M 17 17 L 37 17 L 37 20 L 17 20 Z" fill="#a5926f" opacity="0.8"/>
+  <!-- roof seams -->
+  <line x1="15" y1="27" x2="21" y2="27" stroke="#4a3f2e" stroke-width="1.4"/>
+  <line x1="33" y1="27" x2="39" y2="27" stroke="#4a3f2e" stroke-width="1.4"/>
+  <!-- door (south) -->
+  <rect x="22.5" y="39" width="9" height="13" fill="#3a3126" stroke="#4a3f2e" stroke-width="1.5"/>
+  <line x1="27" y1="39.5" x2="27" y2="51.5" stroke="#57493a" stroke-width="1.2"/>
+  <!-- windows (east/west) -->
+  <rect x="3.5" y="23" width="8" height="8" rx="1" fill="#2c3b52" stroke="#4a3f2e" stroke-width="1.5"/>
+  <rect x="42.5" y="23" width="8" height="8" rx="1" fill="#2c3b52" stroke="#4a3f2e" stroke-width="1.5"/>
+  <path d="M 4.5 24 L 7.5 24 L 4.5 27 Z" fill="#4a6285" opacity="0.9"/>
+  <path d="M 43.5 24 L 46.5 24 L 43.5 27 Z" fill="#4a6285" opacity="0.9"/>
+  <!-- antenna mast (north of center) with gold flag -->
+  <line x1="27" y1="21.5" x2="27" y2="7" stroke="#4a3f2e" stroke-width="2.2"/>
+  <path d="M 27.8 7 L 38 9.6 L 27.8 12.2 Z" fill="#e8b52a" stroke="#8a6a0e" stroke-width="1.3"/>
+  <circle cx="27" cy="6.4" r="1.4" fill="#ffd93b"/>
+  <!-- beacon dome at center -->
+  <circle cx="27" cy="27" r="5.4" fill="#5c503b" stroke="#4a3f2e" stroke-width="1.6"/>
+  <circle cx="27" cy="27" r="3.2" fill="#ffd93b" stroke="#8a6a0e" stroke-width="1.2"/>
+  <circle cx="26" cy="26" r="1" fill="#fff7cc"/>
+</svg>

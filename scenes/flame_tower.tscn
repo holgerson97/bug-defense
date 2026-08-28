@@ -1,6 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/flame_tower.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/flame_tower_base.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/flame_nozzle.svg" id="3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_flame"]
 size = Vector2(40, 40)
@@ -25,23 +27,15 @@ script = ExtResource("1")
 max_health = 110
 health_bar_offset = Vector2(-22, -36)
 
-[node name="Base" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
-color = Color(0.42, 0.3, 0.24, 1)
-
-[node name="Tank" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-14, -8, -6, -8, -6, 8, -14, 8)
-color = Color(0.75, 0.35, 0.15, 1)
+[node name="Base" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2")
 
 [node name="Nozzle" type="Node2D" parent="."]
 
-[node name="Body" type="Polygon2D" parent="Nozzle"]
-polygon = PackedVector2Array(-8, -8, 8, -6, 8, 6, -8, 8)
-color = Color(0.6, 0.48, 0.38, 1)
-
-[node name="Barrel" type="Polygon2D" parent="Nozzle"]
-polygon = PackedVector2Array(6, -3, 20, -4.5, 22, 0, 20, 4.5, 6, 3)
-color = Color(0.28, 0.24, 0.2, 1)
+[node name="Sprite" type="Sprite2D" parent="Nozzle"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3")
 
 [node name="Jet" type="CPUParticles2D" parent="Nozzle"]
 position = Vector2(22, 0)

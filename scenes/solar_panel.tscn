@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/solar_panel.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/solar_panel.svg" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_solar"]
 size = Vector2(30, 30)
@@ -21,21 +22,9 @@ script = ExtResource("1")
 max_health = 40
 health_bar_offset = Vector2(-18, -30)
 
-[node name="Frame" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-15, -15, 15, -15, 15, 15, -15, 15)
-color = Color(0.35, 0.4, 0.45, 1)
-
-[node name="Cell" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-12, -12, 12, -12, 12, 12, -12, 12)
-color = Color(0.11, 0.31, 0.54, 1)
-
-[node name="GridH" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-12, -1, 12, -1, 12, 1, -12, 1)
-color = Color(0.29, 0.53, 0.78, 1)
-
-[node name="GridV" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-1, -12, 1, -12, 1, 12, -1, 12)
-color = Color(0.29, 0.53, 0.78, 1)
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_solar")

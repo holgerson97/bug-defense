@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/tesla_tower.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/tesla_tower_base.svg" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tesla"]
 size = Vector2(40, 40)
@@ -21,17 +22,9 @@ script = ExtResource("1")
 max_health = 100
 health_bar_offset = Vector2(-22, -36)
 
-[node name="Base" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
-color = Color(0.18, 0.2, 0.26, 1)
-
-[node name="Coil" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(12, 0, 11.09, 4.59, 8.49, 8.49, 4.59, 11.09, 0, 12, -4.59, 11.09, -8.49, 8.49, -11.09, 4.59, -12, 0, -11.09, -4.59, -8.49, -8.49, -4.59, -11.09, 0, -12, 4.59, -11.09, 8.49, -8.49, 11.09, -4.59)
-color = Color(0.78, 0.5, 0.24, 1)
-
-[node name="CoilTop" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(6, 0, 5.54, 2.3, 4.24, 4.24, 2.3, 5.54, 0, 6, -2.3, 5.54, -4.24, 4.24, -5.54, 2.3, -6, 0, -5.54, -2.3, -4.24, -4.24, -2.3, -5.54, 0, -6, 2.3, -5.54, 4.24, -4.24, 5.54, -2.3)
-color = Color(0.92, 0.72, 0.4, 1)
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_tesla")
