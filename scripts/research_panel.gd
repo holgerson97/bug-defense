@@ -9,7 +9,8 @@ const LOCK_ICON := "res://assets/icons/lock.svg"
 
 const TAB_DEFS := [
 	{"title": "Player Stats", "branches": ["Offense", "Pilot"]},
-	{"title": "Buildings", "branches": ["Industry", "Engineering"]},
+	{"title": "Unlocks", "branches": ["Industry"]},
+	{"title": "Building Stats", "branches": ["Engineering"]},
 ]
 
 var _buttons: Dictionary = {}

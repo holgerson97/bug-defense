@@ -97,6 +97,7 @@ text = "0"
 
 [node name="Tabs" type="TabContainer" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
+use_hidden_tabs_for_min_size = true
 theme_override_font_sizes/font_size = 16
 
 [node name="CloseButton" type="Button" parent="Center/Panel/Margin/VBox"]
