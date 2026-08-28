@@ -21,7 +21,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_target = null
 	_fire_accum += delta
-	if _fire_accum >= FIRE_INTERVAL:
+	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
 		_fire_accum = 0.0
 		_target = Util.nearest_in_group(self, "air_enemies", global_position, fire_range)
 		if _target != null:

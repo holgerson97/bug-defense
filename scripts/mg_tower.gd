@@ -21,7 +21,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_target = null
 	_fire_accum += delta
-	if _fire_accum >= FIRE_INTERVAL:
+	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
 		_fire_accum = 0.0
 		_target = Util.nearest_in_group(self, "enemies", global_position, fire_range)
 		if _target != null:
@@ -36,7 +36,11 @@ func _fire() -> void:
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = _muzzle.global_position
 	bullet.rotation = _head.global_rotation
-	bullet.damage = 1 + GameState.tower_damage_bonus()
+	var dmg := 1 + GameState.tower_damage_bonus()
+	if randf() < GameState.tower_crit_chance():
+		dmg = int(ceil(dmg * GameState.tower_crit_mult()))
+		bullet.crit = true
+	bullet.damage = dmg
 	# Tower bullets fly over deposits (mask without 16) — otherwise an ore
 	# block in the firing line eats shots and mints free crystal.
 	bullet.collision_mask = 2 | 64

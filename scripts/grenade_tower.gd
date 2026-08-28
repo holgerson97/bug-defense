@@ -11,7 +11,7 @@ var _fire_accum: float = 0.0
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	_fire_accum += delta
-	if _fire_accum >= FIRE_INTERVAL:
+	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
 		_fire_accum = 0.0
 		_fire()
 

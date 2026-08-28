@@ -23,7 +23,7 @@ func _physics_process(delta: float) -> void:
 	global_position += to_burst / to_burst.length() * step
 
 func _detonate() -> void:
-	var damage := BURST_DAMAGE + GameState.tower_damage_bonus()
+	var damage := GameState.tower_damage_roll(BURST_DAMAGE)
 	for enemy in get_tree().get_nodes_in_group("air_enemies"):
 		if enemy.global_position.distance_to(global_position) <= BURST_RADIUS and enemy.has_method("take_damage"):
 			enemy.take_damage(damage)

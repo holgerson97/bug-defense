@@ -31,10 +31,12 @@ var _ghost_poly
 var _ghost_range_poly
 var _ghost_range_line
 var _ghost_item: String = ""
+var _tooltip
 var _place_shape
 var _place_params
 var _last_wall_cell := Vector2.INF
 var _drag_cells: Dictionary = {}
+var _snap_enabled := true
 
 @onready var _player = get_parent()
 
@@ -56,6 +58,13 @@ func _build_ghost() -> void:
 	_ghost.add_child(_ghost_range_line)
 	_ghost_poly = Polygon2D.new()
 	_ghost.add_child(_ghost_poly)
+	_tooltip = Label.new()
+	_tooltip.position = Vector2(26, 18)
+	_tooltip.z_index = 51
+	_tooltip.add_theme_font_size_override("font_size", 12)
+	_tooltip.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_tooltip.add_theme_constant_override("outline_size", 4)
+	_ghost.add_child(_tooltip)
 	add_child(_ghost)
 	_place_shape = RectangleShape2D.new()
 	_place_params = PhysicsShapeQueryParameters2D.new()
@@ -65,6 +74,8 @@ func _build_ghost() -> void:
 
 ## Handles placement input and the ghost for the currently selected item.
 func tick(selected: String) -> void:
+	if Input.is_action_just_pressed("toggle_grid"):
+		_snap_enabled = not _snap_enabled
 	if selected == "miner" and Input.is_action_just_pressed("shoot"):
 		_try_place_miner()
 	elif BUILDING_SCENES.has(selected):
@@ -92,7 +103,8 @@ func _try_place_miner() -> void:
 
 func _build_position(id: String) -> Vector2:
 	var pos := get_global_mouse_position()
-	if id == "wall":
+	# Walls always tile to the grid; everything else follows the X toggle.
+	if id == "wall" or _snap_enabled:
 		pos = pos.snapped(Vector2(WALL_GRID, WALL_GRID))
 	return pos
 
@@ -156,9 +168,24 @@ func _update_ghost(selected: String) -> void:
 	_ghost_poly.polygon = PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half)
 	])
-	_ghost_poly.color = GHOST_VALID if _placement_valid(selected, pos) else GHOST_INVALID
+	var valid := _placement_valid(selected, pos)
+	_ghost_poly.color = GHOST_VALID if valid else GHOST_INVALID
+	_update_tooltip(selected, pos, valid)
 	_ghost.global_position = pos
 	_ghost.visible = true
+
+func _update_tooltip(id: String, pos: Vector2, valid: bool) -> void:
+	var b: Dictionary = GameState.BUILDINGS[id]
+	var text := "%s  (%s)\nGrid snap: %s  [X]" % [b["name"], Util.cost_text(b["cost"]), "on" if _snap_enabled else "off"]
+	if not valid:
+		if not GameState.can_afford(b["cost"]):
+			text += "\nNot enough resources"
+		elif _player.global_position.distance_to(pos) > BUILD_RANGE:
+			text += "\nToo far away"
+		else:
+			text += "\nBlocked"
+	_tooltip.text = text
+	_tooltip.modulate = Color(1, 1, 1, 1) if valid else Color(1, 0.75, 0.75, 1)
 
 ## RTS-style range preview while placing a tower.
 func _update_range_ring(id: String) -> void:

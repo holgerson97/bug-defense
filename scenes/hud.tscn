@@ -170,6 +170,12 @@ theme_override_font_sizes/font_size = 18
 vertical_alignment = 1
 text = "0"
 
+[node name="Rate" type="Label" parent="TopRow/EnergyPanel/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+vertical_alignment = 1
+text = ""
+
 [node name="ResearchButton" type="Button" parent="."]
 anchors_preset = 1
 anchor_left = 1.0
@@ -255,5 +261,47 @@ theme_override_colors/font_color = Color(0.62, 0.68, 0.78, 1)
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 text = "Press R to restart"
+
+[node name="PausePanel" type="Control" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Center" type="CenterContainer" parent="PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="PausePanel/Center"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PausePanel/Center/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 56
+horizontal_alignment = 1
+text = "PAUSED"
+
+[node name="Hint" type="Label" parent="PausePanel/Center/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.68, 0.78, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+text = "Press P to resume"
 
 [node name="ResearchPanel" parent="." instance=ExtResource("2")]

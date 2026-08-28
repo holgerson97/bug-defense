@@ -33,7 +33,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	_fire_accum += delta
-	if _fire_accum >= FIRE_INTERVAL:
+	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
 		_fire_accum = 0.0
 		_zap()
 
@@ -56,7 +56,7 @@ func _zap() -> void:
 		link = next
 	# Capture positions before dealing damage; a kill frees the victim node.
 	var points: Array = [global_position]
-	var damage := ZAP_DAMAGE + GameState.tower_damage_bonus()
+	var damage := GameState.tower_damage_roll(ZAP_DAMAGE)
 	for victim in victims:
 		points.append(victim.global_position)
 		if victim.has_method("take_damage"):

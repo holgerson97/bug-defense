@@ -17,6 +17,32 @@ static func nearest_in_group(node, group: String, from: Vector2, max_dist: float
 			nearest = member
 	return nearest
 
-## Energy-starved consumers dim blue until their next successful spend.
+## Compact cost string like "120s 40c" from a cost dictionary.
+static func cost_text(cost: Dictionary) -> String:
+	var parts: Array = []
+	for kind in cost:
+		parts.append("%d%s" % [cost[kind], kind.substr(0, 1)])
+	return " ".join(parts)
+
+## Energy-starved consumers dim blue and show a blinking bolt icon until
+## their next successful spend.
 static func apply_power_tint(node, powered: bool) -> void:
 	node.modulate = Color(1, 1, 1, 1) if powered else UNPOWERED_TINT
+	var icon = node.get_node_or_null("NoPowerIcon")
+	if powered:
+		if icon != null:
+			icon.queue_free()
+		return
+	if icon != null:
+		return
+	icon = Sprite2D.new()
+	icon.name = "NoPowerIcon"
+	icon.texture = load("res://assets/icons/energy.svg")
+	icon.scale = Vector2(0.4, 0.4)
+	icon.top_level = true
+	icon.z_index = 60
+	node.add_child(icon)
+	icon.global_position = node.global_position + Vector2(0, -36)
+	var tween = icon.create_tween().set_loops()
+	tween.tween_property(icon, "modulate:a", 0.25, 0.4)
+	tween.tween_property(icon, "modulate:a", 1.0, 0.4)

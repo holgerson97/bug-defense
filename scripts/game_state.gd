@@ -5,6 +5,7 @@ signal xp_changed(xp: int, xp_needed: int, level: int)
 signal resources_changed(resources: Dictionary)
 signal upgrades_changed
 signal hotbar_changed
+signal power_rates_changed(production: float, consumption: float)
 
 const HOTBAR_SIZE := 11
 
@@ -36,6 +37,9 @@ const UPGRADES := {
 	"building_hp_1": {"icon": "res://assets/icons/wall.svg", "name": "Reinforced Structures", "branch": "Engineering", "desc": "+25% building health", "cost": {"scrap": 100}, "requires": ["walls_1"], "effects": {"building_hp_mult": 0.25}},
 	"tower_damage_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 150, "crystal": 50}, "requires": ["mg_tower_1"], "effects": {"tower_damage": 1.0}},
 	"miner_yield_1": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 100, "crystal": 30}, "requires": ["miner_1"], "effects": {"miner_yield": 1.0}},
+	"tower_speed_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Rapid Servos", "branch": "Engineering", "desc": "+15% tower attack speed", "cost": {"scrap": 150, "crystal": 40}, "requires": ["mg_tower_1"], "effects": {"tower_speed": 0.15}},
+	"tower_crit_chance_1": {"icon": "res://assets/icons/crit.svg", "name": "Targeting Optics", "branch": "Engineering", "desc": "+5% tower crit chance", "cost": {"scrap": 200, "crystal": 60}, "requires": ["mg_tower_1"], "effects": {"tower_crit_chance": 0.05}},
+	"tower_crit_damage_1": {"icon": "res://assets/icons/crit.svg", "name": "Overcharged Cells", "branch": "Engineering", "desc": "+50% tower crit damage", "cost": {"scrap": 250, "crystal": 80}, "requires": ["tower_crit_chance_1"], "effects": {"tower_crit_mult": 0.5}},
 	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Industry", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 50}, "requires": [], "effects": {}},
 	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Industry", "desc": "Unlocks the Command Center", "cost": {"scrap": 300, "crystal": 100}, "requires": ["miner_1"], "effects": {}},
 }
@@ -58,6 +62,11 @@ const BUILDINGS := {
 
 var xp: int = 0
 var level: int = 1
+var power_production: float = 0.0
+var power_consumption: float = 0.0
+var _prod_accum: float = 0.0
+var _cons_accum: float = 0.0
+var _rate_timer: float = 0.0
 var resources: Dictionary = {"scrap": 0, "crystal": 0, "energy": 20}
 var purchased: Dictionary = {}
 var hotbar: Array = []
@@ -89,8 +98,22 @@ func add_xp(amount: int) -> void:
 	xp_changed.emit(xp, xp_needed(), level)
 
 func add_resource(kind: String, amount: int) -> void:
+	if kind == "energy" and amount > 0:
+		_prod_accum += amount
 	resources[kind] = resources.get(kind, 0) + amount
 	resources_changed.emit(resources)
+
+## Rolling per-second energy production/consumption, refreshed every 2s
+## for the HUD's demand/capacity readout.
+func _process(delta: float) -> void:
+	_rate_timer += delta
+	if _rate_timer >= 2.0:
+		power_production = _prod_accum / _rate_timer
+		power_consumption = _cons_accum / _rate_timer
+		_prod_accum = 0.0
+		_cons_accum = 0.0
+		_rate_timer = 0.0
+		power_rates_changed.emit(power_production, power_consumption)
 
 ## Per-attack energy drain for towers and miners. Returns false (and spends
 ## nothing) when there isn't enough energy banked.
@@ -98,6 +121,7 @@ func try_spend_energy(amount: int) -> bool:
 	if resources.get("energy", 0) < amount:
 		return false
 	resources["energy"] -= amount
+	_cons_accum += amount
 	resources_changed.emit(resources)
 	return true
 
@@ -218,3 +242,20 @@ func tower_damage_bonus() -> int:
 
 func miner_yield_bonus() -> int:
 	return int(stat("miner_yield"))
+
+## Attack towers fire faster per Rapid Servos level (diminishing returns).
+func tower_interval(base_interval: float) -> float:
+	return base_interval / (1.0 + stat("tower_speed"))
+
+func tower_crit_chance() -> float:
+	return minf(stat("tower_crit_chance"), 0.8)
+
+func tower_crit_mult() -> float:
+	return 1.5 + stat("tower_crit_mult")
+
+## Tower hit: base + flat damage bonus, then a crit roll.
+func tower_damage_roll(base_damage: int) -> int:
+	var dmg := base_damage + tower_damage_bonus()
+	if randf() < tower_crit_chance():
+		dmg = int(ceil(dmg * tower_crit_mult()))
+	return dmg

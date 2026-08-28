@@ -7,6 +7,8 @@ extends CanvasLayer
 @onready var _crystal_label: Label = $TopRow/CrystalPanel/HBox/Value
 @onready var _gold_label: Label = $TopRow/GoldPanel/HBox/Value
 @onready var _energy_label: Label = $TopRow/EnergyPanel/HBox/Value
+@onready var _energy_rate: Label = $TopRow/EnergyPanel/HBox/Rate
+@onready var _pause_panel: Control = $PausePanel
 @onready var _game_over: Control = $GameOver
 @onready var _final_score: Label = $GameOver/Center/Panel/Margin/VBox/FinalScore
 @onready var _research_panel: Control = $ResearchPanel
@@ -21,6 +23,7 @@ func _ready() -> void:
 	_research_button.pressed.connect(toggle_research)
 	GameState.xp_changed.connect(_on_xp_changed)
 	GameState.resources_changed.connect(_on_resources_changed)
+	GameState.power_rates_changed.connect(_on_power_rates_changed)
 
 func update_wave(wave: int) -> void:
 	_wave_label.text = "Wave %d" % wave
@@ -37,14 +40,27 @@ func _on_resources_changed(resources: Dictionary) -> void:
 	_gold_label.text = str(resources.get("gold", 0))
 	_energy_label.text = str(resources.get("energy", 0))
 
+## Energy demand/capacity readout: +production / −consumption per second.
+func _on_power_rates_changed(production: float, consumption: float) -> void:
+	_energy_rate.text = "+%.1f −%.1f" % [production, consumption]
+	_energy_rate.add_theme_color_override("font_color", UITheme.BAD if consumption > production else UITheme.TEXT_DIM)
+
 func toggle_research() -> void:
 	if _game_over.visible:
 		return
+	_pause_panel.visible = false
 	_research_panel.visible = not _research_panel.visible
 	get_tree().paused = _research_panel.visible
 
+func toggle_pause() -> void:
+	if _game_over.visible or _research_panel.visible:
+		return
+	_pause_panel.visible = not _pause_panel.visible
+	get_tree().paused = _pause_panel.visible
+
 func show_game_over(score: int, wave: int) -> void:
 	_research_panel.visible = false
+	_pause_panel.visible = false
 	_final_score.text = "You survived to wave %d — score %d" % [wave, score]
 	_game_over.visible = true
 
@@ -56,5 +72,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("research"):
 		toggle_research()
-	elif event.is_action_pressed("ui_cancel") and _research_panel.visible:
-		toggle_research()
+	elif event.is_action_pressed("pause"):
+		toggle_pause()
+	elif event.is_action_pressed("ui_cancel"):
+		if _research_panel.visible:
+			toggle_research()
+		elif _pause_panel.visible:
+			toggle_pause()

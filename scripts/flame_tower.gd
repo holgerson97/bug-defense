@@ -49,8 +49,8 @@ func _physics_process(delta: float) -> void:
 			return
 	_jet.emitting = true
 	_tick_accum += delta
-	if _tick_accum >= TICK_INTERVAL:
-		_tick_accum -= TICK_INTERVAL
+	if _tick_accum >= GameState.tower_interval(TICK_INTERVAL):
+		_tick_accum = 0.0
 		_burn()
 	_sound_accum += delta
 	if _sound_accum >= SOUND_INTERVAL:
@@ -61,6 +61,8 @@ func _physics_process(delta: float) -> void:
 func _burn() -> void:
 	@warning_ignore("integer_division")
 	var damage := maxi(TICK_DAMAGE + GameState.tower_damage_bonus() / 4, 1)
+	if randf() < GameState.tower_crit_chance():
+		damage = int(ceil(damage * GameState.tower_crit_mult()))
 	var nozzle_dir := Vector2.from_angle(_nozzle.global_rotation)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		var to_enemy: Vector2 = enemy.global_position - global_position

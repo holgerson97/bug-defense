@@ -16,6 +16,7 @@ func _make_slot(index: int) -> Dictionary:
 	panel.custom_minimum_size = SLOT_SIZE
 	panel.pivot_offset = SLOT_SIZE / 2.0
 	panel.add_theme_stylebox_override("panel", UITheme.slot_normal())
+	panel.gui_input.connect(_on_slot_gui_input.bind(index))
 	var inner := Control.new()
 	panel.add_child(inner)
 	# Item icon, centered (nudged up to leave room for the cost line).
@@ -55,11 +56,9 @@ func _get_icon(item: Dictionary) -> Texture2D:
 func _on_resources_changed(_resources: Dictionary) -> void:
 	_refresh()
 
-func _cost_text(cost: Dictionary) -> String:
-	var parts: Array = []
-	for kind in cost:
-		parts.append("%d%s" % [cost[kind], kind.substr(0, 1)])
-	return " ".join(parts)
+func _on_slot_gui_input(event: InputEvent, index: int) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		GameState.select_slot(index)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Mouse wheel cycles through slots, wrapping at both ends.
@@ -91,7 +90,7 @@ func _refresh() -> void:
 		# Cost (buildings only), red when unaffordable.
 		if item != null and GameState.BUILDINGS.has(item["id"]):
 			var cost: Dictionary = GameState.BUILDINGS[item["id"]]["cost"]
-			slot["cost"].text = _cost_text(cost)
+			slot["cost"].text = Util.cost_text(cost)
 			slot["cost"].add_theme_color_override("font_color", UITheme.TEXT_DIM if GameState.can_afford(cost) else UITheme.BAD)
 		else:
 			slot["cost"].text = ""
