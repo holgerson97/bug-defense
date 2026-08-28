@@ -1,12 +1,11 @@
 extends "res://scripts/building.gd"
 ## Power pole: relays grid power. Connected poles (BFS from sources in
-## PowerGrid) extend coverage and draw a sagging cable to their link parent;
+## PowerGrid) extend coverage and draw a straight cable to their link parent;
 ## orphaned poles show the standard starved visual (dim + bolt) and stay inert.
 
 const CABLE_COLOR := Color(0.16, 0.14, 0.12, 0.95)
 const CABLE_CORE_COLOR := Color(0.85, 0.62, 0.3, 0.9)
-const CABLE_SAG := 6.0
-## Cables hang from near the pole top, not the base.
+## Cables run from near the pole top, not the base.
 const CABLE_ANCHOR := Vector2(0.0, -14.0)
 
 ## Spark pulse: travel time along the cable and glow color.
@@ -44,22 +43,18 @@ func _ready() -> void:
 	PowerGrid.register_pole(self)
 
 func _process(delta: float) -> void:
-	if _cable.points.size() < 3:
+	if _cable.points.size() < 2:
 		_spark.visible = false
 		return
 	_spark.visible = true
 	_spark_t = fmod(_spark_t + delta / SPARK_TIME, 1.0)
-	## Quadratic bezier through the sag midpoint, travelling parent -> pole.
-	var t := 1.0 - _spark_t
-	var a := _cable.points[0]
-	var b := _cable.points[1]
-	var c := _cable.points[2]
-	_spark.position = a.lerp(b, t).lerp(b.lerp(c, t), t)
+	## Straight run, travelling parent -> pole.
+	_spark.position = _cable.points[1].lerp(_cable.points[0], _spark_t)
 	## Fade in/out at the ends so loops don't pop.
 	_spark.modulate.a = clampf(minf(_spark_t, 1.0 - _spark_t) * 8.0, 0.0, 1.0)
 
 ## Redraw the cable to the BFS parent (pole, battery, solar, any source) on
-## every grid change; a 3-point line with a dropped midpoint fakes the sag.
+## every grid change: a direct line, anchored near the top at both ends.
 func _refresh_link() -> void:
 	var link = PowerGrid.link_parent(self)
 	if link == null or not is_instance_valid(link):
@@ -68,7 +63,6 @@ func _refresh_link() -> void:
 		set_powered(false)
 		return
 	set_powered(true)
-	var to := to_local(link.global_position)
-	var points := PackedVector2Array([CABLE_ANCHOR, (CABLE_ANCHOR + to) * 0.5 + Vector2(0.0, CABLE_SAG), to])
+	var points := PackedVector2Array([CABLE_ANCHOR, to_local(link.global_position) + CABLE_ANCHOR])
 	_cable.points = points
 	_cable_core.points = points
