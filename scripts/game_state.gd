@@ -7,7 +7,7 @@ signal upgrades_changed
 signal hotbar_changed
 signal power_rates_changed(production: float, consumption: float)
 
-const HOTBAR_SIZE := 11
+const HOTBAR_SIZE := 13
 
 const UPGRADES := {
 	# Player stats: one flat repeatable button per category — each purchase
@@ -35,6 +35,8 @@ const UPGRADES := {
 	"tower_crit_damage_1": {"icon": "res://assets/icons/crit.svg", "name": "Overcharged Cells", "branch": "Engineering", "desc": "+50% tower crit damage", "cost": {"scrap": 250, "crystal": 80}, "requires": ["tower_crit_chance_1"], "effects": {"tower_crit_mult": 0.5}},
 	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Industry", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 50}, "requires": [], "effects": {}},
 	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Industry", "desc": "Unlocks the Command Center", "cost": {"scrap": 300, "crystal": 100}, "requires": ["miner_1"], "effects": {}},
+	"light_pole_1": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "branch": "Industry", "desc": "Unlocks the Light Pole", "cost": {"scrap": 40}, "requires": [], "effects": {}},
+	"searchlight_1": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "branch": "Industry", "desc": "Unlocks the rotating Searchlight", "cost": {"scrap": 150, "crystal": 40}, "requires": ["light_pole_1"], "effects": {}},
 }
 
 # Single source of truth per placeable: per-placement cost, unlocking research,
@@ -51,6 +53,8 @@ const BUILDINGS := {
 	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"scrap": 150, "crystal": 70}, "research": "aa_tower_1", "slot": 8, "range": 550.0},
 	"solar_panel": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "cost": {"scrap": 30}, "research": "solar_1", "slot": 9},
 	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"scrap": 200, "crystal": 80}, "research": "command_center_1", "slot": 10},
+	"light_pole": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "cost": {"scrap": 20}, "research": "light_pole_1", "slot": 11},
+	"searchlight": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "cost": {"scrap": 100, "crystal": 30}, "research": "searchlight_1", "slot": 12},
 }
 
 var xp: int = 0
@@ -73,7 +77,7 @@ func reset() -> void:
 	level = 1
 	resources = {"scrap": 0, "crystal": 0, "energy": 20}
 	purchased = {}
-	hotbar = [{"id": "blaster", "name": "Blaster", "icon": "res://assets/icons/blaster.svg"}, null, null, null, null, null, null, null, null, null, null]
+	hotbar = [{"id": "blaster", "name": "Blaster", "icon": "res://assets/icons/blaster.svg"}, null, null, null, null, null, null, null, null, null, null, null, null]
 	selected_slot = 0
 	xp_changed.emit(xp, xp_needed(), level)
 	resources_changed.emit(resources)

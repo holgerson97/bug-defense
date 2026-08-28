@@ -20,7 +20,7 @@ var _energy_accum: float = 0.0
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
-	var target = Util.nearest_in_group(self, "enemies", global_position, fire_range)
+	var target = Util.nearest_in_group(self, "enemies", global_position, fire_range, [], true)
 	if target == null:
 		_jet.emitting = false
 		_tick_accum = 0.0

@@ -1,14 +1,14 @@
 [gd_scene load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://scripts/command_center.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/sprites/buildings/command_center.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/light_pole.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/light_pole.svg" id="2"]
 [ext_resource type="Script" path="res://scripts/light_source.gd" id="3"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cc"]
-size = Vector2(54, 54)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pole"]
+size = Vector2(22, 22)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_cc_sense"]
-size = Vector2(66, 66)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pole_sense"]
+size = Vector2(34, 34)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0, 0, 0, 0.6)
@@ -16,37 +16,37 @@ bg_color = Color(0, 0, 0, 0.6)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
 bg_color = Color(0.3, 0.9, 0.4, 1)
 
-[node name="CommandCenter" type="StaticBody2D" groups=["buildings"]]
+[node name="LightPole" type="StaticBody2D" groups=["buildings"]]
 collision_layer = 32
 collision_mask = 0
 script = ExtResource("1")
-max_health = 200
-health_bar_offset = Vector2(-27, -44)
+max_health = 30
+health_bar_offset = Vector2(-15, -26)
 
 [node name="Sprite" type="Sprite2D" parent="."]
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("2")
 
+[node name="LightSource" type="PointLight2D" parent="."]
+script = ExtResource("3")
+radius = 300.0
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("RectangleShape2D_cc")
+shape = SubResource("RectangleShape2D_pole")
 
 [node name="Sense" type="Area2D" parent="."]
 collision_layer = 0
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Sense"]
-shape = SubResource("RectangleShape2D_cc_sense")
+shape = SubResource("RectangleShape2D_pole_sense")
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 top_level = true
-offset_right = 54.0
+offset_right = 30.0
 offset_bottom = 5.0
 theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
-max_value = 200.0
-value = 200.0
+max_value = 30.0
+value = 30.0
 show_percentage = false
-
-[node name="LightSource" type="PointLight2D" parent="."]
-script = ExtResource("3")
-radius = 90.0

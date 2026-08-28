@@ -39,7 +39,8 @@ func _physics_process(delta: float) -> void:
 
 func _zap() -> void:
 	var victims: Array = []
-	var first = Util.nearest_in_group(self, "enemies", global_position, fire_range, victims)
+	# The initial arc needs a visible target; chain hops find their own way.
+	var first = Util.nearest_in_group(self, "enemies", global_position, fire_range, victims, true)
 	if first == null:
 		return
 	if not GameState.try_spend_energy(ENERGY_PER_ZAP):
@@ -92,9 +93,9 @@ func _spawn_bolts(points: Array) -> void:
 	var light := PointLight2D.new()
 	light.name = "Light"
 	light.color = Color(0.7, 0.95, 1.0)
-	light.energy = 1.6
+	light.energy = 2.0
 	light.texture = _light_texture
-	light.texture_scale = 2.5
+	light.texture_scale = 2.8
 	fx.add_child(light)
 	scene.add_child(fx)
 

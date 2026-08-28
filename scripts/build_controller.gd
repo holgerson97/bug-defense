@@ -20,8 +20,10 @@ const BUILDING_SCENES := {
 	"aa_tower": preload("res://scenes/aa_tower.tscn"),
 	"solar_panel": preload("res://scenes/solar_panel.tscn"),
 	"command_center": preload("res://scenes/command_center.tscn"),
+	"light_pole": preload("res://scenes/light_pole.tscn"),
+	"searchlight": preload("res://scenes/searchlight.tscn"),
 }
-const BUILDING_FOOTPRINT := {"wall": 30.0, "mg_tower": 38.0, "grenade_tower": 38.0, "repair_tower": 38.0, "tesla_tower": 38.0, "flame_tower": 38.0, "aa_tower": 38.0, "solar_panel": 30.0, "command_center": 54.0}
+const BUILDING_FOOTPRINT := {"wall": 30.0, "mg_tower": 38.0, "grenade_tower": 38.0, "repair_tower": 38.0, "tesla_tower": 38.0, "flame_tower": 38.0, "aa_tower": 38.0, "solar_panel": 30.0, "command_center": 54.0, "light_pole": 20.0, "searchlight": 30.0}
 const GHOST_VALID := Color(0.35, 1.0, 0.45, 0.45)
 const GHOST_INVALID := Color(1.0, 0.3, 0.3, 0.45)
 
@@ -65,7 +67,12 @@ func _build_ghost() -> void:
 	_tooltip.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_tooltip.add_theme_constant_override("outline_size", 4)
 	_ghost.add_child(_tooltip)
-	add_child(_ghost)
+	# The night's CanvasModulate would swallow the ghost; a follow-viewport
+	# CanvasLayer keeps it in world coordinates on an unmodulated canvas.
+	var layer := CanvasLayer.new()
+	layer.follow_viewport_enabled = true
+	add_child(layer)
+	layer.add_child(_ghost)
 	_place_shape = RectangleShape2D.new()
 	_place_params = PhysicsShapeQueryParameters2D.new()
 	_place_params.shape = _place_shape

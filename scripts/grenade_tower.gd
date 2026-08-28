@@ -18,7 +18,7 @@ func _physics_process(delta: float) -> void:
 func _fire() -> void:
 	var candidates: Array = []
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy.global_position.distance_to(global_position) <= fire_range:
+		if enemy.global_position.distance_to(global_position) <= fire_range and Util.is_lit(self, enemy.global_position):
 			candidates.append(enemy)
 	if candidates.is_empty():
 		return

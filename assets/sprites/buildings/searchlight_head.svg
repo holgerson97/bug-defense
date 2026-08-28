@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="56" viewBox="0 0 48 28">
+  <!-- Searchlight head, pivot at (24,14), lens pointing +x -->
+  <!-- yoke arm -->
+  <rect x="14" y="4" width="5" height="20" rx="1.5" fill="#3d4b5b" stroke="#2c3540" stroke-width="1.2"/>
+  <!-- drum body -->
+  <rect x="10" y="6.5" width="22" height="15" rx="3" fill="#8ca6bf" stroke="#2c3540" stroke-width="1.8"/>
+  <rect x="13" y="8.5" width="14" height="4" rx="2" fill="#a9bfd2"/>
+  <!-- cooling ribs -->
+  <line x1="16" y1="7.2" x2="16" y2="20.8" stroke="#5c7186" stroke-width="1"/>
+  <line x1="20" y1="7.2" x2="20" y2="20.8" stroke="#5c7186" stroke-width="1"/>
+  <line x1="24" y1="7.2" x2="24" y2="20.8" stroke="#5c7186" stroke-width="1"/>
+  <!-- lens rim -->
+  <rect x="31" y="5" width="6" height="18" rx="2" fill="#2c3540"/>
+  <!-- lens -->
+  <rect x="34" y="6.5" width="5" height="15" rx="2" fill="#ffe9a8" stroke="#c9a23c" stroke-width="1"/>
+  <!-- glow spill -->
+  <path d="M 39 8 L 46 10.5 L 46 17.5 L 39 20 Z" fill="#ffdf8a" opacity="0.5"/>
+</svg>

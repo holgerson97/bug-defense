@@ -21,7 +21,7 @@ script = ExtResource("1")
 color = Color(1, 0.78, 0.4, 1)
 energy = 1.8
 texture = SubResource("GradientTexture2D_light")
-texture_scale = 1.4
+texture_scale = 1.7
 
 [node name="Flash" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(14, 0, 4, 3, 0, 8, -2, 2, -6, 0, -2, -2, 0, -8, 4, -3)

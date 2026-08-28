@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 30 30">
+  <!-- Searchlight base: armored pad with swivel ring, 30px footprint -->
+  <rect x="1" y="1" width="28" height="28" rx="4" fill="#596b80" stroke="#2c3540" stroke-width="1.8"/>
+  <rect x="4.5" y="4.5" width="21" height="21" rx="2.5" fill="#4a5a6c" stroke="#2c3540" stroke-width="1.4"/>
+  <!-- swivel ring -->
+  <circle cx="15" cy="15" r="8.5" fill="#3d4b5b" stroke="#2c3540" stroke-width="1.6"/>
+  <circle cx="15" cy="15" r="6" fill="#333f4d"/>
+  <!-- ring bolts -->
+  <circle cx="15" cy="7.9" r="0.9" fill="#8ca6bf"/>
+  <circle cx="22.1" cy="15" r="0.9" fill="#8ca6bf"/>
+  <circle cx="15" cy="22.1" r="0.9" fill="#8ca6bf"/>
+  <circle cx="7.9" cy="15" r="0.9" fill="#8ca6bf"/>
+  <!-- corner bolts -->
+  <circle cx="3.6" cy="3.6" r="1.1" fill="#8ca6bf"/>
+  <circle cx="26.4" cy="3.6" r="1.1" fill="#8ca6bf"/>
+  <circle cx="3.6" cy="26.4" r="1.1" fill="#8ca6bf"/>
+  <circle cx="26.4" cy="26.4" r="1.1" fill="#8ca6bf"/>
+  <!-- top edge highlight -->
+  <path d="M 5 3.2 L 25 3.2" stroke="#8ca6bf" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+</svg>

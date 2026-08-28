@@ -23,7 +23,7 @@ func _physics_process(delta: float) -> void:
 	_fire_accum += delta
 	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
 		_fire_accum = 0.0
-		_target = Util.nearest_in_group(self, "enemies", global_position, fire_range)
+		_target = Util.nearest_in_group(self, "enemies", global_position, fire_range, [], true)
 		if _target != null:
 			if GameState.try_spend_energy(ENERGY_PER_SHOT):
 				set_powered(true)

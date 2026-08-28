@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+  <!-- Light pole, top-down: round base plate, lamp head, warm glow halo. 20px footprint -->
+  <circle cx="12" cy="12" r="11.2" fill="#ffdf8a" opacity="0.16"/>
+  <circle cx="12" cy="12" r="8.6" fill="#ffdf8a" opacity="0.22"/>
+  <!-- base plate -->
+  <circle cx="12" cy="12" r="6.6" fill="#5a6572" stroke="#2c3540" stroke-width="1.4"/>
+  <!-- base bolts -->
+  <circle cx="12" cy="6.9" r="0.8" fill="#8ca6bf"/>
+  <circle cx="17.1" cy="12" r="0.8" fill="#8ca6bf"/>
+  <circle cx="12" cy="17.1" r="0.8" fill="#8ca6bf"/>
+  <circle cx="6.9" cy="12" r="0.8" fill="#8ca6bf"/>
+  <!-- lamp housing -->
+  <circle cx="12" cy="12" r="4.4" fill="#3d4b5b" stroke="#2c3540" stroke-width="1.2"/>
+  <!-- glass -->
+  <circle cx="12" cy="12" r="3.1" fill="#ffe9a8" stroke="#c9a23c" stroke-width="0.9"/>
+  <circle cx="12.8" cy="11.2" r="1.1" fill="#fff7dd"/>
+</svg>

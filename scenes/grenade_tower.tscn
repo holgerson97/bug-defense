@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/grenade_tower.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/grenade_tower_base.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/light_source.gd" id="3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_gren"]
 size = Vector2(40, 40)
@@ -45,3 +46,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 120.0
 value = 120.0
 show_percentage = false
+
+[node name="LightSource" type="PointLight2D" parent="."]
+script = ExtResource("3")
+radius = 90.0

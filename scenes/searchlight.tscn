@@ -1,0 +1,86 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/searchlight.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/searchlight_base.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/searchlight_head.svg" id="3"]
+[ext_resource type="Script" path="res://scripts/light_source.gd" id="4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sl"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sl_sense"]
+size = Vector2(44, 44)
+
+[sub_resource type="Gradient" id="Gradient_beam"]
+offsets = PackedFloat32Array(0, 0.4, 1)
+colors = PackedColorArray(1, 0.96, 0.85, 1, 1, 0.93, 0.72, 0.55, 1, 0.9, 0.65, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_beam"]
+gradient = SubResource("Gradient_beam")
+width = 512
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_beam"]
+blend_mode = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.3, 0.9, 0.4, 1)
+
+[node name="Searchlight" type="StaticBody2D" groups=["buildings"]]
+collision_layer = 32
+collision_mask = 0
+script = ExtResource("1")
+max_health = 80
+health_bar_offset = Vector2(-18, -32)
+
+[node name="Base" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2")
+
+[node name="Head" type="Node2D" parent="."]
+
+[node name="Sprite" type="Sprite2D" parent="Head"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3")
+
+[node name="BeamPoly" type="Polygon2D" parent="Head"]
+material = SubResource("CanvasItemMaterial_beam")
+polygon = PackedVector2Array(10, 0, 480, -129, 500, 0, 480, 129)
+color = Color(1, 0.95, 0.78, 0.35)
+
+[node name="BeamLight" type="PointLight2D" parent="Head"]
+position = Vector2(260, 0)
+color = Color(1, 0.94, 0.8, 1)
+energy = 1.5
+texture = SubResource("GradientTexture2D_beam")
+texture_scale = 1.2
+
+[node name="LightSource" type="PointLight2D" parent="."]
+script = ExtResource("4")
+radius = 90.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_sl")
+
+[node name="Sense" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sense"]
+shape = SubResource("RectangleShape2D_sl_sense")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+top_level = true
+offset_right = 36.0
+offset_bottom = 5.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 80.0
+value = 80.0
+show_percentage = false
