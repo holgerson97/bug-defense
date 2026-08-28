@@ -34,7 +34,7 @@ var _ghost_item: String = ""
 var _tooltip
 var _place_shape
 var _place_params
-var _last_wall_cell := Vector2.INF
+var _drag_origin := Vector2.INF
 var _drag_cells: Dictionary = {}
 var _snap_enabled := true
 
@@ -78,13 +78,10 @@ func tick(selected: String) -> void:
 		_snap_enabled = not _snap_enabled
 	if selected == "miner" and Input.is_action_just_pressed("shoot"):
 		_try_place_miner()
-	elif BUILDING_SCENES.has(selected):
-		if selected == "wall" and Input.is_action_pressed("shoot"):
-			_drag_place_walls()
-		elif Input.is_action_just_pressed("shoot"):
-			_try_place_building(selected)
+	elif BUILDING_SCENES.has(selected) and Input.is_action_pressed("shoot"):
+		_drag_place(selected)
 	if not Input.is_action_pressed("shoot"):
-		_last_wall_cell = Vector2.INF
+		_drag_origin = Vector2.INF
 		_drag_cells.clear()
 	_update_ghost(selected)
 
@@ -119,9 +116,6 @@ func _placement_valid(id: String, pos: Vector2) -> bool:
 	var hits: Array = get_world_2d().direct_space_state.intersect_shape(_place_params, 1)
 	return hits.is_empty()
 
-func _try_place_building(id: String) -> bool:
-	return _try_place_building_at(id, _build_position(id))
-
 func _try_place_building_at(id: String, pos: Vector2) -> bool:
 	if not _placement_valid(id, pos):
 		return false
@@ -133,25 +127,33 @@ func _try_place_building_at(id: String, pos: Vector2) -> bool:
 	Sfx.play("place", pos)
 	return true
 
-## Hold-and-drag wall painting: fills every grid cell along the drag path.
-func _drag_place_walls() -> void:
-	var grid := Vector2(WALL_GRID, WALL_GRID)
-	var target := _build_position("wall")
-	if _last_wall_cell == Vector2.INF:
-		if _try_wall_cell(target):
-			_last_wall_cell = target
+## Hold-and-drag: the first click places at the cursor; dragging then fills a
+## straight row locked to the dominant axis (X or Y) from that origin. Bigger
+## buildings space themselves out naturally — intermediate cells that overlap
+## an already-placed one simply fail the placement check.
+func _drag_place(id: String) -> void:
+	var target := _build_position(id)
+	if _drag_origin == Vector2.INF:
+		if _try_drag_cell(id, target):
+			_drag_origin = target
 		return
-	var dist := _last_wall_cell.distance_to(target)
-	var samples := maxi(int(dist / (WALL_GRID * 0.5)), 1)
-	for i in samples:
-		var cell := _last_wall_cell.lerp(target, float(i + 1) / samples).snapped(grid)
-		if _try_wall_cell(cell):
-			_last_wall_cell = cell
+	var delta := get_global_mouse_position() - _drag_origin
+	var locked := _drag_origin
+	if absf(delta.x) >= absf(delta.y):
+		locked.x = target.x
+	else:
+		locked.y = target.y
+	var dist := _drag_origin.distance_to(locked)
+	if dist < WALL_GRID * 0.5:
+		return
+	var dir := (locked - _drag_origin) / dist
+	for i in int(dist / WALL_GRID) + 1:
+		_try_drag_cell(id, _drag_origin + dir * WALL_GRID * i)
 
-func _try_wall_cell(cell: Vector2) -> bool:
+func _try_drag_cell(id: String, cell: Vector2) -> bool:
 	if _drag_cells.has(cell):
 		return false
-	if not _try_place_building_at("wall", cell):
+	if not _try_place_building_at(id, cell):
 		return false
 	_drag_cells[cell] = true
 	return true

@@ -10,6 +10,7 @@ signal died
 const RECOIL_KICK := 5.0
 const RECOIL_MAX := 14.0
 const RECOIL_RECOVER := 14.0
+const AUTO_ATTACK_RANGE := 700.0
 
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 var health: int
@@ -44,9 +45,16 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = input_dir * GameState.player_speed(base_speed)
 	move_and_slide()
-	var mouse := get_global_mouse_position()
-	if global_position.distance_squared_to(mouse) > 16.0:
-		look_at(mouse)
+	# Space auto-attacks the closest enemy, overriding mouse aim.
+	var auto_target = null
+	if Input.is_action_pressed("auto_attack"):
+		auto_target = Util.nearest_in_group(self, "enemies", global_position, AUTO_ATTACK_RANGE)
+	if auto_target != null:
+		look_at(auto_target.global_position)
+	else:
+		var mouse := get_global_mouse_position()
+		if global_position.distance_squared_to(mouse) > 16.0:
+			look_at(mouse)
 
 	var regen := GameState.player_regen()
 	if regen > 0.0 and health < _max_health:
@@ -59,7 +67,9 @@ func _physics_process(delta: float) -> void:
 
 	_fire_cooldown -= delta
 	var selected := GameState.selected_item_id()
-	if selected == "blaster" and Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
+	# Auto-attack fires the blaster regardless of the selected hotbar slot.
+	var firing := auto_target != null or (selected == "blaster" and Input.is_action_pressed("shoot"))
+	if firing and _fire_cooldown <= 0.0:
 		_shoot()
 		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate)
 	_build.tick(selected)

@@ -2,7 +2,7 @@ extends "res://scripts/building.gd"
 ## Solar panel: cheap, fragile generator trickling energy into the shared pool.
 
 const PRODUCE_INTERVAL := 2.0
-const PRODUCE_AMOUNT := 1
+const PRODUCE_AMOUNT := 4
 
 var _produce_accum: float = 0.0
 
