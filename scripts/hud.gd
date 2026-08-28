@@ -5,6 +5,7 @@ extends CanvasLayer
 @onready var _xp_label: Label = $TopRow/XPPanel/HBox/Value
 @onready var _scrap_label: Label = $TopRow/ScrapPanel/HBox/Value
 @onready var _crystal_label: Label = $TopRow/CrystalPanel/HBox/Value
+@onready var _gold_label: Label = $TopRow/GoldPanel/HBox/Value
 @onready var _game_over: Control = $GameOver
 @onready var _final_score: Label = $GameOver/Center/Panel/Margin/VBox/FinalScore
 @onready var _research_panel: Control = $ResearchPanel
@@ -32,6 +33,7 @@ func _on_xp_changed(xp: int, xp_needed: int, level: int) -> void:
 func _on_resources_changed(resources: Dictionary) -> void:
 	_scrap_label.text = str(resources.get("scrap", 0))
 	_crystal_label.text = str(resources.get("crystal", 0))
+	_gold_label.text = str(resources.get("gold", 0))
 
 func toggle_research() -> void:
 	if _game_over.visible:
