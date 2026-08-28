@@ -14,10 +14,16 @@ const Effects = preload("res://scripts/effects.gd")
 @export var scrap_value: int = 6
 @export var crystal_value: int = 0
 
+## Enemies stuck off-screen this long teleport back to the view edge,
+## so stragglers can never stall a wave.
+const OFFSCREEN_RELOCATE_TIME := 5.0
+const OFFSCREEN_MARGIN := 100.0
+
 var health: int
 var _attack_cooldown: float = 0.0
 var _target
 var _dead: bool = false
+var _offscreen_time: float = 0.0
 
 func _ready() -> void:
 	health = max_health
@@ -26,7 +32,20 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if _target == null or not is_instance_valid(_target):
 		return
+	_track_offscreen(delta)
 	_behave(delta)
+
+func _track_offscreen(delta: float) -> void:
+	var view_rect: Rect2 = get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()
+	if view_rect.grow(OFFSCREEN_MARGIN).has_point(global_position):
+		_offscreen_time = 0.0
+		return
+	_offscreen_time += delta
+	if _offscreen_time >= OFFSCREEN_RELOCATE_TIME:
+		_offscreen_time = 0.0
+		# Drop back in just outside a random edge of the current view.
+		var radius := view_rect.size.length() / 2.0 + 60.0
+		global_position = view_rect.get_center() + Vector2.from_angle(randf() * TAU) * radius
 
 ## Default behavior: chase the player, melee-attack in range. Variants override.
 func _behave(delta) -> void:
