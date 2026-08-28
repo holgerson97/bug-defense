@@ -5,7 +5,6 @@ extends "res://scripts/building.gd"
 const ONE_SHOT_EFFECT = preload("res://scripts/effects/one_shot_effect.gd")
 
 const FIRE_INTERVAL := 1.1
-const FIRE_RANGE := 300.0
 const ENERGY_PER_ZAP := 2
 const CHAIN_RANGE := 130.0
 const MAX_CHAINS := 3
@@ -16,6 +15,7 @@ const BOLT_JITTER := 7.0
 const BOLT_COLOR := Color(0.75, 0.95, 1.0, 0.9)
 const BOLT_CORE_COLOR := Color(0.95, 1.0, 1.0, 0.95)
 
+var fire_range: float = GameState.BUILDINGS["tesla_tower"]["range"]
 var _fire_accum: float = 0.0
 var _light_texture
 
@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 
 func _zap() -> void:
 	var victims: Array = []
-	var first = _nearest_enemy(global_position, FIRE_RANGE, victims)
+	var first = Util.nearest_in_group(self, "enemies", global_position, fire_range, victims)
 	if first == null:
 		return
 	if not GameState.try_spend_energy(ENERGY_PER_ZAP):
@@ -49,7 +49,7 @@ func _zap() -> void:
 	victims.append(first)
 	var link = first
 	for i in MAX_CHAINS:
-		var next = _nearest_enemy(link.global_position, CHAIN_RANGE, victims)
+		var next = Util.nearest_in_group(self, "enemies", link.global_position, CHAIN_RANGE, victims)
 		if next == null:
 			break
 		victims.append(next)
@@ -64,18 +64,6 @@ func _zap() -> void:
 		damage = maxi(int(ceil(damage / 2.0)), 1)
 	_spawn_bolts(points)
 	Sfx.play("zap", global_position, -8.0)
-
-func _nearest_enemy(from: Vector2, radius: float, exclude: Array):
-	var nearest = null
-	var best := radius
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy in exclude:
-			continue
-		var dist: float = enemy.global_position.distance_to(from)
-		if dist <= best:
-			best = dist
-			nearest = enemy
-	return nearest
 
 ## One self-freeing effect node holding every chain segment plus a coil flash.
 func _spawn_bolts(points: Array) -> void:

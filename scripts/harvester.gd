@@ -3,7 +3,6 @@ extends CharacterBody2D
 ## gold block, mines for a moment, hauls the cargo home and repeats. Ignores
 ## all collision (layer/mask 0) and dies with its command center.
 
-const Effects = preload("res://scripts/effects.gd")
 
 enum State { TO_MINE, MINING, TO_BASE }
 
@@ -48,7 +47,7 @@ func _to_mine(delta: float) -> void:
 		_rescan_accum += delta
 		if _rescan_accum >= RESCAN_INTERVAL:
 			_rescan_accum = 0.0
-			_target_deposit = _nearest_deposit()
+			_target_deposit = Util.nearest_in_group(self, "gold_deposits", command_center.global_position, SEARCH_RANGE)
 	if _target_deposit == null:
 		_idle_orbit(delta)
 		return
@@ -97,13 +96,3 @@ func _drive_toward(point: Vector2) -> void:
 	velocity = (point - global_position).normalized() * SPEED
 	rotation = velocity.angle()
 	move_and_slide()
-
-func _nearest_deposit():
-	var nearest = null
-	var best := SEARCH_RANGE
-	for deposit in get_tree().get_nodes_in_group("gold_deposits"):
-		var dist: float = deposit.global_position.distance_to(command_center.global_position)
-		if dist <= best:
-			best = dist
-			nearest = deposit
-	return nearest

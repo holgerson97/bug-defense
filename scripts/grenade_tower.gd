@@ -2,10 +2,10 @@ extends "res://scripts/building.gd"
 ## Grenade tower: lobs a grenade at a random enemy in range every few seconds.
 
 const FIRE_INTERVAL := 2.5
-const FIRE_RANGE := 450.0
 const ENERGY_PER_LOB := 2
 
 var grenade_scene: PackedScene = preload("res://scenes/grenade.tscn")
+var fire_range: float = GameState.BUILDINGS["grenade_tower"]["range"]
 var _fire_accum: float = 0.0
 
 func _physics_process(delta: float) -> void:
@@ -18,7 +18,7 @@ func _physics_process(delta: float) -> void:
 func _fire() -> void:
 	var candidates: Array = []
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy.global_position.distance_to(global_position) <= FIRE_RANGE:
+		if enemy.global_position.distance_to(global_position) <= fire_range:
 			candidates.append(enemy)
 	if candidates.is_empty():
 		return

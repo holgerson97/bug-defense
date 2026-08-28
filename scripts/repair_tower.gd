@@ -5,9 +5,9 @@ extends "res://scripts/building.gd"
 const HEAL_INTERVAL := 1.0
 const HEAL_AMOUNT := 3
 const ENERGY_PER_PULSE := 1
-const HEAL_RANGE := 250.0
 const BEAM_TIME := 0.4
 
+var heal_range: float = GameState.BUILDINGS["repair_tower"]["range"]
 var _heal_accum: float = 0.0
 var _beam_timer: float = 0.0
 
@@ -36,7 +36,7 @@ func _pick_target():
 	var best = null
 	var best_missing := 0
 	for building in get_tree().get_nodes_in_group("buildings"):
-		if building.global_position.distance_to(global_position) > HEAL_RANGE:
+		if building.global_position.distance_to(global_position) > heal_range:
 			continue
 		var missing: int = building.max_health - building.health
 		if missing > best_missing:
@@ -46,7 +46,7 @@ func _pick_target():
 		return best
 	var player = get_tree().get_first_node_in_group("player")
 	if player != null and is_instance_valid(player):
-		if player.global_position.distance_to(global_position) <= HEAL_RANGE and player.health < player.max_health():
+		if player.global_position.distance_to(global_position) <= heal_range and player.health < player.max_health():
 			return player
 	return null
 

@@ -5,7 +5,6 @@ const EXTRACT_INTERVAL := 2.0
 const EXTRACT_AMOUNT := 2
 const SIDE_OFFSET := 44.0
 const ENERGY_PER_CYCLE := 1
-const UNPOWERED_TINT := Color(0.6, 0.7, 1.0, 0.85)
 
 var deposit
 
@@ -30,8 +29,6 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if deposit == null or not is_instance_valid(deposit):
 		return
-	if deposit.crystal <= 0:
-		return
 	_accum += delta
 	while _accum >= EXTRACT_INTERVAL:
 		_accum -= EXTRACT_INTERVAL
@@ -48,4 +45,4 @@ func _set_powered(p: bool) -> void:
 	if p == _powered:
 		return
 	_powered = p
-	modulate = Color(1, 1, 1, 1) if p else UNPOWERED_TINT
+	Util.apply_power_tint(self, p)

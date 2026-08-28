@@ -40,17 +40,20 @@ const UPGRADES := {
 	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Industry", "desc": "Unlocks the Command Center", "cost": {"scrap": 300, "crystal": 100}, "requires": ["miner_1"], "effects": {}},
 }
 
-# Per-placement costs, paid directly when the building is placed.
+# Single source of truth per placeable: per-placement cost, unlocking research,
+# hotbar slot, and (for towers) attack range read by both the tower script and
+# the placement ghost's range ring.
 const BUILDINGS := {
-	"wall": {"icon": "res://assets/icons/wall.svg", "name": "Wall", "cost": {"scrap": 15}, "research": "walls_1"},
-	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"scrap": 120, "crystal": 40}, "research": "mg_tower_1"},
-	"grenade_tower": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "cost": {"scrap": 160, "crystal": 60}, "research": "grenade_tower_1"},
-	"repair_tower": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Tower", "cost": {"scrap": 120, "crystal": 50}, "research": "repair_tower_1"},
-	"tesla_tower": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "cost": {"scrap": 140, "crystal": 60}, "research": "tesla_tower_1"},
-	"flame_tower": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "cost": {"scrap": 130, "crystal": 50}, "research": "flame_tower_1"},
-	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"scrap": 150, "crystal": 70}, "research": "aa_tower_1"},
-	"solar_panel": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "cost": {"scrap": 30}, "research": "solar_1"},
-	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"scrap": 200, "crystal": 80}, "research": "command_center_1"},
+	"miner": {"icon": "res://assets/icons/miner.svg", "name": "Miner", "cost": {"scrap": 40}, "research": "miner_1", "slot": 1},
+	"wall": {"icon": "res://assets/icons/wall.svg", "name": "Wall", "cost": {"scrap": 15}, "research": "walls_1", "slot": 2},
+	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"scrap": 120, "crystal": 40}, "research": "mg_tower_1", "slot": 3, "range": 350.0},
+	"grenade_tower": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "cost": {"scrap": 160, "crystal": 60}, "research": "grenade_tower_1", "slot": 4, "range": 450.0},
+	"repair_tower": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Tower", "cost": {"scrap": 120, "crystal": 50}, "research": "repair_tower_1", "slot": 5, "range": 250.0},
+	"tesla_tower": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "cost": {"scrap": 140, "crystal": 60}, "research": "tesla_tower_1", "slot": 6, "range": 300.0},
+	"flame_tower": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "cost": {"scrap": 130, "crystal": 50}, "research": "flame_tower_1", "slot": 7, "range": 170.0},
+	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"scrap": 150, "crystal": 70}, "research": "aa_tower_1", "slot": 8, "range": 550.0},
+	"solar_panel": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "cost": {"scrap": 30}, "research": "solar_1", "slot": 9},
+	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"scrap": 200, "crystal": 80}, "research": "command_center_1", "slot": 10},
 }
 
 var xp: int = 0
@@ -166,27 +169,11 @@ func purchase(id: String) -> bool:
 		return false
 	spend(upgrade_cost(id))
 	purchased[id] = upgrade_level(id) + 1
-	match id:
-		"miner_1":
-			set_hotbar_item(1, {"id": "miner", "name": "Miner", "icon": "res://assets/icons/miner.svg"})
-		"walls_1":
-			set_hotbar_item(2, {"id": "wall", "name": "Wall", "icon": "res://assets/icons/wall.svg"})
-		"mg_tower_1":
-			set_hotbar_item(3, {"id": "mg_tower", "name": "MG Tower", "icon": "res://assets/icons/mg_tower.svg"})
-		"grenade_tower_1":
-			set_hotbar_item(4, {"id": "grenade_tower", "name": "Grenade Tower", "icon": "res://assets/icons/grenade_tower.svg"})
-		"repair_tower_1":
-			set_hotbar_item(5, {"id": "repair_tower", "name": "Repair Tower", "icon": "res://assets/icons/repair_tower.svg"})
-		"tesla_tower_1":
-			set_hotbar_item(6, {"id": "tesla_tower", "name": "Tesla Tower", "icon": "res://assets/icons/tesla_tower.svg"})
-		"flame_tower_1":
-			set_hotbar_item(7, {"id": "flame_tower", "name": "Flamethrower Tower", "icon": "res://assets/icons/flame_tower.svg"})
-		"aa_tower_1":
-			set_hotbar_item(8, {"id": "aa_tower", "name": "AA Flak Cannon", "icon": "res://assets/icons/aa_tower.svg"})
-		"solar_1":
-			set_hotbar_item(9, {"id": "solar_panel", "name": "Solar Panel", "icon": "res://assets/icons/solar_panel.svg"})
-		"command_center_1":
-			set_hotbar_item(10, {"id": "command_center", "name": "Command Center", "icon": "res://assets/icons/command_center.svg"})
+	# Building unlocks put their item into the hotbar slot from the table.
+	for b_id in BUILDINGS:
+		var b: Dictionary = BUILDINGS[b_id]
+		if b["research"] == id:
+			set_hotbar_item(b["slot"], {"id": b_id, "name": b["name"], "icon": b["icon"]})
 	upgrades_changed.emit()
 	return true
 

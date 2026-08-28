@@ -2,7 +2,6 @@ extends Node2D
 ## Lobbed grenade: travels to a target point over FLIGHT_TIME (fake arc via
 ## scaling) and explodes, damaging all enemies in a radius.
 
-const Effects = preload("res://scripts/effects.gd")
 
 const FLIGHT_TIME := 0.6
 const BLAST_RADIUS := 90.0

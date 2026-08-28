@@ -1,14 +1,11 @@
 extends CharacterBody2D
 
 signal died
-signal health_changed(current: int, total: int)
 
 @export var base_speed: float = 320.0
 @export var base_fire_rate: float = 0.15
 
-const Effects = preload("res://scripts/effects.gd")
 
-const MINER_COST := {"scrap": 40}
 const MINER_PLACE_RANGE := 80.0
 const RECOIL_KICK := 5.0
 const RECOIL_MAX := 14.0
@@ -31,9 +28,7 @@ const BUILDING_SCENES := {
 	"command_center": preload("res://scenes/command_center.tscn"),
 }
 const BUILDING_FOOTPRINT := {"wall": 30.0, "mg_tower": 38.0, "grenade_tower": 38.0, "repair_tower": 38.0, "tesla_tower": 38.0, "flame_tower": 38.0, "aa_tower": 38.0, "solar_panel": 30.0, "command_center": 54.0}
-const GHOST_SIZE := {"wall": 32.0, "mg_tower": 40.0, "grenade_tower": 40.0, "repair_tower": 40.0, "tesla_tower": 40.0, "flame_tower": 40.0, "aa_tower": 40.0, "solar_panel": 32.0, "command_center": 56.0}
-# Must match the range each tower script actually uses.
-const TOWER_RANGE := {"mg_tower": 350.0, "grenade_tower": 450.0, "repair_tower": 250.0, "tesla_tower": 300.0, "flame_tower": 170.0, "aa_tower": 550.0}
+const GHOST_MARGIN := 1.0
 const GHOST_VALID := Color(0.35, 1.0, 0.45, 0.45)
 const GHOST_INVALID := Color(1.0, 0.3, 0.3, 0.45)
 
@@ -134,16 +129,10 @@ func _physics_process(delta: float) -> void:
 
 func _try_place_miner() -> void:
 	var mouse := get_global_mouse_position()
-	var target = null
-	var best_dist := MINER_PLACE_RANGE
-	for deposit in get_tree().get_nodes_in_group("deposits"):
-		var dist: float = deposit.global_position.distance_to(mouse)
-		if dist <= best_dist:
-			best_dist = dist
-			target = deposit
-	if target == null or target.crystal <= 0 or target.has_miner:
+	var target = Util.nearest_in_group(self, "deposits", mouse, MINER_PLACE_RANGE)
+	if target == null or target.has_miner:
 		return
-	if not GameState.spend(MINER_COST):
+	if not GameState.spend(GameState.BUILDINGS["miner"]["cost"]):
 		return
 	var miner = miner_scene.instantiate()
 	miner.deposit = target
@@ -213,7 +202,7 @@ func _update_ghost(selected: String) -> void:
 		_ghost_item = selected
 		_update_range_ring(selected)
 	var pos := _build_position(selected)
-	var half: float = GHOST_SIZE[selected] / 2.0
+	var half: float = BUILDING_FOOTPRINT[selected] / 2.0 + GHOST_MARGIN
 	_ghost_poly.polygon = PackedVector2Array([
 		Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half)
 	])
@@ -223,11 +212,11 @@ func _update_ghost(selected: String) -> void:
 
 ## RTS-style range preview while placing a tower.
 func _update_range_ring(id: String) -> void:
-	if not TOWER_RANGE.has(id):
+	var radius: float = GameState.BUILDINGS[id].get("range", 0.0)
+	if radius <= 0.0:
 		_ghost_range_poly.polygon = PackedVector2Array()
 		_ghost_range_line.points = PackedVector2Array()
 		return
-	var radius: float = TOWER_RANGE[id]
 	var points := PackedVector2Array()
 	for i in 48:
 		points.append(Vector2.from_angle(TAU * i / 48.0) * radius)
@@ -254,7 +243,6 @@ func take_damage(amount: int) -> void:
 	Sfx.play("player_hurt", global_position, -3.0)
 	health = maxi(health - amount, 0)
 	_update_health_bar()
-	health_changed.emit(health, _max_health)
 	if health == 0:
 		_dead = true
 		died.emit()
@@ -264,7 +252,6 @@ func heal(amount: int) -> void:
 		return
 	health = mini(health + amount, _max_health)
 	_update_health_bar()
-	health_changed.emit(health, _max_health)
 
 func max_health() -> int:
 	return _max_health

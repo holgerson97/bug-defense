@@ -16,7 +16,7 @@ func _behave(delta) -> void:
 	if to_player.length() < KEEP_DISTANCE:
 		move = -to_player.normalized()
 	else:
-		var ally = _nearest_ally()
+		var ally = Util.nearest_in_group(self, "enemies", global_position, INF, [self])
 		if ally != null:
 			var to_ally: Vector2 = ally.global_position - global_position
 			if to_ally.length() > 40.0:
@@ -29,18 +29,6 @@ func _behave(delta) -> void:
 	if _heal_timer >= HEAL_INTERVAL:
 		_heal_timer = 0.0
 		_heal_pulse()
-
-func _nearest_ally():
-	var best = null
-	var best_dist := INF
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if e == self or not is_instance_valid(e):
-			continue
-		var dist: float = e.global_position.distance_to(global_position)
-		if dist < best_dist:
-			best_dist = dist
-			best = e
-	return best
 
 func _heal_pulse() -> void:
 	for e in get_tree().get_nodes_in_group("enemies"):

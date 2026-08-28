@@ -1,6 +1,5 @@
 extends Area2D
 
-const Effects = preload("res://scripts/effects.gd")
 
 const TRAIL_LENGTH := 8
 

@@ -2,10 +2,8 @@ extends StaticBody2D
 ## Shared base for placeable buildings: health bar, enemy gnaw damage,
 ## healing, and a debris burst on destruction. Towers extend this script.
 
-const Effects = preload("res://scripts/effects.gd")
 
 const GNAW_DPS := 4.0
-const UNPOWERED_TINT := Color(0.6, 0.7, 1.0, 0.85)
 
 @export var max_health: int = 60
 @export var health_bar_offset: Vector2 = Vector2(-18, -30)
@@ -42,7 +40,7 @@ func set_powered(p: bool) -> void:
 	if p == _powered:
 		return
 	_powered = p
-	modulate = Color(1, 1, 1, 1) if p else UNPOWERED_TINT
+	Util.apply_power_tint(self, p)
 
 func take_damage(amount: int) -> void:
 	if _destroyed:

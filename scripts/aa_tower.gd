@@ -3,12 +3,12 @@ extends "res://scripts/building.gd"
 ## target and firing timed-fuse shells that burst at the predicted position.
 
 const FIRE_INTERVAL := 0.9
-const FIRE_RANGE := 550.0
 const ENERGY_PER_SHELL := 2
 const SHELL_SPEED := 600.0
 const MUZZLE_OFFSET := 30.0
 
 var shell_scene: PackedScene = preload("res://scenes/flak_shell.tscn")
+var fire_range: float = GameState.BUILDINGS["aa_tower"]["range"]
 var _fire_accum: float = 0.0
 var _target
 
@@ -23,7 +23,7 @@ func _physics_process(delta: float) -> void:
 	_fire_accum += delta
 	if _fire_accum >= FIRE_INTERVAL:
 		_fire_accum = 0.0
-		_target = _nearest_air_enemy()
+		_target = Util.nearest_in_group(self, "air_enemies", global_position, fire_range)
 		if _target != null:
 			if GameState.try_spend_energy(ENERGY_PER_SHELL):
 				set_powered(true)
@@ -31,24 +31,14 @@ func _physics_process(delta: float) -> void:
 			else:
 				set_powered(false)
 
-func _nearest_air_enemy():
-	var nearest = null
-	var best := FIRE_RANGE
-	for enemy in get_tree().get_nodes_in_group("air_enemies"):
-		var dist: float = enemy.global_position.distance_to(global_position)
-		if dist <= best:
-			best = dist
-			nearest = enemy
-	return nearest
-
 ## Timed-fuse flak: lead the target, clamp the fuse point to max range and
 ## let the shell burst there whether or not the target is still nearby.
 func _fire(target) -> void:
 	var flight_time: float = global_position.distance_to(target.global_position) / SHELL_SPEED
 	var predicted: Vector2 = target.global_position + target.velocity * flight_time
 	var offset := predicted - global_position
-	if offset.length() > FIRE_RANGE:
-		predicted = global_position + offset.normalized() * FIRE_RANGE
+	if offset.length() > fire_range:
+		predicted = global_position + offset.normalized() * fire_range
 	_head.rotation = offset.angle()
 	var muzzle: Vector2 = global_position + Vector2.from_angle(_head.rotation) * MUZZLE_OFFSET
 	var shell = shell_scene.instantiate()

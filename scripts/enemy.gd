@@ -2,7 +2,6 @@ extends CharacterBody2D
 
 signal died(points: int)
 
-const Effects = preload("res://scripts/effects.gd")
 
 @export var speed: float = 110.0
 @export var max_health: int = 3

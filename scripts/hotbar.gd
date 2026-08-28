@@ -3,7 +3,6 @@ extends HBoxContainer
 const SLOT_SIZE := Vector2(60, 60)
 
 var _slots: Array = []
-var _icon_cache: Dictionary = {}
 
 func _ready() -> void:
 	GameState.hotbar_changed.connect(_refresh)
@@ -49,12 +48,9 @@ func _make_slot(index: int) -> Dictionary:
 	return {"panel": panel, "icon": icon, "num": num, "cost": cost}
 
 func _get_icon(item: Dictionary) -> Texture2D:
+	# load() already caches resources per path.
 	var path: String = item.get("icon", "")
-	if path == "":
-		return null
-	if not _icon_cache.has(path):
-		_icon_cache[path] = load(path)
-	return _icon_cache[path]
+	return null if path == "" else load(path)
 
 func _on_resources_changed(_resources: Dictionary) -> void:
 	_refresh()

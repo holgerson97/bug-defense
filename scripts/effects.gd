@@ -1,3 +1,4 @@
+class_name Effects
 extends RefCounted
 ## Static helpers to spawn self-freeing combat effects into the current scene.
 ## Callers pass themselves (any node in the tree) so effects are never

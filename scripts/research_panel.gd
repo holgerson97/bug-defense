@@ -15,7 +15,6 @@ const TAB_DEFS := [
 
 var _buttons: Dictionary = {}
 var _button_ui: Dictionary = {}
-var _icon_cache: Dictionary = {}
 
 @onready var _scrap_value: Label = $Center/Panel/Margin/VBox/ResourcesRow/ScrapValue
 @onready var _crystal_value: Label = $Center/Panel/Margin/VBox/ResourcesRow/CrystalValue
@@ -43,11 +42,8 @@ func _on_resources_changed(_resources: Dictionary) -> void:
 	_refresh()
 
 func _icon(path: String) -> Texture2D:
-	if path == "":
-		return null
-	if not _icon_cache.has(path):
-		_icon_cache[path] = load(path)
-	return _icon_cache[path]
+	# load() already caches resources per path.
+	return null if path == "" else load(path)
 
 ## Requires-depth: 0 for roots, 1 + max prerequisite tier otherwise.
 func _tier(id: String) -> int:

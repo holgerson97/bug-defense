@@ -3,8 +3,9 @@ extends "res://scripts/building.gd"
 ## a standard bullet from the rotating head's muzzle.
 
 const FIRE_INTERVAL := 0.35
-const FIRE_RANGE := 350.0
 const ENERGY_PER_SHOT := 1
+
+var fire_range: float = GameState.BUILDINGS["mg_tower"]["range"]
 
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 var _fire_accum: float = 0.0
@@ -22,7 +23,7 @@ func _physics_process(delta: float) -> void:
 	_fire_accum += delta
 	if _fire_accum >= FIRE_INTERVAL:
 		_fire_accum = 0.0
-		_target = _nearest_enemy()
+		_target = Util.nearest_in_group(self, "enemies", global_position, fire_range)
 		if _target != null:
 			if GameState.try_spend_energy(ENERGY_PER_SHOT):
 				set_powered(true)
@@ -30,16 +31,6 @@ func _physics_process(delta: float) -> void:
 				_fire()
 			else:
 				set_powered(false)
-
-func _nearest_enemy():
-	var nearest = null
-	var best := FIRE_RANGE
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		var dist: float = enemy.global_position.distance_to(global_position)
-		if dist <= best:
-			best = dist
-			nearest = enemy
-	return nearest
 
 func _fire() -> void:
 	var bullet = bullet_scene.instantiate()
