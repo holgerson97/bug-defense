@@ -19,6 +19,8 @@ var _fire_cooldown: float = 0.0
 var _regen_accum: float = 0.0
 var _dead: bool = false
 var _recoil: Vector2 = Vector2.ZERO
+var _auto_attack: bool = false
+var _auto_label: Label
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _camera: Camera2D = $Camera2D
@@ -29,6 +31,14 @@ func _ready() -> void:
 	_max_health = GameState.player_max_health()
 	health = _max_health
 	_update_health_bar()
+	_auto_label = Label.new()
+	_auto_label.text = "AUTO"
+	_auto_label.top_level = true
+	_auto_label.z_index = 60
+	_auto_label.visible = false
+	_auto_label.add_theme_font_size_override("font_size", 10)
+	_auto_label.add_theme_color_override("font_color", UITheme.ACCENT)
+	add_child(_auto_label)
 
 func _physics_process(delta: float) -> void:
 	_health_bar.global_position = global_position + Vector2(-22, -40)
@@ -45,9 +55,13 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = input_dir * GameState.player_speed(base_speed)
 	move_and_slide()
-	# Space auto-attacks the closest enemy, overriding mouse aim.
+	# Space toggles auto-attack: aim and fire at the closest enemy.
+	if Input.is_action_just_pressed("auto_attack"):
+		_auto_attack = not _auto_attack
+		_auto_label.visible = _auto_attack
+	_auto_label.global_position = global_position + Vector2(26, -46)
 	var auto_target = null
-	if Input.is_action_pressed("auto_attack"):
+	if _auto_attack:
 		auto_target = Util.nearest_in_group(self, "enemies", global_position, AUTO_ATTACK_RANGE)
 	if auto_target != null:
 		look_at(auto_target.global_position)
