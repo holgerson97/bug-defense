@@ -30,9 +30,9 @@ func _make_slot(index: int) -> Dictionary:
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	center.add_child(icon)
-	# Slot number badge, top-left.
+	# Slot number badge, top-left ("0" is slot 10; slot 11 is wheel-only).
 	var num := Label.new()
-	num.text = str(index + 1)
+	num.text = str((index + 1) % 10) if index < 10 else ""
 	num.position = Vector2(5, 1)
 	num.add_theme_font_size_override("font_size", 11)
 	num.add_theme_color_override("font_color", UITheme.ACCENT)
@@ -66,7 +66,16 @@ func _cost_text(cost: Dictionary) -> String:
 	return " ".join(parts)
 
 func _unhandled_input(event: InputEvent) -> void:
-	for i in GameState.HOTBAR_SIZE:
+	# Mouse wheel cycles through slots, wrapping at both ends.
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			GameState.select_slot(wrapi(GameState.selected_slot - 1, 0, GameState.HOTBAR_SIZE))
+			return
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			GameState.select_slot(wrapi(GameState.selected_slot + 1, 0, GameState.HOTBAR_SIZE))
+			return
+	# Number keys: only the first 10 slots have bound actions (1-9 then 0).
+	for i in mini(GameState.HOTBAR_SIZE, 10):
 		if event.is_action_pressed("slot_%d" % (i + 1)):
 			GameState.select_slot(i)
 			return

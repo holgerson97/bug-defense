@@ -6,6 +6,7 @@ const ONE_SHOT_EFFECT = preload("res://scripts/effects/one_shot_effect.gd")
 
 const FIRE_INTERVAL := 1.1
 const FIRE_RANGE := 300.0
+const ENERGY_PER_ZAP := 2
 const CHAIN_RANGE := 130.0
 const MAX_CHAINS := 3
 const ZAP_DAMAGE := 2
@@ -41,6 +42,10 @@ func _zap() -> void:
 	var first = _nearest_enemy(global_position, FIRE_RANGE, victims)
 	if first == null:
 		return
+	if not GameState.try_spend_energy(ENERGY_PER_ZAP):
+		set_powered(false)
+		return
+	set_powered(true)
 	victims.append(first)
 	var link = first
 	for i in MAX_CHAINS:

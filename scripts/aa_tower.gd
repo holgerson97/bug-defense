@@ -4,6 +4,7 @@ extends "res://scripts/building.gd"
 
 const FIRE_INTERVAL := 0.9
 const FIRE_RANGE := 550.0
+const ENERGY_PER_SHELL := 2
 const SHELL_SPEED := 600.0
 const MUZZLE_OFFSET := 30.0
 
@@ -24,7 +25,11 @@ func _physics_process(delta: float) -> void:
 		_fire_accum = 0.0
 		_target = _nearest_air_enemy()
 		if _target != null:
-			_fire(_target)
+			if GameState.try_spend_energy(ENERGY_PER_SHELL):
+				set_powered(true)
+				_fire(_target)
+			else:
+				set_powered(false)
 
 func _nearest_air_enemy():
 	var nearest = null

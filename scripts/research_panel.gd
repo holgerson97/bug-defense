@@ -149,8 +149,10 @@ func _make_upgrade_button(id: String) -> Button:
 	cost_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cost_row.add_theme_constant_override("separation", 6)
 	vbox.add_child(cost_row)
+	# Always build all three resource pairs; _refresh hides the zero-cost ones
+	# (scaled costs can grow a gold component that the base cost lacks).
 	var cost_labels := {}
-	for kind in up["cost"]:
+	for kind in ["scrap", "crystal", "gold"]:
 		var kind_icon := TextureRect.new()
 		kind_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		kind_icon.custom_minimum_size = Vector2(12, 12)
@@ -160,10 +162,10 @@ func _make_upgrade_button(id: String) -> Button:
 		kind_icon.texture = _icon("res://assets/icons/%s.svg" % kind)
 		cost_row.add_child(kind_icon)
 		var amount := Label.new()
-		amount.text = str(up["cost"][kind])
+		amount.text = str(up["cost"].get(kind, 0))
 		amount.add_theme_font_size_override("font_size", 11)
 		cost_row.add_child(amount)
-		cost_labels[kind] = amount
+		cost_labels[kind] = {"icon": kind_icon, "label": amount}
 	_buttons[id] = btn
 	_button_ui[id] = {"icon": icon, "name": name_label, "sub": sub_label, "cost_row": cost_row, "cost_labels": cost_labels}
 	return btn
@@ -209,9 +211,13 @@ func _refresh() -> void:
 			ui["cost_row"].visible = true
 			var cost: Dictionary = GameState.upgrade_cost(id)
 			for kind in ui["cost_labels"]:
-				ui["cost_labels"][kind].text = str(cost.get(kind, 0))
-				var enough: bool = GameState.resources.get(kind, 0) >= cost.get(kind, 0)
-				ui["cost_labels"][kind].add_theme_color_override("font_color", UITheme.TEXT_COLOR if enough else UITheme.BAD)
+				var pair: Dictionary = ui["cost_labels"][kind]
+				var amount: int = cost.get(kind, 0)
+				pair["icon"].visible = amount > 0
+				pair["label"].visible = amount > 0
+				pair["label"].text = str(amount)
+				var enough: bool = GameState.resources.get(kind, 0) >= amount
+				pair["label"].add_theme_color_override("font_color", UITheme.TEXT_COLOR if enough else UITheme.BAD)
 	# Redraw the connectors after the containers have laid the buttons out,
 	# and shrink the whole panel uniformly if the tree is wider than the view.
 	await get_tree().process_frame

@@ -4,6 +4,7 @@ extends "res://scripts/building.gd"
 
 const FIRE_INTERVAL := 0.35
 const FIRE_RANGE := 350.0
+const ENERGY_PER_SHOT := 1
 
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 var _fire_accum: float = 0.0
@@ -23,8 +24,12 @@ func _physics_process(delta: float) -> void:
 		_fire_accum = 0.0
 		_target = _nearest_enemy()
 		if _target != null:
-			_head.rotation = (_target.global_position - global_position).angle()
-			_fire()
+			if GameState.try_spend_energy(ENERGY_PER_SHOT):
+				set_powered(true)
+				_head.rotation = (_target.global_position - global_position).angle()
+				_fire()
+			else:
+				set_powered(false)
 
 func _nearest_enemy():
 	var nearest = null

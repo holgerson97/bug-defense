@@ -7,7 +7,7 @@ signal upgrades_changed
 signal hotbar_changed
 
 const WORLD_SIZE := Vector2(2560, 1440)
-const HOTBAR_SIZE := 9
+const HOTBAR_SIZE := 11
 
 const UPGRADES := {
 	"damage_1": {"icon": "res://assets/icons/blaster.svg", "name": "Sharper Rounds", "branch": "Offense", "desc": "+1 bullet damage", "cost": {"scrap": 50}, "requires": [], "effects": {"damage_bonus": 1.0}},
@@ -37,6 +37,8 @@ const UPGRADES := {
 	"building_hp_1": {"icon": "res://assets/icons/wall.svg", "name": "Reinforced Structures", "branch": "Engineering", "desc": "+25% building health", "cost": {"scrap": 100}, "requires": ["walls_1"], "effects": {"building_hp_mult": 0.25}},
 	"tower_damage_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 150, "crystal": 50}, "requires": ["mg_tower_1"], "effects": {"tower_damage": 1.0}},
 	"miner_yield_1": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 100, "crystal": 30}, "requires": ["miner_1"], "effects": {"miner_yield": 1.0}},
+	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Industry", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 50}, "requires": [], "effects": {}},
+	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Industry", "desc": "Unlocks the Command Center", "cost": {"scrap": 300, "crystal": 100}, "requires": ["miner_1"], "effects": {}},
 }
 
 # Per-placement costs, paid directly when the building is placed.
@@ -48,11 +50,13 @@ const BUILDINGS := {
 	"tesla_tower": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "cost": {"scrap": 140, "crystal": 60}, "research": "tesla_tower_1"},
 	"flame_tower": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "cost": {"scrap": 130, "crystal": 50}, "research": "flame_tower_1"},
 	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"scrap": 150, "crystal": 70}, "research": "aa_tower_1"},
+	"solar_panel": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "cost": {"scrap": 30}, "research": "solar_1"},
+	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"scrap": 200, "crystal": 80}, "research": "command_center_1"},
 }
 
 var xp: int = 0
 var level: int = 1
-var resources: Dictionary = {"scrap": 0, "crystal": 0}
+var resources: Dictionary = {"scrap": 0, "crystal": 0, "energy": 20}
 var purchased: Dictionary = {}
 var hotbar: Array = []
 var selected_slot: int = 0
@@ -63,9 +67,9 @@ func _ready() -> void:
 func reset() -> void:
 	xp = 0
 	level = 1
-	resources = {"scrap": 0, "crystal": 0}
+	resources = {"scrap": 0, "crystal": 0, "energy": 20}
 	purchased = {}
-	hotbar = [{"id": "blaster", "name": "Blaster", "icon": "res://assets/icons/blaster.svg"}, null, null, null, null, null, null, null, null]
+	hotbar = [{"id": "blaster", "name": "Blaster", "icon": "res://assets/icons/blaster.svg"}, null, null, null, null, null, null, null, null, null, null]
 	selected_slot = 0
 	xp_changed.emit(xp, xp_needed(), level)
 	resources_changed.emit(resources)
@@ -85,6 +89,15 @@ func add_xp(amount: int) -> void:
 func add_resource(kind: String, amount: int) -> void:
 	resources[kind] = resources.get(kind, 0) + amount
 	resources_changed.emit(resources)
+
+## Per-attack energy drain for towers and miners. Returns false (and spends
+## nothing) when there isn't enough energy banked.
+func try_spend_energy(amount: int) -> bool:
+	if resources.get("energy", 0) < amount:
+		return false
+	resources["energy"] -= amount
+	resources_changed.emit(resources)
+	return true
 
 func can_afford(cost: Dictionary) -> bool:
 	for kind in cost:
@@ -129,6 +142,9 @@ func upgrade_cost(id: String) -> Dictionary:
 	var scaled := {}
 	for kind in base:
 		scaled[kind] = int(ceil(base[kind] * pow(1.6, lvl)))
+	# High-level repeatables demand gold, the Harvester-only late-game resource.
+	if lvl >= 5:
+		scaled["gold"] = int(ceil(15.0 * pow(1.5, lvl - 5)))
 	return scaled
 
 func is_purchased(id: String) -> bool:
@@ -167,6 +183,10 @@ func purchase(id: String) -> bool:
 			set_hotbar_item(7, {"id": "flame_tower", "name": "Flamethrower Tower", "icon": "res://assets/icons/flame_tower.svg"})
 		"aa_tower_1":
 			set_hotbar_item(8, {"id": "aa_tower", "name": "AA Flak Cannon", "icon": "res://assets/icons/aa_tower.svg"})
+		"solar_1":
+			set_hotbar_item(9, {"id": "solar_panel", "name": "Solar Panel", "icon": "res://assets/icons/solar_panel.svg"})
+		"command_center_1":
+			set_hotbar_item(10, {"id": "command_center", "name": "Command Center", "icon": "res://assets/icons/command_center.svg"})
 	upgrades_changed.emit()
 	return true
 

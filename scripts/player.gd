@@ -26,9 +26,11 @@ const BUILDING_SCENES := {
 	"tesla_tower": preload("res://scenes/tesla_tower.tscn"),
 	"flame_tower": preload("res://scenes/flame_tower.tscn"),
 	"aa_tower": preload("res://scenes/aa_tower.tscn"),
+	"solar_panel": preload("res://scenes/solar_panel.tscn"),
+	"command_center": preload("res://scenes/command_center.tscn"),
 }
-const BUILDING_FOOTPRINT := {"wall": 30.0, "mg_tower": 38.0, "grenade_tower": 38.0, "repair_tower": 38.0, "tesla_tower": 38.0, "flame_tower": 38.0, "aa_tower": 38.0}
-const GHOST_SIZE := {"wall": 32.0, "mg_tower": 40.0, "grenade_tower": 40.0, "repair_tower": 40.0, "tesla_tower": 40.0, "flame_tower": 40.0, "aa_tower": 40.0}
+const BUILDING_FOOTPRINT := {"wall": 30.0, "mg_tower": 38.0, "grenade_tower": 38.0, "repair_tower": 38.0, "tesla_tower": 38.0, "flame_tower": 38.0, "aa_tower": 38.0, "solar_panel": 30.0, "command_center": 54.0}
+const GHOST_SIZE := {"wall": 32.0, "mg_tower": 40.0, "grenade_tower": 40.0, "repair_tower": 40.0, "tesla_tower": 40.0, "flame_tower": 40.0, "aa_tower": 40.0, "solar_panel": 32.0, "command_center": 56.0}
 # Must match the range each tower script actually uses.
 const TOWER_RANGE := {"mg_tower": 350.0, "grenade_tower": 450.0, "repair_tower": 250.0, "tesla_tower": 300.0, "flame_tower": 170.0, "aa_tower": 550.0}
 const GHOST_VALID := Color(0.35, 1.0, 0.45, 0.45)

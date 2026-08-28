@@ -3,6 +3,7 @@ extends "res://scripts/building.gd"
 
 const FIRE_INTERVAL := 2.5
 const FIRE_RANGE := 450.0
+const ENERGY_PER_LOB := 2
 
 var grenade_scene: PackedScene = preload("res://scenes/grenade.tscn")
 var _fire_accum: float = 0.0
@@ -21,6 +22,10 @@ func _fire() -> void:
 			candidates.append(enemy)
 	if candidates.is_empty():
 		return
+	if not GameState.try_spend_energy(ENERGY_PER_LOB):
+		set_powered(false)
+		return
+	set_powered(true)
 	var target = candidates.pick_random()
 	var grenade = grenade_scene.instantiate()
 	grenade.global_position = global_position

@@ -4,10 +4,13 @@ extends Node2D
 const EXTRACT_INTERVAL := 2.0
 const EXTRACT_AMOUNT := 2
 const SIDE_OFFSET := 44.0
+const ENERGY_PER_CYCLE := 1
+const UNPOWERED_TINT := Color(0.6, 0.7, 1.0, 0.85)
 
 var deposit
 
 var _accum: float = 0.0
+var _powered: bool = true
 
 func _ready() -> void:
 	# Snap to the side of the block facing the player, drill pointing at it.
@@ -32,6 +35,17 @@ func _process(delta: float) -> void:
 	_accum += delta
 	while _accum >= EXTRACT_INTERVAL:
 		_accum -= EXTRACT_INTERVAL
+		# Each extraction cycle drinks energy; starved miners skip the cycle.
+		if not GameState.try_spend_energy(ENERGY_PER_CYCLE):
+			_set_powered(false)
+			continue
+		_set_powered(true)
 		var taken = deposit.extract(EXTRACT_AMOUNT + GameState.miner_yield_bonus())
 		if taken > 0:
 			GameState.add_resource("crystal", taken)
+
+func _set_powered(p: bool) -> void:
+	if p == _powered:
+		return
+	_powered = p
+	modulate = Color(1, 1, 1, 1) if p else UNPOWERED_TINT

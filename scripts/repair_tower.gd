@@ -4,6 +4,7 @@ extends "res://scripts/building.gd"
 
 const HEAL_INTERVAL := 1.0
 const HEAL_AMOUNT := 3
+const ENERGY_PER_PULSE := 1
 const HEAL_RANGE := 250.0
 const BEAM_TIME := 0.4
 
@@ -19,8 +20,12 @@ func _physics_process(delta: float) -> void:
 		_heal_accum = 0.0
 		var target = _pick_target()
 		if target != null:
-			target.heal(HEAL_AMOUNT)
-			_show_beam(target.global_position)
+			if GameState.try_spend_energy(ENERGY_PER_PULSE):
+				set_powered(true)
+				target.heal(HEAL_AMOUNT)
+				_show_beam(target.global_position)
+			else:
+				set_powered(false)
 	if _beam_timer > 0.0:
 		_beam_timer -= delta
 		if _beam_timer <= 0.0:
