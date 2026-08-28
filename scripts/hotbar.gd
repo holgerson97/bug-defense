@@ -18,6 +18,8 @@ func _make_slot(index: int) -> Dictionary:
 	panel.add_theme_stylebox_override("panel", UITheme.slot_normal())
 	panel.gui_input.connect(_on_slot_gui_input.bind(index))
 	var inner := Control.new()
+	# Children must not swallow clicks — the panel handles slot selection.
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(inner)
 	# Item icon, centered (nudged up to leave room for the cost line).
 	var center := CenterContainer.new()
@@ -26,6 +28,7 @@ func _make_slot(index: int) -> Dictionary:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_child(center)
 	var icon := TextureRect.new()
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.custom_minimum_size = Vector2(30, 30)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

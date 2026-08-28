@@ -76,6 +76,8 @@ func _build_ghost() -> void:
 func tick(selected: String) -> void:
 	if Input.is_action_just_pressed("toggle_grid"):
 		_snap_enabled = not _snap_enabled
+	if Input.is_action_just_pressed("sell"):
+		_try_sell_building()
 	if selected == "miner" and Input.is_action_just_pressed("shoot"):
 		_try_place_miner()
 	elif BUILDING_SCENES.has(selected) and Input.is_action_pressed("shoot"):
@@ -115,6 +117,27 @@ func _placement_valid(id: String, pos: Vector2) -> bool:
 	_place_params.transform = Transform2D(0.0, pos)
 	var hits: Array = get_world_2d().direct_space_state.intersect_shape(_place_params, 1)
 	return hits.is_empty()
+
+## Right-click a building to sell it for half its cost. The building id is
+## derived from its scene file name (e.g. mg_tower.tscn -> "mg_tower").
+func _try_sell_building() -> void:
+	var params := PhysicsPointQueryParameters2D.new()
+	params.position = get_global_mouse_position()
+	params.collision_mask = 32
+	var hits: Array = get_world_2d().direct_space_state.intersect_point(params, 1)
+	if hits.is_empty():
+		return
+	var building = hits[0]["collider"]
+	var id: String = building.scene_file_path.get_file().get_basename()
+	if not GameState.BUILDINGS.has(id):
+		return
+	var cost: Dictionary = GameState.BUILDINGS[id]["cost"]
+	for kind in cost:
+		@warning_ignore("integer_division")
+		GameState.add_resource(kind, cost[kind] / 2)
+	Effects.debris_burst(self, building.global_position)
+	Sfx.play("place", building.global_position, -4.0)
+	building.queue_free()
 
 func _try_place_building_at(id: String, pos: Vector2) -> bool:
 	if not _placement_valid(id, pos):

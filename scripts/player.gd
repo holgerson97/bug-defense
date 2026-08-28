@@ -10,7 +10,7 @@ signal died
 const RECOIL_KICK := 5.0
 const RECOIL_MAX := 14.0
 const RECOIL_RECOVER := 14.0
-const AUTO_ATTACK_RANGE := 700.0
+const AUTO_ATTACK_RANGE := 250.0
 
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 var health: int

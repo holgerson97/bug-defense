@@ -10,22 +10,15 @@ signal power_rates_changed(production: float, consumption: float)
 const HOTBAR_SIZE := 11
 
 const UPGRADES := {
-	"damage_1": {"icon": "res://assets/icons/blaster.svg", "name": "Sharper Rounds", "branch": "Offense", "desc": "+1 bullet damage", "cost": {"scrap": 50}, "requires": [], "effects": {"damage_bonus": 1.0}},
-	"fire_rate_1": {"icon": "res://assets/icons/blaster.svg", "name": "Rapid Fire", "branch": "Offense", "desc": "20% faster firing", "cost": {"scrap": 100}, "requires": ["damage_1"], "effects": {"fire_rate_cut": 0.2}},
-	"damage_2": {"icon": "res://assets/icons/blaster.svg", "name": "Heavy Rounds", "branch": "Offense", "desc": "+2 bullet damage", "cost": {"scrap": 150, "crystal": 50}, "requires": ["fire_rate_1"], "effects": {"damage_bonus": 2.0}},
-	"damage_3": {"icon": "res://assets/icons/blaster.svg", "name": "Annihilator Rounds", "branch": "Offense", "desc": "+3 bullet damage", "cost": {"scrap": 300, "crystal": 100}, "requires": ["damage_2"], "effects": {"damage_bonus": 3.0}},
-	"fire_rate_2": {"icon": "res://assets/icons/blaster.svg", "name": "Overdrive Trigger", "branch": "Offense", "desc": "20% faster firing", "cost": {"scrap": 200, "crystal": 60}, "requires": ["fire_rate_1"], "effects": {"fire_rate_cut": 0.2}},
-	"crit_chance_1": {"icon": "res://assets/icons/crit.svg", "name": "Critical Eye", "branch": "Offense", "desc": "+10% crit chance", "cost": {"scrap": 150, "crystal": 40}, "requires": ["damage_1"], "effects": {"crit_chance": 0.1}},
-	"crit_chance_2": {"icon": "res://assets/icons/crit.svg", "name": "Predator Instinct", "branch": "Offense", "desc": "+15% crit chance", "cost": {"scrap": 250, "crystal": 80}, "requires": ["crit_chance_1"], "effects": {"crit_chance": 0.15}},
-	"crit_damage_1": {"icon": "res://assets/icons/crit.svg", "name": "Deadly Precision", "branch": "Offense", "desc": "+50% crit damage", "cost": {"scrap": 200, "crystal": 60}, "requires": ["crit_chance_1"], "effects": {"crit_mult": 0.5}},
-	"crit_damage_2": {"icon": "res://assets/icons/crit.svg", "name": "Executioner", "branch": "Offense", "desc": "+100% crit damage", "cost": {"scrap": 350, "crystal": 120}, "requires": ["crit_damage_1"], "effects": {"crit_mult": 1.0}},
-	"speed_1": {"icon": "res://assets/icons/xp.svg", "name": "Thrusters", "branch": "Pilot", "desc": "+15% move speed", "cost": {"scrap": 50}, "requires": [], "effects": {"speed_mult": 0.15}},
-	"speed_2": {"icon": "res://assets/icons/xp.svg", "name": "Afterburners", "branch": "Pilot", "desc": "+15% move speed", "cost": {"scrap": 150, "crystal": 40}, "requires": ["speed_1"], "effects": {"speed_mult": 0.15}},
-	"hp_1": {"icon": "res://assets/icons/health.svg", "name": "Hull Plating", "branch": "Pilot", "desc": "+25 max health", "cost": {"scrap": 100}, "requires": ["speed_1"], "effects": {"player_hp_bonus": 25.0}},
-	"hp_2": {"icon": "res://assets/icons/health.svg", "name": "Composite Armor", "branch": "Pilot", "desc": "+50 max health", "cost": {"scrap": 200, "crystal": 60}, "requires": ["hp_1"], "effects": {"player_hp_bonus": 50.0}},
-	"hp_3": {"icon": "res://assets/icons/health.svg", "name": "Fortress Hull", "branch": "Pilot", "desc": "+75 max health", "cost": {"scrap": 400, "crystal": 150}, "requires": ["hp_2"], "effects": {"player_hp_bonus": 75.0}},
-	"regen_1": {"icon": "res://assets/icons/health.svg", "name": "Nanobots", "branch": "Pilot", "desc": "Regenerate 2 HP/s", "cost": {"scrap": 150, "crystal": 50}, "requires": ["hp_1"], "effects": {"player_regen": 2.0}},
-	"regen_2": {"icon": "res://assets/icons/health.svg", "name": "Nanoswarm", "branch": "Pilot", "desc": "+3 HP/s regen", "cost": {"scrap": 300, "crystal": 100}, "requires": ["regen_1"], "effects": {"player_regen": 3.0}},
+	# Player stats: one flat repeatable button per category — each purchase
+	# raises the level (effect stacks) and the price (x1.6 per level).
+	"damage": {"icon": "res://assets/icons/blaster.svg", "name": "Damage", "branch": "Offense", "desc": "+1 bullet damage", "cost": {"scrap": 50}, "requires": [], "effects": {"damage_bonus": 1.0}},
+	"attack_speed": {"icon": "res://assets/icons/blaster.svg", "name": "Attack Speed", "branch": "Offense", "desc": "+10% fire rate", "cost": {"scrap": 75}, "requires": [], "effects": {"fire_rate_cut": 0.1}},
+	"crit_chance": {"icon": "res://assets/icons/crit.svg", "name": "Crit Chance", "branch": "Offense", "desc": "+5% crit chance", "cost": {"scrap": 100, "crystal": 20}, "requires": [], "effects": {"crit_chance": 0.05}},
+	"crit_damage": {"icon": "res://assets/icons/crit.svg", "name": "Crit Damage", "branch": "Offense", "desc": "+25% crit damage", "cost": {"scrap": 120, "crystal": 30}, "requires": [], "effects": {"crit_mult": 0.25}},
+	"speed": {"icon": "res://assets/icons/xp.svg", "name": "Move Speed", "branch": "Pilot", "desc": "+10% move speed", "cost": {"scrap": 50}, "requires": [], "effects": {"speed_mult": 0.1}},
+	"health": {"icon": "res://assets/icons/health.svg", "name": "Max Health", "branch": "Pilot", "desc": "+25 max health", "cost": {"scrap": 75}, "requires": [], "effects": {"player_hp_bonus": 25.0}},
+	"regen": {"icon": "res://assets/icons/health.svg", "name": "Regeneration", "branch": "Pilot", "desc": "+1 HP/s regen", "cost": {"scrap": 120, "crystal": 30}, "requires": [], "effects": {"player_regen": 1.0}},
 	"miner_1": {"icon": "res://assets/icons/miner.svg", "name": "Miner", "branch": "Industry", "desc": "Unlocks the Miner building", "cost": {"scrap": 150}, "requires": [], "effects": {}},
 	"walls_1": {"icon": "res://assets/icons/wall.svg", "name": "Walls", "branch": "Industry", "desc": "Unlocks buildable Walls", "cost": {"scrap": 75}, "requires": [], "effects": {}},
 	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Industry", "desc": "Unlocks the MG Tower", "cost": {"scrap": 150, "crystal": 30}, "requires": ["walls_1"], "effects": {}},
