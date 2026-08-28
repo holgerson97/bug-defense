@@ -17,6 +17,7 @@ var _destroyed: bool = false
 @onready var _sense: Area2D = $Sense
 
 func _ready() -> void:
+	max_health = int(ceil(max_health * GameState.building_hp_mult()))
 	health = max_health
 	_update_health_bar()
 

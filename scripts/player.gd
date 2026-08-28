@@ -46,6 +46,8 @@ var _ghost_range_line
 var _ghost_item: String = ""
 var _place_shape
 var _place_params
+var _last_wall_cell := Vector2.INF
+var _drag_cells: Dictionary = {}
 
 @onready var _health_bar: ProgressBar = $HealthBar
 @onready var _camera: Camera2D = $Camera2D
@@ -112,8 +114,14 @@ func _physics_process(delta: float) -> void:
 		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate)
 	elif selected == "miner" and Input.is_action_just_pressed("shoot"):
 		_try_place_miner()
-	elif BUILDING_SCENES.has(selected) and Input.is_action_just_pressed("shoot"):
-		_try_place_building(selected)
+	elif BUILDING_SCENES.has(selected):
+		if selected == "wall" and Input.is_action_pressed("shoot"):
+			_drag_place_walls()
+		elif Input.is_action_just_pressed("shoot"):
+			_try_place_building(selected)
+	if not Input.is_action_pressed("shoot"):
+		_last_wall_cell = Vector2.INF
+		_drag_cells.clear()
 	_update_ghost(selected)
 
 func _try_place_miner() -> void:
@@ -152,16 +160,42 @@ func _placement_valid(id: String, pos: Vector2) -> bool:
 	var hits: Array = get_world_2d().direct_space_state.intersect_shape(_place_params, 1)
 	return hits.is_empty()
 
-func _try_place_building(id: String) -> void:
-	var pos := _build_position(id)
+func _try_place_building(id: String) -> bool:
+	return _try_place_building_at(id, _build_position(id))
+
+func _try_place_building_at(id: String, pos: Vector2) -> bool:
 	if not _placement_valid(id, pos):
-		return
+		return false
 	if not GameState.spend(GameState.BUILDINGS[id]["cost"]):
-		return
+		return false
 	var building = BUILDING_SCENES[id].instantiate()
 	building.global_position = pos
 	get_tree().current_scene.add_child(building)
 	Sfx.play("place", pos)
+	return true
+
+## Hold-and-drag wall painting: fills every grid cell along the drag path.
+func _drag_place_walls() -> void:
+	var grid := Vector2(WALL_GRID, WALL_GRID)
+	var target := _build_position("wall")
+	if _last_wall_cell == Vector2.INF:
+		if _try_wall_cell(target):
+			_last_wall_cell = target
+		return
+	var dist := _last_wall_cell.distance_to(target)
+	var samples := maxi(int(dist / (WALL_GRID * 0.5)), 1)
+	for i in samples:
+		var cell := _last_wall_cell.lerp(target, float(i + 1) / samples).snapped(grid)
+		if _try_wall_cell(cell):
+			_last_wall_cell = cell
+
+func _try_wall_cell(cell: Vector2) -> bool:
+	if _drag_cells.has(cell):
+		return false
+	if not _try_place_building_at("wall", cell):
+		return false
+	_drag_cells[cell] = true
+	return true
 
 func _update_ghost(selected: String) -> void:
 	if not BUILDING_SCENES.has(selected):

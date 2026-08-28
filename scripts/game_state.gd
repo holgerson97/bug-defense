@@ -31,6 +31,9 @@ const UPGRADES := {
 	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Industry", "desc": "Unlocks the MG Tower", "cost": {"scrap": 150, "crystal": 30}, "requires": ["walls_1"], "effects": {}},
 	"grenade_tower_1": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "branch": "Industry", "desc": "Unlocks the Grenade Tower", "cost": {"scrap": 200, "crystal": 60}, "requires": ["mg_tower_1"], "effects": {}},
 	"repair_tower_1": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Beam Tower", "branch": "Industry", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 150, "crystal": 60}, "requires": ["walls_1"], "effects": {}},
+	"building_hp_1": {"icon": "res://assets/icons/wall.svg", "name": "Reinforced Structures", "branch": "Engineering", "desc": "+25% building health", "cost": {"scrap": 100}, "requires": ["walls_1"], "effects": {"building_hp_mult": 0.25}},
+	"tower_damage_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 150, "crystal": 50}, "requires": ["mg_tower_1"], "effects": {"tower_damage": 1.0}},
+	"miner_yield_1": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 100, "crystal": 30}, "requires": ["miner_1"], "effects": {"miner_yield": 1.0}},
 }
 
 # Per-placement costs, paid directly when the building is placed.
@@ -186,3 +189,13 @@ func player_max_health() -> int:
 
 func player_regen() -> float:
 	return stat("player_regen")
+
+# Building stats (Engineering research).
+func building_hp_mult() -> float:
+	return 1.0 + stat("building_hp_mult")
+
+func tower_damage_bonus() -> int:
+	return int(stat("tower_damage"))
+
+func miner_yield_bonus() -> int:
+	return int(stat("miner_yield"))

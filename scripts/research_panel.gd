@@ -7,13 +7,18 @@ const LINE_OWNED := Color(0.3, 0.9, 0.4, 0.9)
 const LINE_LOCKED := Color(0.5, 0.5, 0.5, 0.35)
 const LOCK_ICON := "res://assets/icons/lock.svg"
 
+const TAB_DEFS := [
+	{"title": "Player Stats", "branches": ["Offense", "Pilot"]},
+	{"title": "Buildings", "branches": ["Industry", "Engineering"]},
+]
+
 var _buttons: Dictionary = {}
 var _button_ui: Dictionary = {}
 var _icon_cache: Dictionary = {}
 
 @onready var _scrap_value: Label = $Center/Panel/Margin/VBox/ResourcesRow/ScrapValue
 @onready var _crystal_value: Label = $Center/Panel/Margin/VBox/ResourcesRow/CrystalValue
-@onready var _branches: HBoxContainer = $Center/Panel/Margin/VBox/Branches
+@onready var _tabs: TabContainer = $Center/Panel/Margin/VBox/Tabs
 @onready var _lines: Control = $Lines
 @onready var _center: CenterContainer = $Center
 @onready var _panel: PanelContainer = $Center/Panel
@@ -21,6 +26,7 @@ var _icon_cache: Dictionary = {}
 func _ready() -> void:
 	theme = UITheme.build()
 	_build_tree()
+	_tabs.tab_changed.connect(_on_tab_changed)
 	_lines.draw.connect(_draw_lines)
 	GameState.resources_changed.connect(_on_resources_changed)
 	GameState.upgrades_changed.connect(_refresh)
@@ -49,38 +55,50 @@ func _tier(id: String) -> int:
 		tier = maxi(tier, _tier(req) + 1)
 	return tier
 
+func _on_tab_changed(_tab: int) -> void:
+	_refresh()
+
 func _build_tree() -> void:
-	var max_tier := 0
 	var tiers := {}
 	for id in GameState.UPGRADES:
 		tiers[id] = _tier(id)
-		max_tier = maxi(max_tier, tiers[id])
-	# Branch columns (definition order), one centered row per tier so tiers
-	# line up across branches and leave room for the connector lines.
-	var branch_rows := {}
-	for id in GameState.UPGRADES:
-		var up: Dictionary = GameState.UPGRADES[id]
-		var branch: String = up["branch"]
-		if not branch_rows.has(branch):
-			var col := VBoxContainer.new()
-			col.add_theme_constant_override("separation", 26)
-			var title := Label.new()
-			title.text = branch
-			title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			title.add_theme_font_size_override("font_size", 24)
-			title.add_theme_color_override("font_color", UITheme.ACCENT)
-			col.add_child(title)
-			var rows: Array = []
-			for t in max_tier + 1:
-				var row := HBoxContainer.new()
-				row.alignment = BoxContainer.ALIGNMENT_CENTER
-				row.add_theme_constant_override("separation", 10)
-				row.custom_minimum_size = Vector2(0, BUTTON_SIZE.y)
-				col.add_child(row)
-				rows.append(row)
-			_branches.add_child(col)
-			branch_rows[branch] = rows
-		branch_rows[branch][tiers[id]].add_child(_make_upgrade_button(id))
+	# One tab per TAB_DEFS entry; inside, branch columns (definition order)
+	# with one centered row per tier so tiers line up across branches.
+	for tab in TAB_DEFS:
+		var tab_root := HBoxContainer.new()
+		tab_root.name = tab["title"]
+		tab_root.add_theme_constant_override("separation", 16)
+		_tabs.add_child(tab_root)
+		var max_tier := 0
+		for id in GameState.UPGRADES:
+			if GameState.UPGRADES[id]["branch"] in tab["branches"]:
+				max_tier = maxi(max_tier, tiers[id])
+		var branch_rows := {}
+		for id in GameState.UPGRADES:
+			var up: Dictionary = GameState.UPGRADES[id]
+			var branch: String = up["branch"]
+			if not branch in tab["branches"]:
+				continue
+			if not branch_rows.has(branch):
+				var col := VBoxContainer.new()
+				col.add_theme_constant_override("separation", 26)
+				var title := Label.new()
+				title.text = branch
+				title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				title.add_theme_font_size_override("font_size", 24)
+				title.add_theme_color_override("font_color", UITheme.ACCENT)
+				col.add_child(title)
+				var rows: Array = []
+				for t in max_tier + 1:
+					var row := HBoxContainer.new()
+					row.alignment = BoxContainer.ALIGNMENT_CENTER
+					row.add_theme_constant_override("separation", 10)
+					row.custom_minimum_size = Vector2(0, BUTTON_SIZE.y)
+					col.add_child(row)
+					rows.append(row)
+				tab_root.add_child(col)
+				branch_rows[branch] = rows
+			branch_rows[branch][tiers[id]].add_child(_make_upgrade_button(id))
 
 func _make_upgrade_button(id: String) -> Button:
 	var up: Dictionary = GameState.UPGRADES[id]
@@ -207,10 +225,14 @@ func _draw_lines() -> void:
 		return
 	for id in _buttons:
 		var btn: Button = _buttons[id]
+		if not btn.is_visible_in_tree():
+			continue
 		for req in GameState.UPGRADES[id]["requires"]:
 			if not _buttons.has(req):
 				continue
 			var req_btn: Button = _buttons[req]
+			if not req_btn.is_visible_in_tree():
+				continue
 			# Global transforms so the lines track the auto-fit scale.
 			var from: Vector2 = req_btn.get_global_transform() * Vector2(req_btn.size.x / 2.0, req_btn.size.y) - _lines.global_position
 			var to: Vector2 = btn.get_global_transform() * Vector2(btn.size.x / 2.0, 0.0) - _lines.global_position

@@ -40,7 +40,7 @@ func _fire() -> void:
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = _muzzle.global_position
 	bullet.rotation = _head.global_rotation
-	bullet.damage = 1
+	bullet.damage = 1 + GameState.tower_damage_bonus()
 	get_tree().current_scene.add_child(bullet)
 	Effects.muzzle_flash(self, _muzzle.global_position, _head.global_rotation)
 	Sfx.play("shoot", _muzzle.global_position, -12.0)

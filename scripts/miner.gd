@@ -32,6 +32,6 @@ func _process(delta: float) -> void:
 	_accum += delta
 	while _accum >= EXTRACT_INTERVAL:
 		_accum -= EXTRACT_INTERVAL
-		var taken = deposit.extract(EXTRACT_AMOUNT)
+		var taken = deposit.extract(EXTRACT_AMOUNT + GameState.miner_yield_bonus())
 		if taken > 0:
 			GameState.add_resource("crystal", taken)

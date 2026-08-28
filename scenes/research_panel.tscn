@@ -95,9 +95,9 @@ theme_override_font_sizes/font_size = 20
 vertical_alignment = 1
 text = "0"
 
-[node name="Branches" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+[node name="Tabs" type="TabContainer" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_font_sizes/font_size = 16
 
 [node name="CloseButton" type="Button" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2

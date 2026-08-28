@@ -25,9 +25,10 @@ func _physics_process(delta: float) -> void:
 		_explode()
 
 func _explode() -> void:
+	var blast_damage := BLAST_DAMAGE + GameState.tower_damage_bonus()
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if enemy.global_position.distance_to(global_position) <= BLAST_RADIUS and enemy.has_method("take_damage"):
-			enemy.take_damage(BLAST_DAMAGE)
+			enemy.take_damage(blast_damage)
 	Effects.explosion(self, global_position)
 	Sfx.play("explosion", global_position, -4.0)
 	queue_free()
