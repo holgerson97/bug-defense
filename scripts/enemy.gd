@@ -47,6 +47,38 @@ const RESTUCK_WINDOW := 4.0        ## 2nd stuck event this close -> path even of
 ## "E<sync_id>" on every peer); the enemy_sync batcher keys packets on it.
 var sync_id: int = 0
 
+## Balance ids: scene file basename (the same trick the sell code uses),
+## with the generically-named scenes mapped to their wave-kind names.
+const BALANCE_ALIASES := {"enemy": "grunt", "drone_tank": "drone", "boss_broodmother": "boss"}
+
+## Wave-manager stat overrides, stashed BEFORE the node enters the tree.
+## _ready applies Balance base stats first, then layers these on top, so wave
+## scaling always beats the JSON base values (the host computes them from
+## Balance anyway; on clients they make puppet max_health match the host).
+var spawn_overrides: Dictionary = {}
+
+func balance_id() -> String:
+	var base := scene_file_path.get_file().get_basename()
+	return str(BALANCE_ALIASES.get(base, base))
+
+## Balance base stats by type id, then the wave manager's spawn overrides.
+func _apply_balance() -> void:
+	var sec = Balance.section("enemies/" + balance_id())
+	max_health = Balance.inum("enemies/%s/hp" % balance_id(), max_health)
+	speed = float(sec.get("speed", speed))
+	damage = int(sec.get("damage", damage))
+	attack_interval = float(sec.get("attack_interval", attack_interval))
+	attack_range = float(sec.get("attack_range", attack_range))
+	points = int(sec.get("points", points))
+	scrap_value = int(sec.get("scrap", scrap_value))
+	crystal_value = int(sec.get("crystal", crystal_value))
+	if spawn_overrides.has("max_health"):
+		max_health = spawn_overrides["max_health"]
+	if spawn_overrides.has("speed_delta"):
+		speed += spawn_overrides["speed_delta"]
+	if spawn_overrides.has("scrap_value"):
+		scrap_value = spawn_overrides["scrap_value"]
+
 var health: int
 var _attack_cooldown: float = 0.0
 var _target
@@ -79,6 +111,7 @@ func _is_puppet() -> bool:
 func _ready() -> void:
 	## Top-down: no floor snapping, walls never resolve as "slopes" to climb.
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	_apply_balance()
 	health = max_health
 	if _is_puppet():
 		## Puppet: no AI/physics; the host resolves collisions, so the local

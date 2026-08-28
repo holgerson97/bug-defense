@@ -1,8 +1,8 @@
 extends "res://scripts/building.gd"
 ## Grenade tower: lobs a grenade at a random enemy in range every few seconds.
 
-const FIRE_INTERVAL := 2.5
-const ENERGY_PER_LOB := 2
+var fire_interval: float = Balance.num("towers/grenade_tower/interval", 2.5)
+var energy_per_lob: int = Balance.inum("towers/grenade_tower/energy_per_lob", 2)
 
 var grenade_scene: PackedScene = preload("res://scenes/grenade.tscn")
 var base_range: float = GameState.BUILDINGS["grenade_tower"]["range"]
@@ -23,7 +23,7 @@ func _physics_process(delta: float) -> void:
 	## Extended Barrels research scales range live.
 	fire_range = base_range * GameState.tower_range_mult()
 	_fire_accum += delta
-	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
+	if _fire_accum >= GameState.tower_interval(fire_interval):
 		_fire_accum = 0.0
 		_fire()
 
@@ -41,7 +41,7 @@ func _fire() -> void:
 			candidates.append(enemy)
 	if candidates.is_empty():
 		return
-	if not grid_powered() or not GameState.try_spend_energy(ENERGY_PER_LOB):
+	if not grid_powered() or not GameState.try_spend_energy(energy_per_lob):
 		set_powered(false)
 		return
 	set_powered(true)

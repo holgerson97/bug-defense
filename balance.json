@@ -1,0 +1,131 @@
+{
+	"_readme": "Base Defense gameplay balance. Every value here overrides the built-in default; delete a key (or this whole file) to fall back to the shipped behavior. Edits apply on the NEXT launch. In LAN co-op only the HOST's file governs the simulation - clients mirror the host. Note: 'scrap' is the internal key for Bug Hearts, the research-only currency; buildings cost crystal (plus gold for premium tiers). Tower/searchlight arcs, cones and sweeps are full angles in degrees; intervals and cooldowns are seconds; ranges and radii are pixels.",
+
+	"player": {
+		"speed": 320.0,
+		"fire_cooldown": 0.15,
+		"min_fire_cooldown": 0.04,
+		"damage": 1,
+		"max_health": 100,
+		"auto_attack_range": 250.0,
+		"light_radius": 540.0,
+		"build_range": 300.0,
+		"heal_beam": { "range": 140.0, "tick": 0.5, "heal": 3, "energy": 1 },
+		"reactor": { "interval": 2.0, "amount": 12.0, "cover_range": 150.0 }
+	},
+
+	"towers": {
+		"mg_tower":      { "hp": 120, "damage": 1, "range": 350.0, "arc": 90.0,  "burst_size": 30, "shot_interval": 0.05, "cooldown": 0.5, "energy_per_burst": 5 },
+		"grenade_tower": { "hp": 120, "range": 450.0, "arc": 120.0, "interval": 2.5, "energy_per_lob": 2, "blast_radius": 90.0, "blast_damage": 3 },
+		"repair_tower":  { "hp": 100, "range": 250.0, "interval": 1.0, "heal_amount": 3, "energy_per_pulse": 1 },
+		"tesla_tower":   { "hp": 100, "damage": 2, "range": 360.0, "interval": 1.1, "energy_per_zap": 2, "chain_range": 130.0, "max_chains": 3 },
+		"flame_tower":   { "hp": 110, "damage": 1, "range": 260.0, "arc": 90.0, "interval": 0.9, "energy_per_throw": 1, "splash_radius": 40.0, "splash_mult": 2, "patch_radius": 48.0, "patch_lifetime": 3.5, "patch_tick_interval": 0.5 },
+		"aa_tower":      { "hp": 110, "range": 550.0, "arc": 120.0, "interval": 0.9, "energy_per_shell": 2, "shell_speed": 600.0, "burst_radius": 130.0, "burst_damage": 4 }
+	},
+
+	"buildings": {
+		"gnaw_dps": 4.0,
+		"wall":           { "cost": { "crystal": 6 },   "hp": 300 },
+		"miner":          { "cost": { "crystal": 15 },  "extract_interval": 2.0, "extract_amount": 2, "energy_per_cycle": 1 },
+		"mg_tower":       { "cost": { "crystal": 90 } },
+		"grenade_tower":  { "cost": { "crystal": 120 } },
+		"repair_tower":   { "cost": { "crystal": 100 } },
+		"tesla_tower":    { "cost": { "crystal": 115, "gold": 15 } },
+		"flame_tower":    { "cost": { "crystal": 105 } },
+		"aa_tower":       { "cost": { "crystal": 130, "gold": 20 } },
+		"solar_panel":    { "cost": { "crystal": 12 },  "hp": 40, "produce_interval": 2.0, "produce_amount": 6 },
+		"battery":        { "cost": { "crystal": 45 },  "hp": 60, "cap_bonus": 100 },
+		"power_pole":     { "cost": { "crystal": 10 },  "hp": 40, "range": 160.0 },
+		"power_grid":     { "link_range": 250.0, "source_cover": 120.0 },
+		"command_center": { "cost": { "crystal": 160 }, "hp": 200, "train_interval": 4.0, "train_cost": { "crystal": 12 }, "train_energy": 2, "max_workers": 5 },
+		"harvester":      { "speed": 120.0, "mine_time": 2.0, "mine_amount": 10 },
+		"light_pole":     { "cost": { "crystal": 8 },   "hp": 30, "radius": 300.0 },
+		"searchlight":    { "cost": { "crystal": 70, "gold": 10 }, "hp": 80, "range": 500.0, "cone": 36.0, "sweep": 140.0, "sweep_speed": 0.5, "energy_interval": 2.0, "energy_per_interval": 1 },
+		"intake_station": { "cost": { "crystal": 130, "gold": 25 }, "hp": 150, "range": 110.0, "burn_interval": 4.0, "crystal_per_burn": 5, "energy_base": 40, "energy_per_extra_cooler": 20, "max_coolers": 3 },
+		"cooling_tower":  { "cost": { "crystal": 55, "gold": 10 },  "hp": 60 }
+	},
+
+	"enemies": {
+		"grunt":  { "hp": 2,   "speed": 125.0, "damage": 3,  "attack_interval": 0.8, "attack_range": 36.0, "points": 5,   "scrap": 1,   "crystal": 0 },
+		"runner": { "hp": 1,   "speed": 200.0, "damage": 3,  "attack_interval": 0.5, "attack_range": 28.0, "points": 1,   "scrap": 1,   "crystal": 0 },
+		"brute":  { "hp": 15,  "speed": 65.0,  "damage": 20, "attack_interval": 0.8, "attack_range": 44.0, "points": 30,  "scrap": 18,  "crystal": 0 },
+		"mage":   { "hp": 6,   "speed": 85.0,  "damage": 0,  "attack_interval": 0.8, "attack_range": 36.0, "points": 35,  "scrap": 24,  "crystal": 5, "cast_interval": 8.0, "summon_count": 20, "max_alive_summons": 40, "kite_distance": 440.0, "approach_distance": 540.0 },
+		"wasp":   { "hp": 3,   "speed": 160.0, "damage": 4,  "attack_interval": 0.7, "attack_range": 34.0, "points": 8,   "scrap": 6,   "crystal": 0, "weave_frequency": 6.0, "weave_amplitude": 90.0 },
+		"drone":  { "hp": 25,  "speed": 70.0,  "damage": 10, "attack_interval": 1.0, "attack_range": 44.0, "points": 40,  "scrap": 20,  "crystal": 0, "drift_frequency": 1.4, "drift_amplitude": 16.0 },
+		"boss":   { "hp": 250, "speed": 70.0,  "damage": 25, "attack_interval": 1.2, "attack_range": 72.0, "points": 250, "scrap": 150, "crystal": 50, "birth_interval": 4.5, "max_alive_brood": 16, "max_per_brood": 8 }
+	},
+
+	"waves": {
+		"hp_scale": 1.12,
+		"chaff_hp_scale": 1.06,
+		"mage_hp_scale": 1.09,
+		"wasp_hp_scale": 1.07,
+		"boss_hp_growth": 1.5,
+		"boss_every": 10,
+		"time_between_waves": 20.0,
+		"spawn_interval": 0.18,
+		"spawn_radius": 800.0,
+		"max_alive": 350,
+		"chaff_burst": 5,
+		"composition": {
+			"grunt_base": 20, "grunt_per_wave": 8,
+			"runner_from_wave": 2, "runner_base": 10, "runner_per_wave": 6,
+			"brute_divisor": 4,
+			"mage_divisor": 6, "mage_cap": 3,
+			"wasp_divisor": 6, "wasp_per_step": 4, "wasp_cap": 24,
+			"wasp_flood_wave": 14, "wasp_flood_base": 12, "wasp_flood_per_wave": 4,
+			"drone_divisor": 8
+		}
+	},
+
+	"upgrades": {
+		"cost_scale": 1.6,
+		"crit": {
+			"player_chance_base": 0.05, "player_chance_cap": 0.8, "player_mult_base": 1.5,
+			"tower_chance_cap": 0.8, "tower_mult_base": 1.5
+		},
+		"economy": {
+			"energy_start": 20, "energy_cap_base": 100, "crystal_start": 30,
+			"sell_refund": 0.5, "scrap_gain_mult": 1.25
+		},
+		"research": {
+			"damage":             { "cost": { "scrap": 35 },   "effects": { "damage_bonus": 1.0 } },
+			"attack_speed":       { "cost": { "scrap": 52 },   "effects": { "fire_rate_cut": 0.1 } },
+			"crit_chance":        { "cost": { "scrap": 110 },  "effects": { "crit_chance": 0.05 } },
+			"crit_damage":        { "cost": { "scrap": 140 },  "effects": { "crit_mult": 0.25 } },
+			"speed":              { "cost": { "scrap": 35 },   "effects": { "speed_mult": 0.1 } },
+			"health":             { "cost": { "scrap": 52 },   "effects": { "player_hp_bonus": 25.0 } },
+			"regen":              { "cost": { "scrap": 140 },  "effects": { "player_regen": 1.0 } },
+			"player_light":       { "cost": { "scrap": 42 },   "effects": { "light_radius": 0.15 } },
+			"build_range":        { "cost": { "scrap": 52 },   "effects": { "build_range": 0.1 } },
+			"heal_range":         { "cost": { "scrap": 42 },   "effects": { "heal_range": 0.15 } },
+			"heal_amount":        { "cost": { "scrap": 56 },   "effects": { "heal_amount": 1.0 } },
+			"player_power":       { "cost": { "scrap": 70 },   "effects": { "player_power": 0.2 } },
+			"player_power_range": { "cost": { "scrap": 56 },   "effects": { "player_cover": 0.15 } },
+			"miner_1":            { "cost": { "scrap": 105 },  "effects": {} },
+			"walls_1":            { "cost": { "scrap": 52 },   "effects": {} },
+			"mg_tower_1":         { "cost": { "scrap": 230 },  "effects": {} },
+			"grenade_tower_1":    { "cost": { "scrap": 320 },  "effects": {} },
+			"repair_tower_1":     { "cost": { "scrap": 270 },  "effects": {} },
+			"tesla_tower_1":      { "cost": { "scrap": 410 },  "effects": {} },
+			"flame_tower_1":      { "cost": { "scrap": 320 },  "effects": {} },
+			"aa_tower_1":         { "cost": { "scrap": 450 },  "effects": {} },
+			"building_walk":      { "cost": { "scrap": 6000 }, "effects": {} },
+			"building_hp":        { "cost": { "scrap": 70 },   "effects": { "building_hp_mult": 0.25 } },
+			"tower_damage":       { "cost": { "scrap": 175 },  "effects": { "tower_damage": 1.0 } },
+			"miner_yield":        { "cost": { "scrap": 115 },  "effects": { "miner_yield": 1.0 } },
+			"tower_speed":        { "cost": { "scrap": 160 },  "effects": { "tower_speed": 0.15 } },
+			"tower_range":        { "cost": { "scrap": 200 },  "effects": { "tower_range": 0.1 } },
+			"tower_crit_chance":  { "cost": { "scrap": 225 },  "effects": { "tower_crit_chance": 0.05 } },
+			"tower_crit_damage":  { "cost": { "scrap": 285 },  "effects": { "tower_crit_mult": 0.5 } },
+			"solar_1":            { "cost": { "scrap": 35 },   "effects": {} },
+			"command_center_1":   { "cost": { "scrap": 500 },  "effects": {} },
+			"light_pole_1":       { "cost": { "scrap": 28 },   "effects": {} },
+			"searchlight_1":      { "cost": { "scrap": 230 },  "effects": {} },
+			"battery_1":          { "cost": { "scrap": 140 },  "effects": {} },
+			"power_pole_1":       { "cost": { "scrap": 50 },   "effects": {} },
+			"intake_station_1":   { "cost": { "scrap": 410 },  "effects": {} },
+			"cooling_tower_1":    { "cost": { "scrap": 100 },  "effects": {} }
+		}
+	}
+}

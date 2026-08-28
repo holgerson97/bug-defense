@@ -5,13 +5,13 @@ extends "res://scripts/building.gd"
 ## the ground for a few seconds. Enemies can waddle out — that is the
 ## counterplay.
 
-const THROW_INTERVAL := 0.9
-const ENERGY_PER_THROW := 1
 const TURN_SPEED := 8.0
 const RETARGET_INTERVAL := 0.1
 const FLARE_TIME := 0.18
 const NOZZLE_LENGTH := 25.0
 
+var throw_interval: float = Balance.num("towers/flame_tower/interval", 0.9)
+var energy_per_throw: int = Balance.inum("towers/flame_tower/energy_per_throw", 1)
 var base_range: float = GameState.BUILDINGS["flame_tower"]["range"]
 var fire_range: float = base_range
 var half_arc: float = deg_to_rad(GameState.BUILDINGS["flame_tower"]["arc"]) / 2.0
@@ -58,10 +58,10 @@ func _physics_process(delta: float) -> void:
 	var aim: float = (target.global_position - global_position).angle()
 	_nozzle.rotation = lerp_angle(_nozzle.rotation, aim, minf(TURN_SPEED * delta, 1.0))
 	_throw_accum += delta
-	if _throw_accum < GameState.tower_interval(THROW_INTERVAL):
+	if _throw_accum < GameState.tower_interval(throw_interval):
 		return
 	## Starved nozzle: keep the accumulator full and retry every frame.
-	if not grid_powered() or not GameState.try_spend_energy(ENERGY_PER_THROW):
+	if not grid_powered() or not GameState.try_spend_energy(energy_per_throw):
 		set_powered(false)
 		return
 	set_powered(true)
@@ -89,9 +89,11 @@ func _throw(target) -> void:
 class FireGlob extends Node2D:
 	const FIRE_PATCH := preload("res://scripts/effects/fire_patch.gd")
 	const FLIGHT_TIME := 0.45
-	const SPLASH_RADIUS := 40.0
 	const MAX_PATCHES := 4
 
+	var splash_radius: float = Balance.num("towers/flame_tower/splash_radius", 40.0)
+	var splash_mult: int = Balance.inum("towers/flame_tower/splash_mult", 2)
+	var damage_base: int = Balance.inum("towers/flame_tower/damage", 1)
 	var target_point: Vector2
 	var patches: Array = []
 	## Phase 6 client replay: no damage on land; the patch spawns with its
@@ -148,18 +150,18 @@ class FireGlob extends Node2D:
 	func _land() -> void:
 		if not cosmetic:
 			@warning_ignore("integer_division")
-			var damage := maxi(1 + GameState.tower_damage_bonus() / 4, 1) * 2
+			var damage := maxi(damage_base + GameState.tower_damage_bonus() / 4, 1) * splash_mult
 			if randf() < GameState.tower_crit_chance():
 				damage = int(ceil(damage * GameState.tower_crit_mult()))
 			for enemy in get_tree().get_nodes_in_group("enemies"):
-				if enemy.global_position.distance_to(global_position) <= SPLASH_RADIUS and enemy.has_method("take_damage"):
+				if enemy.global_position.distance_to(global_position) <= splash_radius and enemy.has_method("take_damage"):
 					enemy.take_damage(damage)
 		var scene = get_tree().current_scene
 		if scene != null:
 			## Fire doesn't stack: a glob landing on a burning spot rekindles
 			## the existing patch instead of piling a second DoT on top.
 			for existing in patches:
-				if is_instance_valid(existing) and existing.global_position.distance_to(global_position) <= FIRE_PATCH.RADIUS * 0.8:
+				if is_instance_valid(existing) and existing.global_position.distance_to(global_position) <= existing.radius * 0.8:
 					existing.refresh()
 					queue_free()
 					return

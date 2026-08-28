@@ -4,9 +4,9 @@ extends Node2D
 
 const FLAK_BURST_SCENE = preload("res://scenes/effects/flak_burst.tscn")
 
-const SPEED := 600.0
-const BURST_RADIUS := 130.0
-const BURST_DAMAGE := 4
+var speed: float = Balance.num("towers/aa_tower/shell_speed", 600.0)
+var burst_radius: float = Balance.num("towers/aa_tower/burst_radius", 130.0)
+var burst_damage: int = Balance.inum("towers/aa_tower/burst_damage", 4)
 
 var burst_point: Vector2
 ## Phase 6 client replay: cosmetic shells fly the host's route but free
@@ -18,7 +18,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var to_burst := burst_point - global_position
-	var step := SPEED * delta
+	var step := speed * delta
 	if to_burst.length() <= step:
 		global_position = burst_point
 		_detonate()
@@ -29,9 +29,9 @@ func _detonate() -> void:
 	if cosmetic:
 		queue_free()
 		return
-	var damage := GameState.tower_damage_roll(BURST_DAMAGE)
+	var damage := GameState.tower_damage_roll(burst_damage)
 	for enemy in get_tree().get_nodes_in_group("air_enemies"):
-		if enemy.global_position.distance_to(global_position) <= BURST_RADIUS and enemy.has_method("take_damage"):
+		if enemy.global_position.distance_to(global_position) <= burst_radius and enemy.has_method("take_damage"):
 			enemy.take_damage(damage)
 	var scene = get_tree().current_scene
 	if scene != null:

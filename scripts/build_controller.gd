@@ -5,7 +5,6 @@ extends Node2D
 ## The player calls tick(selected) every physics frame.
 
 const MINER_PLACE_RANGE := 80.0
-const BUILD_RANGE := 300.0
 const WALL_GRID := 16.0
 const GHOST_MARGIN := 1.0
 # Placement collides against player (1), ground enemies (2), deposits (16)
@@ -35,6 +34,10 @@ const BUILDING_FOOTPRINT := {"wall": 48.0, "mg_tower": 48.0, "grenade_tower": 48
 const PLACE_EPSILON := 2.0
 const GHOST_VALID := Color(0.35, 1.0, 0.45, 0.45)
 const GHOST_INVALID := Color(1.0, 0.3, 0.3, 0.45)
+
+var build_range: float = Balance.num("player/build_range", 300.0)
+## Fraction of the cost refunded on right-click sell.
+var sell_refund: float = Balance.num("upgrades/economy/sell_refund", 0.5)
 
 var miner_scene: PackedScene = preload("res://scenes/miner.tscn")
 var _ghost
@@ -160,7 +163,7 @@ func _build_position(id: String) -> Vector2:
 func _placement_valid(id: String, pos: Vector2) -> bool:
 	if not GameState.can_afford(GameState.BUILDINGS[id]["cost"]):
 		return false
-	if _player.global_position.distance_to(pos) > BUILD_RANGE * GameState.build_range_mult():
+	if _player.global_position.distance_to(pos) > build_range * GameState.build_range_mult():
 		return false
 	## Query slightly inside the footprint so flush neighbors don't collide.
 	var query: float = BUILDING_FOOTPRINT[id] - PLACE_EPSILON
@@ -193,8 +196,7 @@ func _sell_at(pos: Vector2) -> void:
 		return
 	var cost: Dictionary = GameState.BUILDINGS[id]["cost"]
 	for kind in cost:
-		@warning_ignore("integer_division")
-		GameState.add_resource(kind, cost[kind] / 2)
+		GameState.add_resource(kind, int(cost[kind] * sell_refund))
 	_sell_fx(building.global_position)
 	if Net.is_online():
 		_rpc_sell_fx.rpc(building.global_position)
@@ -284,7 +286,7 @@ func _update_tooltip(id: String, pos: Vector2, valid: bool) -> void:
 	if not valid:
 		if not GameState.can_afford(b["cost"]):
 			text += "\nNot enough resources"
-		elif _player.global_position.distance_to(pos) > BUILD_RANGE * GameState.build_range_mult():
+		elif _player.global_position.distance_to(pos) > build_range * GameState.build_range_mult():
 			text += "\nToo far away"
 		else:
 			text += "\nBlocked"

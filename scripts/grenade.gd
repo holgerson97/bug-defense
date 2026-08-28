@@ -4,8 +4,9 @@ extends Node2D
 
 
 const FLIGHT_TIME := 0.6
-const BLAST_RADIUS := 90.0
-const BLAST_DAMAGE := 3
+
+var blast_radius: float = Balance.num("towers/grenade_tower/blast_radius", 90.0)
+var blast_damage: int = Balance.inum("towers/grenade_tower/blast_damage", 3)
 
 var target_point: Vector2
 ## Phase 6 client replay: full arc + explosion FX/sfx, damage skipped.
@@ -27,10 +28,10 @@ func _physics_process(delta: float) -> void:
 
 func _explode() -> void:
 	if not cosmetic:
-		var blast_damage := GameState.tower_damage_roll(BLAST_DAMAGE)
+		var dmg := GameState.tower_damage_roll(blast_damage)
 		for enemy in get_tree().get_nodes_in_group("enemies"):
-			if enemy.global_position.distance_to(global_position) <= BLAST_RADIUS and enemy.has_method("take_damage"):
-				enemy.take_damage(blast_damage)
+			if enemy.global_position.distance_to(global_position) <= blast_radius and enemy.has_method("take_damage"):
+				enemy.take_damage(dmg)
 	Effects.explosion(self, global_position)
 	Sfx.play("explosion", global_position, -4.0)
 	queue_free()

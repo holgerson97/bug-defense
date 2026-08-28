@@ -2,11 +2,12 @@ extends "res://scripts/building.gd"
 ## WW2-style anti-air flak cannon: only engages air enemies, leading each
 ## target and firing timed-fuse shells that burst at the predicted position.
 
-const FIRE_INTERVAL := 0.9
-const ENERGY_PER_SHELL := 2
-const SHELL_SPEED := 600.0
 const MUZZLE_OFFSET := 34.0
 const IDLE_TURN_SPEED := 4.0
+
+var fire_interval: float = Balance.num("towers/aa_tower/interval", 0.9)
+var energy_per_shell: int = Balance.inum("towers/aa_tower/energy_per_shell", 2)
+var shell_speed: float = Balance.num("towers/aa_tower/shell_speed", 600.0)
 
 var shell_scene: PackedScene = preload("res://scenes/flak_shell.tscn")
 var base_range: float = GameState.BUILDINGS["aa_tower"]["range"]
@@ -35,11 +36,11 @@ func _physics_process(delta: float) -> void:
 		_target = null
 		_head.rotation = lerp_angle(_head.rotation, facing, minf(IDLE_TURN_SPEED * delta, 1.0))
 	_fire_accum += delta
-	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
+	if _fire_accum >= GameState.tower_interval(fire_interval):
 		_fire_accum = 0.0
 		_target = Util.nearest_in_group(self, "air_enemies", global_position, fire_range, [], true, facing, half_arc)
 		if _target != null:
-			if grid_powered() and GameState.try_spend_energy(ENERGY_PER_SHELL):
+			if grid_powered() and GameState.try_spend_energy(energy_per_shell):
 				set_powered(true)
 				_fire(_target)
 			else:
@@ -48,7 +49,7 @@ func _physics_process(delta: float) -> void:
 ## Timed-fuse flak: lead the target, clamp the fuse point to max range and
 ## let the shell burst there whether or not the target is still nearby.
 func _fire(target) -> void:
-	var flight_time: float = global_position.distance_to(target.global_position) / SHELL_SPEED
+	var flight_time: float = global_position.distance_to(target.global_position) / shell_speed
 	var predicted: Vector2 = target.global_position + target.velocity * flight_time
 	var offset := predicted - global_position
 	if offset.length() > fire_range:

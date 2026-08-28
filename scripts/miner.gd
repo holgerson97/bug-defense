@@ -1,14 +1,15 @@
 extends Node2D
 ## Placed next to a crystal block; extracts 2 crystal every 2 seconds until empty.
 
-const EXTRACT_INTERVAL := 2.0
-const EXTRACT_AMOUNT := 2
 const SIDE_OFFSET := 44.0
-const ENERGY_PER_CYCLE := 1
 const BOB_PIXELS := 2.5
 const WOBBLE_RAD := 0.05
 const BOBS_PER_CYCLE := 3.0
 const SPRITE_SCALE := 0.5
+
+var extract_interval: float = Balance.num("buildings/miner/extract_interval", 2.0)
+var extract_amount: int = Balance.inum("buildings/miner/extract_amount", 2)
+var energy_per_cycle: int = Balance.inum("buildings/miner/energy_per_cycle", 1)
 
 var deposit
 
@@ -39,14 +40,14 @@ func _process(delta: float) -> void:
 		_fog.emitting = false
 		return
 	_accum += delta
-	while _accum >= EXTRACT_INTERVAL:
-		_accum -= EXTRACT_INTERVAL
+	while _accum >= extract_interval:
+		_accum -= extract_interval
 		# Each extraction cycle drinks energy; starved miners skip the cycle.
-		if not GameState.try_spend_energy(ENERGY_PER_CYCLE):
+		if not GameState.try_spend_energy(energy_per_cycle):
 			_set_powered(false)
 			continue
 		_set_powered(true)
-		var taken = deposit.extract(EXTRACT_AMOUNT + GameState.miner_yield_bonus())
+		var taken = deposit.extract(extract_amount + GameState.miner_yield_bonus())
 		if taken > 0:
 			## Host banks the crystal; replicated miners keep the visuals only
 			## (client try_spend_energy above is a mirror check, no spend).
@@ -62,7 +63,7 @@ func _animate() -> void:
 		_sprite.position.y = 0.0
 		_sprite.rotation = 0.0
 		return
-	var phase := _accum / EXTRACT_INTERVAL * TAU * BOBS_PER_CYCLE
+	var phase := _accum / extract_interval * TAU * BOBS_PER_CYCLE
 	_sprite.position.y = -absf(sin(phase)) * BOB_PIXELS
 	_sprite.rotation = sin(phase * 0.5) * WOBBLE_RAD
 

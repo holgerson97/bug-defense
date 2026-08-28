@@ -2,10 +2,11 @@ extends "res://scripts/building.gd"
 ## Repair tower: every second heals the most-damaged building in range,
 ## or the player if no building needs it. Shows a brief green beam.
 
-const HEAL_INTERVAL := 1.0
-const HEAL_AMOUNT := 3
-const ENERGY_PER_PULSE := 1
 const BEAM_TIME := 0.4
+
+var heal_interval: float = Balance.num("towers/repair_tower/interval", 1.0)
+var heal_amount: int = Balance.inum("towers/repair_tower/heal_amount", 3)
+var energy_per_pulse: int = Balance.inum("towers/repair_tower/energy_per_pulse", 1)
 
 var base_range: float = GameState.BUILDINGS["repair_tower"]["range"]
 var heal_range: float = base_range
@@ -33,13 +34,13 @@ func _physics_process(delta: float) -> void:
 	## Extended Barrels research scales range live.
 	heal_range = base_range * GameState.tower_range_mult()
 	_heal_accum += delta
-	if _heal_accum >= HEAL_INTERVAL:
+	if _heal_accum >= heal_interval:
 		_heal_accum = 0.0
 		var target = _pick_target()
 		if target != null:
-			if grid_powered() and GameState.try_spend_energy(ENERGY_PER_PULSE):
+			if grid_powered() and GameState.try_spend_energy(energy_per_pulse):
 				set_powered(true)
-				target.heal(HEAL_AMOUNT)
+				target.heal(heal_amount)
 				_show_beam(target.global_position)
 				FxEvents.repair_beam(self, target.global_position)
 			else:

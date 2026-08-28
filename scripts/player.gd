@@ -12,17 +12,17 @@ signal died
 const RECOIL_KICK := 5.0
 const RECOIL_MAX := 14.0
 const RECOIL_RECOVER := 14.0
-const AUTO_ATTACK_RANGE := 250.0
+var auto_attack_range: float = Balance.num("player/auto_attack_range", 250.0)
 ## Physics layer 6 ("buildings") as a bit value; Phase Stride masks it out.
 const BUILDING_LAYER_BIT := 32
 ## Heal beam (hold F): mends the most damaged building in range every tick.
-const HEAL_BEAM_RANGE := 140.0
-const HEAL_TICK := 0.5
-const HEAL_BASE := 3
-const HEAL_ENERGY := 1
+var heal_beam_range: float = Balance.num("player/heal_beam/range", 140.0)
+var heal_tick: float = Balance.num("player/heal_beam/tick", 0.5)
+var heal_base: int = Balance.inum("player/heal_beam/heal", 3)
+var heal_energy: int = Balance.inum("player/heal_beam/energy", 1)
 ## Suit reactor: passive 6/s baseline — sustains roughly two turrets.
-const REACTOR_INTERVAL := 2.0
-const REACTOR_AMOUNT := 12.0
+var reactor_interval: float = Balance.num("player/reactor/interval", 2.0)
+var reactor_amount: float = Balance.num("player/reactor/amount", 12.0)
 
 var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 ## Replicated by the MultiplayerSynchronizer; setters also run on puppets.
@@ -34,7 +34,7 @@ var _regen_accum: float = 0.0
 var _recoil: Vector2 = Vector2.ZERO
 var _auto_attack: bool = false
 ## Starts full so the first heal tick lands the moment F is pressed.
-var _heal_accum: float = HEAL_TICK
+var _heal_accum: float = heal_tick
 var _heal_target: Node2D = null
 var _heal_beam: Line2D
 var _reactor_accum: float = 0.0
@@ -61,8 +61,10 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	GameState.upgrades_changed.connect(_on_upgrades_changed)
+	base_speed = Balance.num("player/speed", base_speed)
+	base_fire_rate = Balance.num("player/fire_cooldown", base_fire_rate)
 	_max_health = GameState.player_max_health()
-	_base_light_radius = _light.radius
+	_base_light_radius = Balance.num("player/light_radius", _light.radius)
 	_apply_light_radius()
 	_apply_building_walk()
 	_camera.enabled = is_multiplayer_authority()
@@ -151,7 +153,7 @@ func _physics_process(delta: float) -> void:
 	var auto_target = null
 	if _auto_attack:
 		# Terrain LOS like towers: never aim at enemies behind rock/ore.
-		auto_target = Util.nearest_visible_in_group(self, "enemies", global_position, AUTO_ATTACK_RANGE)
+		auto_target = Util.nearest_visible_in_group(self, "enemies", global_position, auto_attack_range)
 	if auto_target != null:
 		look_at(auto_target.global_position)
 	else:
@@ -178,9 +180,9 @@ func _physics_process(delta: float) -> void:
 	## Suit reactor: passive energy through the normal path so it shows in the
 	## HUD production rate; carry banks fractional output from multipliers.
 	_reactor_accum += delta
-	if _reactor_accum >= REACTOR_INTERVAL:
-		_reactor_accum -= REACTOR_INTERVAL
-		_reactor_carry += REACTOR_AMOUNT * GameState.player_power_mult()
+	if _reactor_accum >= reactor_interval:
+		_reactor_accum -= reactor_interval
+		_reactor_carry += reactor_amount * GameState.player_power_mult()
 		var whole := int(_reactor_carry)
 		_reactor_carry -= whole
 		GameState.add_resource("energy", whole)
@@ -189,24 +191,24 @@ func _physics_process(delta: float) -> void:
 	## building in range and spends energy (godmode-aware via try_spend_energy).
 	if Input.is_action_pressed("heal_beam"):
 		_heal_accum += delta
-		if _heal_accum >= HEAL_TICK:
+		if _heal_accum >= heal_tick:
 			_heal_accum = 0.0
 			_heal_target = _pick_heal_target()
-			if _heal_target != null and not GameState.try_spend_energy(HEAL_ENERGY):
+			if _heal_target != null and not GameState.try_spend_energy(heal_energy):
 				_heal_target = null
 			if _heal_target != null:
 				## request_heal routes to the host online (heal() itself
 				## no-ops on clients — building HP is host-owned, Phase 4).
-				_heal_target.request_heal(HEAL_BASE + GameState.player_heal_bonus())
+				_heal_target.request_heal(heal_base + GameState.player_heal_bonus())
 	else:
-		_heal_accum = HEAL_TICK
+		_heal_accum = heal_tick
 		_heal_target = null
 	_update_heal_beam()
 	_build.tick(selected)
 
 ## Most-damaged building in beam range (repair tower pick, minus player heal).
 func _pick_heal_target():
-	var reach := HEAL_BEAM_RANGE * GameState.player_heal_range_mult()
+	var reach := heal_beam_range * GameState.player_heal_range_mult()
 	var best = null
 	var best_missing := 0
 	for building in get_tree().get_nodes_in_group("buildings"):

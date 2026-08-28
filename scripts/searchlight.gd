@@ -5,13 +5,14 @@ extends "res://scripts/building.gd"
 ## of glowing. covers() gives matching cone vision. Reach/angle mirror
 ## GameState.BUILDINGS["searchlight"] "range" / "cone".
 
-const SWEEP_SPEED := 0.5
-const SWEEP_HALF_ARC := deg_to_rad(70.0)
-const ENERGY_INTERVAL := 2.0
-const ENERGY_PER_INTERVAL := 1
-const BEAM_REACH := 500.0
-const BEAM_HALF_ANGLE := deg_to_rad(18.0)
 const CONE_TEX_SIZE := 256
+
+var sweep_speed: float = Balance.num("buildings/searchlight/sweep_speed", 0.5)
+var sweep_half_arc: float = deg_to_rad(Balance.num("buildings/searchlight/sweep", 140.0)) / 2.0
+var energy_interval: float = Balance.num("buildings/searchlight/energy_interval", 2.0)
+var energy_per_interval: int = Balance.inum("buildings/searchlight/energy_per_interval", 1)
+var beam_reach: float = Balance.num("buildings/searchlight/range", 500.0)
+var beam_half_angle: float = deg_to_rad(Balance.num("buildings/searchlight/cone", 36.0)) / 2.0
 
 var _energy_accum: float = 0.0
 var _sweep_dir := 1.0
@@ -39,25 +40,25 @@ func _physics_process(delta: float) -> void:
 		return
 	# Starved: beam dark, sweep paused; retry the spend every frame.
 	if not _powered:
-		if grid_powered() and GameState.try_spend_energy(ENERGY_PER_INTERVAL):
+		if grid_powered() and GameState.try_spend_energy(energy_per_interval):
 			set_powered(true)
 			_energy_accum = 0.0
 		else:
 			return
 	_energy_accum += delta
-	if _energy_accum >= ENERGY_INTERVAL:
-		_energy_accum -= ENERGY_INTERVAL
-		if not grid_powered() or not GameState.try_spend_energy(ENERGY_PER_INTERVAL):
+	if _energy_accum >= energy_interval:
+		_energy_accum -= energy_interval
+		if not grid_powered() or not GameState.try_spend_energy(energy_per_interval):
 			set_powered(false)
 			return
 	_sweep(delta)
 
 # Ping-pong the sweep: flip direction at the arc bounds.
 func _sweep(delta: float) -> void:
-	_head.rotation += SWEEP_SPEED * _sweep_dir * delta
+	_head.rotation += sweep_speed * _sweep_dir * delta
 	var off := _head.rotation - facing
-	if absf(off) >= SWEEP_HALF_ARC:
-		_head.rotation = facing + clampf(off, -SWEEP_HALF_ARC, SWEEP_HALF_ARC)
+	if absf(off) >= sweep_half_arc:
+		_head.rotation = facing + clampf(off, -sweep_half_arc, sweep_half_arc)
 		_sweep_dir = -_sweep_dir
 
 func set_powered(p: bool) -> void:
@@ -71,9 +72,9 @@ func covers(pos: Vector2) -> bool:
 	if not _powered:
 		return false
 	var to := pos - global_position
-	if to.length() > BEAM_REACH:
+	if to.length() > beam_reach:
 		return false
-	return absf(wrapf(to.angle() - _head.global_rotation, -PI, PI)) <= BEAM_HALF_ANGLE
+	return absf(wrapf(to.angle() - _head.global_rotation, -PI, PI)) <= beam_half_angle
 
 ## The beam is a PointLight2D with a script-built cone alpha texture:
 ## apex at left-center of the Image, soft-edged wedge opening along +X
@@ -91,14 +92,14 @@ func _build_cone_light() -> void:
 			var r := v.length() / float(CONE_TEX_SIZE)
 			if r > 1.0:
 				continue
-			var a := smoothstep(BEAM_HALF_ANGLE, BEAM_HALF_ANGLE * 0.85, absf(atan2(v.y, v.x)))
+			var a := smoothstep(beam_half_angle, beam_half_angle * 0.85, absf(atan2(v.y, v.x)))
 			a *= smoothstep(1.0, 0.85, r)
 			if a > 0.0:
 				img.set_pixel(x, y, Color(1, 1, 1, a))
 	_cone = PointLight2D.new()
 	_cone.texture = ImageTexture.create_from_image(img)
-	_cone.texture_scale = BEAM_REACH / float(CONE_TEX_SIZE)
-	_cone.position = Vector2(BEAM_REACH / 2.0, 0.0)
+	_cone.texture_scale = beam_reach / float(CONE_TEX_SIZE)
+	_cone.position = Vector2(beam_reach / 2.0, 0.0)
 	_cone.color = Color(1, 1, 1)
 	_cone.energy = 1.0
 	_head.add_child(_cone)

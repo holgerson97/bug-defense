@@ -6,13 +6,15 @@ extends "res://scripts/building.gd"
 ## complex: dim + bolt, no burn, no smoke, coolers idle. Not a grid source
 ## itself: the output pole must reach a real source (solar/battery/CC).
 
-const BURN_INTERVAL := 4.0
-const CRYSTAL_PER_BURN := 5
-const ENERGY_BASE := 40
-const ENERGY_PER_EXTRA_COOLER := 20
-const MAX_COOLERS := 3
-const COMPLEX_RANGE := 110.0
 const SPRITE_SCALE := 0.5
+
+var burn_interval: float = Balance.num("buildings/intake_station/burn_interval", 4.0)
+var crystal_per_burn: int = Balance.inum("buildings/intake_station/crystal_per_burn", 5)
+var energy_base: int = Balance.inum("buildings/intake_station/energy_base", 40)
+var energy_per_extra_cooler: int = Balance.inum("buildings/intake_station/energy_per_extra_cooler", 20)
+var max_coolers: int = Balance.inum("buildings/intake_station/max_coolers", 3)
+## Complex radius, mirrored by GameState.BUILDINGS["intake_station"]["range"].
+var complex_range: float = Balance.num("buildings/intake_station/range", 110.0)
 
 var _burn_accum: float = 0.0
 var _burning := false
@@ -29,8 +31,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	_burn_accum += delta
-	if _burn_accum >= BURN_INTERVAL:
-		_burn_accum -= BURN_INTERVAL
+	if _burn_accum >= burn_interval:
+		_burn_accum -= burn_interval
 		_cycle()
 
 ## One burn cycle: verify the complex, then trade crystal for energy.
@@ -44,10 +46,10 @@ func _cycle() -> void:
 		## Host owns the crystal->energy trade; clients only predict the burn
 		## FX from their mirror so the furnace look matches (cosmetic drift ok).
 		if Net.is_host():
-			if GameState.spend({"crystal": CRYSTAL_PER_BURN}):
-				GameState.add_resource("energy", ENERGY_BASE + (mini(coolers.size(), MAX_COOLERS) - 1) * ENERGY_PER_EXTRA_COOLER)
+			if GameState.spend({"crystal": crystal_per_burn}):
+				GameState.add_resource("energy", energy_base + (mini(coolers.size(), max_coolers) - 1) * energy_per_extra_cooler)
 				_burning = true
-		elif GameState.can_afford({"crystal": CRYSTAL_PER_BURN}):
+		elif GameState.can_afford({"crystal": crystal_per_burn}):
 			_burning = true
 	if _burning:
 		_strike()
@@ -59,7 +61,7 @@ func _cycle() -> void:
 func _in_complex(group: String) -> Array:
 	var found: Array = []
 	for node in get_tree().get_nodes_in_group(group):
-		if node.global_position.distance_to(global_position) <= COMPLEX_RANGE:
+		if node.global_position.distance_to(global_position) <= complex_range:
 			found.append(node)
 	return found
 

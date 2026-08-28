@@ -2,11 +2,11 @@ extends "res://scripts/building.gd"
 ## Tesla tower: zaps the nearest enemy, then chains lightning to nearby
 ## foes at half damage per hop. Bolts are self-freeing jagged Line2D flashes.
 
-const FIRE_INTERVAL := 1.1
-const ENERGY_PER_ZAP := 2
-const CHAIN_RANGE := 130.0
-const MAX_CHAINS := 3
-const ZAP_DAMAGE := 2
+var fire_interval: float = Balance.num("towers/tesla_tower/interval", 1.1)
+var energy_per_zap: int = Balance.inum("towers/tesla_tower/energy_per_zap", 2)
+var chain_range: float = Balance.num("towers/tesla_tower/chain_range", 130.0)
+var max_chains: int = Balance.inum("towers/tesla_tower/max_chains", 3)
+var zap_damage: int = Balance.inum("towers/tesla_tower/damage", 2)
 
 var base_range: float = GameState.BUILDINGS["tesla_tower"]["range"]
 var fire_range: float = base_range
@@ -24,7 +24,7 @@ func _physics_process(delta: float) -> void:
 	## Extended Barrels research scales range live.
 	fire_range = base_range * GameState.tower_range_mult()
 	_fire_accum += delta
-	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
+	if _fire_accum >= GameState.tower_interval(fire_interval):
 		_fire_accum = 0.0
 		_zap()
 
@@ -34,21 +34,21 @@ func _zap() -> void:
 	var first = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, victims, true)
 	if first == null:
 		return
-	if not grid_powered() or not GameState.try_spend_energy(ENERGY_PER_ZAP):
+	if not grid_powered() or not GameState.try_spend_energy(energy_per_zap):
 		set_powered(false)
 		return
 	set_powered(true)
 	victims.append(first)
 	var link = first
-	for i in MAX_CHAINS:
-		var next = Util.nearest_in_group(self, "enemies", link.global_position, CHAIN_RANGE, victims)
+	for i in max_chains:
+		var next = Util.nearest_in_group(self, "enemies", link.global_position, chain_range, victims)
 		if next == null:
 			break
 		victims.append(next)
 		link = next
 	# Capture positions before dealing damage; a kill frees the victim node.
 	var points: Array = [global_position]
-	var damage := GameState.tower_damage_roll(ZAP_DAMAGE)
+	var damage := GameState.tower_damage_roll(zap_damage)
 	for victim in victims:
 		points.append(victim.global_position)
 		if victim.has_method("take_damage"):

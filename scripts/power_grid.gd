@@ -8,12 +8,13 @@ extends Node
 
 signal grid_changed
 
-const LINK_RANGE := 250.0
-const COVER_RANGE := 160.0
-const SOURCE_COVER := 120.0
+var LINK_RANGE: float = Balance.num("buildings/power_grid/link_range", 250.0)
+## Mirrors GameState.BUILDINGS["power_pole"]["range"] (the ghost's circle).
+var COVER_RANGE: float = Balance.num("buildings/power_pole/range", 160.0)
+var SOURCE_COVER: float = Balance.num("buildings/power_grid/source_cover", 120.0)
 ## The player's suit carries a small reactor: towers near the player run
 ## without pole coverage. Mobile, so never part of the cached BFS.
-const PLAYER_COVER := 150.0
+var PLAYER_COVER: float = Balance.num("player/reactor/cover_range", 150.0)
 
 var _dirty := true
 var _links: Dictionary = {}

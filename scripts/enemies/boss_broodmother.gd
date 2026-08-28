@@ -2,10 +2,11 @@ extends "res://scripts/enemy.gd"
 ## Boss (every 10th wave): slow bruiser that births runner broods while alive.
 ## Crossing 75/50/25% HP triggers a rage brood: a full ring at once.
 
-const BIRTH_INTERVAL := 4.5
-const MAX_ALIVE_BROOD := 16
-const MAX_PER_BROOD := 8
 const RAGE_THRESHOLDS := [0.75, 0.5, 0.25]
+
+var birth_interval: float = Balance.num("enemies/boss/birth_interval", 4.5)
+var max_alive_brood: int = Balance.inum("enemies/boss/max_alive_brood", 16)
+var max_per_brood: int = Balance.inum("enemies/boss/max_per_brood", 8)
 ## Phase 6: enemy HP isn't replicated, but the boss bar must move on clients
 ## — a tiny periodic host RPC keeps puppet bars honest.
 const HP_SYNC_INTERVAL := 1.0
@@ -37,7 +38,7 @@ func _physics_process(delta: float) -> void:
 	if _target == null or not is_instance_valid(_target):
 		return
 	_birth_timer += delta
-	if _birth_timer >= BIRTH_INTERVAL:
+	if _birth_timer >= birth_interval:
 		_birth_timer = 0.0
 		_birth(_brood_count())
 
@@ -52,7 +53,7 @@ func take_damage(amount) -> void:
 	## Rage broods at HP thresholds; while-loop catches big hits crossing several.
 	while not _dead and _rage_index < RAGE_THRESHOLDS.size() and health <= int(max_health * RAGE_THRESHOLDS[_rage_index]):
 		_rage_index += 1
-		_birth(MAX_PER_BROOD)
+		_birth(max_per_brood)
 
 ## Host -> clients: puppet health-bar update (spawn overrides made
 ## max_health identical on every peer, so the ratio matches).
@@ -66,7 +67,7 @@ func _rpc_boss_health(value: int) -> void:
 func _brood_count() -> int:
 	var wm = get_tree().get_first_node_in_group("wave_manager")
 	var wave: int = wm.wave if wm != null else 10
-	return clampi(3 + wave / 10, 4, MAX_PER_BROOD)
+	return clampi(3 + wave / 10, 4, max_per_brood)
 
 ## Births runners in a ring; alive brood is capped to avoid runaway.
 ## Host-only by construction (AI is puppet-gated); spawns route through the
@@ -79,10 +80,10 @@ func _birth(count: int) -> void:
 	_brood = _brood.filter(func(s): return is_instance_valid(s))
 	var wave: int = wm.wave
 	for i in count:
-		if _brood.size() >= MAX_ALIVE_BROOD:
+		if _brood.size() >= max_alive_brood:
 			return
 		var a := TAU * float(i) / float(count) + randf_range(-0.2, 0.2)
 		var pos: Vector2 = global_position + Vector2.from_angle(a) * randf_range(50.0, 70.0)
-		var runner = wm.spawn_summon(pos, 1 + wave / 10, wave * 2.0)
+		var runner = wm.spawn_summon(pos, Balance.inum("enemies/runner/hp", 1) + wave / 10, wave * 2.0)
 		if runner != null:
 			_brood.append(runner)

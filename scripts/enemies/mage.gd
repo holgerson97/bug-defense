@@ -1,16 +1,17 @@
 extends "res://scripts/enemy.gd"
 ## Kites the player at range and periodically summons a swarm of runners.
 
-const KITE_DISTANCE := 440.0
-const APPROACH_DISTANCE := 540.0
 const RETREAT_SPEED_MULT := 1.35
-const CAST_INTERVAL := 8.0
 const FIRST_CAST_DELAY := 2.0
-const MAX_ALIVE_SUMMONS := 40
-const SUMMON_COUNT := 20
 const FAN_HALF_ARC := 1.4
 
-var _cast_timer: float = CAST_INTERVAL - FIRST_CAST_DELAY
+var kite_distance: float = Balance.num("enemies/mage/kite_distance", 440.0)
+var approach_distance: float = Balance.num("enemies/mage/approach_distance", 540.0)
+var cast_interval: float = Balance.num("enemies/mage/cast_interval", 8.0)
+var max_alive_summons: int = Balance.inum("enemies/mage/max_alive_summons", 40)
+var summon_count: int = Balance.inum("enemies/mage/summon_count", 20)
+
+var _cast_timer: float = cast_interval - FIRST_CAST_DELAY
 var _summons: Array = []
 
 ## The mage kites the nearest PLAYER specifically; buildings never distract it.
@@ -22,11 +23,11 @@ func _behave(delta) -> void:
 	var dist := to_player.length()
 	var move := Vector2.ZERO
 	var spd := speed
-	if dist < KITE_DISTANCE:
+	if dist < kite_distance:
 		## Panic retreat: the mage stays behind its swarm.
 		move = -to_player.normalized()
 		spd *= RETREAT_SPEED_MULT
-	elif dist > APPROACH_DISTANCE:
+	elif dist > approach_distance:
 		move = to_player.normalized()
 	rotation = to_player.angle()
 	if move != Vector2.ZERO:
@@ -37,7 +38,7 @@ func _behave(delta) -> void:
 		_steering_reset()
 
 	_cast_timer += delta
-	if _cast_timer >= CAST_INTERVAL:
+	if _cast_timer >= cast_interval:
 		_cast_timer = 0.0
 		_summon_swarm()
 
@@ -53,12 +54,12 @@ func _summon_swarm() -> void:
 	_summons = _summons.filter(func(s): return is_instance_valid(s))
 	var wave: int = wm.wave
 	var toward: float = (_target.global_position - global_position).angle()
-	for i in SUMMON_COUNT:
-		if _summons.size() >= MAX_ALIVE_SUMMONS:
+	for i in summon_count:
+		if _summons.size() >= max_alive_summons:
 			return
-		var a: float = toward + lerpf(-FAN_HALF_ARC, FAN_HALF_ARC, float(i) / float(SUMMON_COUNT - 1))
+		var a: float = toward + lerpf(-FAN_HALF_ARC, FAN_HALF_ARC, float(i) / float(summon_count - 1))
 		var ring: float = 60.0 + float(i % 3) * 45.0
 		var pos: Vector2 = global_position + Vector2.from_angle(a) * (ring + randf_range(-10.0, 10.0))
-		var runner = wm.spawn_summon(pos, 1 + wave / 10, wave * 2.0)
+		var runner = wm.spawn_summon(pos, Balance.inum("enemies/runner/hp", 1) + wave / 10, wave * 2.0)
 		if runner != null:
 			_summons.append(runner)

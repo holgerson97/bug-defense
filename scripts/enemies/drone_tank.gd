@@ -3,8 +3,8 @@ extends "res://scripts/enemy.gd"
 ## in a slow, near-straight line, soaking AA fire while wasp swarms slip past,
 ## then delivers heavy gnawing bites in melee range.
 
-const DRIFT_FREQUENCY := 1.4
-const DRIFT_AMPLITUDE := 16.0
+var drift_frequency: float = Balance.num("enemies/drone/drift_frequency", 1.4)
+var drift_amplitude: float = Balance.num("enemies/drone/drift_amplitude", 16.0)
 
 var _drift_time: float = randf() * TAU
 
@@ -14,7 +14,7 @@ func _behave(delta) -> void:
 		## Gentle drift only — a fat slow target the flak can track.
 		_drift_time += delta
 		var dir := to_target.normalized()
-		velocity = dir * speed + dir.orthogonal() * sin(_drift_time * DRIFT_FREQUENCY) * DRIFT_AMPLITUDE
+		velocity = dir * speed + dir.orthogonal() * sin(_drift_time * drift_frequency) * drift_amplitude
 		rotation = velocity.angle()
 		move_and_slide()
 	else:

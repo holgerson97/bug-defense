@@ -9,13 +9,16 @@ signal power_rates_changed(production: float, consumption: float)
 const HOTBAR_SIZE := 17
 
 ## Stored energy is capped; each Battery building raises the cap.
-const BASE_ENERGY_CAP := 100
-const BATTERY_CAP_BONUS := 100
+var BASE_ENERGY_CAP: int = Balance.inum("upgrades/economy/energy_cap_base", 100)
+var BATTERY_CAP_BONUS: int = Balance.inum("buildings/battery/cap_bonus", 100)
 
 ## Branches holding one-shot building unlocks (everything else is repeatable).
 const UNLOCK_BRANCHES := ["Defense", "Resource", "Electricity"]
 
-const UPGRADES := {
+## Shipped defaults for the research table; costs and effects are overlaid
+## from balance.json ("upgrades/research/<id>") in _init — icons, names,
+## branches, descriptions and requires always stay in code.
+const UPGRADE_DEFAULTS := {
 	# Player and building stats: one flat repeatable button per category — each
 	# purchase raises the level (effect stacks) and the price (x1.6 per level).
 	"damage": {"icon": "res://assets/icons/blaster.svg", "name": "Damage", "branch": "Offense", "desc": "+1 bullet damage", "cost": {"scrap": 35}, "requires": [], "effects": {"damage_bonus": 1.0}},
@@ -72,7 +75,10 @@ const UPGRADES := {
 # the ghost's placement circle.
 ## Buildings cost crystal (plus gold for premium ones); bug hearts
 ## (internal key "scrap") are spent exclusively on research.
-const BUILDINGS := {
+## Shipped defaults: costs and range/arc/cone/sweep are overlaid from
+## balance.json in _init (towers read range/arc from "towers/<id>",
+## support buildings from "buildings/<id>").
+const BUILDING_DEFAULTS := {
 	"miner": {"icon": "res://assets/icons/miner.svg", "name": "Miner", "cost": {"crystal": 15}, "research": "miner_1", "slot": 1},
 	"wall": {"icon": "res://assets/icons/wall.svg", "name": "Wall", "cost": {"crystal": 6}, "research": "walls_1", "slot": 2},
 	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"crystal": 90}, "research": "mg_tower_1", "slot": 3, "range": 350.0, "arc": 90.0, "tower": true},
@@ -92,7 +98,44 @@ const BUILDINGS := {
 }
 
 ## Global bounty boost: kills pay 1.25x their listed bug-heart value.
-const SCRAP_GAIN_MULT := 1.25
+var SCRAP_GAIN_MULT: float = Balance.num("upgrades/economy/scrap_gain_mult", 1.25)
+
+## Balance-fed live tables (same shape as the *_DEFAULTS consts above).
+var UPGRADES: Dictionary = {}
+var BUILDINGS: Dictionary = {}
+
+## Balance-fed bases for the stat helpers below (fallback = shipped value).
+var _cost_scale: float = Balance.num("upgrades/cost_scale", 1.6)
+var _player_crit_base: float = Balance.num("upgrades/crit/player_chance_base", 0.05)
+var _player_crit_cap: float = Balance.num("upgrades/crit/player_chance_cap", 0.8)
+var _player_crit_mult_base: float = Balance.num("upgrades/crit/player_mult_base", 1.5)
+var _tower_crit_cap: float = Balance.num("upgrades/crit/tower_chance_cap", 0.8)
+var _tower_crit_mult_base: float = Balance.num("upgrades/crit/tower_mult_base", 1.5)
+var _player_damage_base: int = Balance.inum("player/damage", 1)
+var _player_hp_base: int = Balance.inum("player/max_health", 100)
+var _min_fire_cooldown: float = Balance.num("player/min_fire_cooldown", 0.04)
+var _crystal_start: int = Balance.inum("upgrades/economy/crystal_start", 30)
+var _energy_start: int = Balance.inum("upgrades/economy/energy_start", 20)
+
+func _init() -> void:
+	for id in UPGRADE_DEFAULTS:
+		var up: Dictionary = UPGRADE_DEFAULTS[id].duplicate(true)
+		up["cost"] = Balance.cost_dict("upgrades/research/%s/cost" % id, up["cost"])
+		var eff: Dictionary = Balance.dict("upgrades/research/%s/effects" % id, up["effects"])
+		var effects := {}
+		for key in eff:
+			if eff[key] is float or eff[key] is int:
+				effects[key] = float(eff[key])
+		up["effects"] = effects
+		UPGRADES[id] = up
+	for id in BUILDING_DEFAULTS:
+		var b: Dictionary = BUILDING_DEFAULTS[id].duplicate(true)
+		b["cost"] = Balance.cost_dict("buildings/%s/cost" % id, b["cost"])
+		var sec: String = ("towers/" + id) if b.get("tower", false) else ("buildings/" + id)
+		for key in ["range", "arc", "cone", "sweep"]:
+			if b.has(key):
+				b[key] = Balance.num("%s/%s" % [sec, key], b[key])
+		BUILDINGS[id] = b
 
 var power_production: float = 0.0
 var power_consumption: float = 0.0
@@ -100,7 +143,7 @@ var _prod_accum: float = 0.0
 var _cons_accum: float = 0.0
 var _rate_timer: float = 0.0
 ## Starter crystal lets the first solar/wall/miner go up before any mining.
-var resources: Dictionary = {"scrap": 0, "crystal": 30, "energy": 20}
+var resources: Dictionary = {"scrap": 0, "crystal": _crystal_start, "energy": _energy_start}
 ## Cheat toggle (G): player takes no damage, all costs are free.
 ## Online it is session-wide and host-owned: client G presses are ignored
 ## (the setter no-ops), the host's state broadcast mirrors it to everyone.
@@ -144,7 +187,7 @@ func _is_client() -> bool:
 	return net != null and net.is_online() and not net.is_host()
 
 func reset() -> void:
-	resources = {"scrap": 0, "crystal": 30, "energy": 20}
+	resources = {"scrap": 0, "crystal": _crystal_start, "energy": _energy_start}
 	godmode = false
 	purchased = {}
 	_scrap_carry = 0.0
@@ -293,7 +336,7 @@ func upgrade_cost(id: String) -> Dictionary:
 	var scaled := {}
 	for kind in base:
 		# minf guards against int64 overflow at absurd upgrade levels.
-		scaled[kind] = int(ceil(minf(base[kind] * pow(1.6, lvl), 1e12)))
+		scaled[kind] = int(ceil(minf(base[kind] * pow(_cost_scale, lvl), 1e12)))
 	return scaled
 
 func is_purchased(id: String) -> bool:
@@ -346,23 +389,23 @@ func stat(key: String) -> float:
 
 # Player stats: research effects.
 func player_damage() -> int:
-	return 1 + int(stat("damage_bonus"))
+	return _player_damage_base + int(stat("damage_bonus"))
 
 func player_crit_chance() -> float:
-	return minf(0.05 + stat("crit_chance"), 0.8)
+	return minf(_player_crit_base + stat("crit_chance"), _player_crit_cap)
 
 func player_crit_mult() -> float:
-	return 1.5 + stat("crit_mult")
+	return _player_crit_mult_base + stat("crit_mult")
 
 func player_fire_cooldown(base_cooldown: float) -> float:
 	# Diminishing returns so unlimited fire-rate levels never hit zero.
-	return maxf(base_cooldown / (1.0 + stat("fire_rate_cut")), 0.04)
+	return maxf(base_cooldown / (1.0 + stat("fire_rate_cut")), _min_fire_cooldown)
 
 func player_speed(base_speed: float) -> float:
 	return base_speed * (1.0 + stat("speed_mult"))
 
 func player_max_health() -> int:
-	return 100 + int(stat("player_hp_bonus"))
+	return _player_hp_base + int(stat("player_hp_bonus"))
 
 func player_regen() -> float:
 	return stat("player_regen")
@@ -406,10 +449,10 @@ func tower_range_mult() -> float:
 	return 1.0 + stat("tower_range")
 
 func tower_crit_chance() -> float:
-	return minf(stat("tower_crit_chance"), 0.8)
+	return minf(stat("tower_crit_chance"), _tower_crit_cap)
 
 func tower_crit_mult() -> float:
-	return 1.5 + stat("tower_crit_mult")
+	return _tower_crit_mult_base + stat("tower_crit_mult")
 
 ## Tower hit: base + flat damage bonus, then a crit roll.
 func tower_damage_roll(base_damage: int) -> int:

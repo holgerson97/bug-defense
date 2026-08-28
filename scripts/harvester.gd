@@ -6,14 +6,15 @@ extends CharacterBody2D
 
 enum State { TO_MINE, MINING, TO_BASE }
 
-const SPEED := 120.0
 const STOP_DIST := 40.0
-const MINE_TIME := 2.0
-const MINE_AMOUNT := 10
 const SEARCH_RANGE := 1200.0
 const RESCAN_INTERVAL := 1.0
 const ORBIT_RADIUS := 70.0
 const ORBIT_SPEED := 0.9
+
+var speed: float = Balance.num("buildings/harvester/speed", 120.0)
+var mine_time: float = Balance.num("buildings/harvester/mine_time", 2.0)
+var mine_amount: int = Balance.inum("buildings/harvester/mine_amount", 10)
 
 var command_center
 var cargo: int = 0
@@ -67,9 +68,9 @@ func _mining(delta: float) -> void:
 	_mine_accum += delta
 	# Slight dig shake while chewing on the block.
 	_sprite.position = Vector2(randf_range(-1.4, 1.4), randf_range(-1.4, 1.4))
-	if _mine_accum >= MINE_TIME:
+	if _mine_accum >= mine_time:
 		_sprite.position = Vector2.ZERO
-		cargo = _target_deposit.extract(MINE_AMOUNT)
+		cargo = _target_deposit.extract(mine_amount)
 		_state = State.TO_BASE
 
 func _to_base() -> void:
@@ -95,6 +96,6 @@ func _idle_orbit(delta: float) -> void:
 	_drive_toward(point)
 
 func _drive_toward(point: Vector2) -> void:
-	velocity = (point - global_position).normalized() * SPEED
+	velocity = (point - global_position).normalized() * speed
 	rotation = velocity.angle()
 	move_and_slide()

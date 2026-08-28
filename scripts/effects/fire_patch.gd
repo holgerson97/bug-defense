@@ -3,12 +3,14 @@ extends Node2D
 ## enemies standing inside, glows with a flickering fire light that also
 ## reveals bugs for lit-gated towers, fades out over its last second.
 
-const RADIUS := 48.0
-const LIFETIME := 3.5
 const FADE_TIME := 1.0
-const TICK_INTERVAL := 0.5
 const LIGHT_RADIUS := 70.0
 const LIGHT_ENERGY := 0.9
+
+var radius: float = Balance.num("towers/flame_tower/patch_radius", 48.0)
+var lifetime: float = Balance.num("towers/flame_tower/patch_lifetime", 3.5)
+var tick_interval: float = Balance.num("towers/flame_tower/patch_tick_interval", 0.5)
+var tick_damage_base: int = Balance.inum("towers/flame_tower/damage", 1)
 
 ## Phase 6 client replay: skip damage ticking only — visuals, light and the
 ## light_sources group join stay identical (client vision feeds nothing;
@@ -23,11 +25,11 @@ var _light: PointLight2D
 func _ready() -> void:
 	## Scorched ground so the fire reads as sitting on the floor.
 	var scorch := Polygon2D.new()
-	scorch.polygon = _ring_points(RADIUS * 0.7)
+	scorch.polygon = _ring_points(radius * 0.7)
 	scorch.color = Color(0.12, 0.07, 0.04, 0.7)
 	add_child(scorch)
 	var embers := Polygon2D.new()
-	embers.polygon = _ring_points(RADIUS * 0.45)
+	embers.polygon = _ring_points(radius * 0.45)
 	embers.color = Color(0.9, 0.35, 0.08, 0.35)
 	add_child(embers)
 	## Low-count flames: the horde budget matters more than fidelity.
@@ -35,7 +37,7 @@ func _ready() -> void:
 	_flames.amount = 12
 	_flames.lifetime = 0.6
 	_flames.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	_flames.emission_sphere_radius = RADIUS * 0.75
+	_flames.emission_sphere_radius = radius * 0.75
 	_flames.direction = Vector2(0, -1)
 	_flames.spread = 15.0
 	_flames.gravity = Vector2(0, -70)
@@ -63,17 +65,17 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_time += delta
-	if _time >= LIFETIME:
+	if _time >= lifetime:
 		queue_free()
 		return
-	var fade := minf((LIFETIME - _time) / FADE_TIME, 1.0)
+	var fade := minf((lifetime - _time) / FADE_TIME, 1.0)
 	if fade < 1.0:
 		modulate.a = fade
 		_flames.emitting = false
 	## Cheap flicker: the light jitters a little every physics frame.
 	_light.energy = LIGHT_ENERGY * fade * randf_range(0.82, 1.12)
 	_tick_accum += delta
-	if _tick_accum >= TICK_INTERVAL:
+	if _tick_accum >= tick_interval:
 		_tick_accum = 0.0
 		_tick_damage()
 
@@ -84,11 +86,11 @@ func _tick_damage() -> void:
 	if cosmetic:
 		return
 	@warning_ignore("integer_division")
-	var damage := maxi(1 + GameState.tower_damage_bonus() / 4, 1)
+	var damage := maxi(tick_damage_base + GameState.tower_damage_bonus() / 4, 1)
 	if randf() < GameState.tower_crit_chance():
 		damage = int(ceil(damage * GameState.tower_crit_mult()))
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy.global_position.distance_to(global_position) <= RADIUS and enemy.has_method("take_damage"):
+		if enemy.global_position.distance_to(global_position) <= radius and enemy.has_method("take_damage"):
 			enemy.take_damage(damage)
 
 ## Vision check used by Util.is_lit: anything standing in the fire is lit.
@@ -97,7 +99,7 @@ func covers(pos: Vector2) -> bool:
 
 ## Patch-cap control: the owning tower cuts the oldest patch short.
 func force_fade() -> void:
-	_time = maxf(_time, LIFETIME - FADE_TIME)
+	_time = maxf(_time, lifetime - FADE_TIME)
 
 ## A glob landing on an already-burning spot rekindles it instead of
 ## stacking a second patch (overlapping patches would multiply the DoT).

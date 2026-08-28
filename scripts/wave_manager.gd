@@ -23,10 +23,19 @@ const KIND_NAMES := {"grunt": "Grunt", "runner": "Runner", "brute": "Brute", "ma
 ## Chaff pours out in big bursts; everything else trickles one per tick.
 ## Wasps count as chaff so the wave-14+ air hordes arrive as swarms too.
 const CHAFF := {"grunt": true, "runner": true, "wasp": true}
-const CHAFF_BURST := 5
+var chaff_burst: int = Balance.inum("waves/chaff_burst", 5)
 
 ## Hard ceiling on alive enemies: the spawner defers (never drops) at the cap.
-const MAX_ALIVE := 350
+var max_alive: int = Balance.inum("waves/max_alive", 350)
+
+## Balance knobs: per-wave HP growth curves, boss cadence and composition
+## formula constants (fallbacks = the shipped values).
+var hp_scale_factor: float = Balance.num("waves/hp_scale", 1.12)
+var chaff_hp_scale_factor: float = Balance.num("waves/chaff_hp_scale", 1.06)
+var mage_hp_scale_factor: float = Balance.num("waves/mage_hp_scale", 1.09)
+var wasp_hp_scale_factor: float = Balance.num("waves/wasp_hp_scale", 1.07)
+var boss_hp_growth: float = Balance.num("waves/boss_hp_growth", 1.5)
+var boss_every: int = Balance.inum("waves/boss_every", 10)
 
 var wave: int = 0
 var _alive: int = 0
@@ -45,6 +54,9 @@ var _points_pending: int = 0
 
 func _ready() -> void:
 	add_to_group("wave_manager")
+	time_between_waves = Balance.num("waves/time_between_waves", time_between_waves)
+	spawn_interval = Balance.num("waves/spawn_interval", spawn_interval)
+	spawn_radius = Balance.num("waves/spawn_radius", spawn_radius)
 	_spawner.spawn_function = _spawn_enemy_node
 	## Simulation is host-only (offline counts as host); clients only receive
 	## the wave RPCs and re-emit the local signals for the HUD.
@@ -85,22 +97,25 @@ func _start_wave() -> void:
 	wave_started.emit(wave)
 	if Net.is_online():
 		_rpc_wave_started.rpc(wave)
-	var boss_wave := wave % 10 == 0
+	var boss_wave := wave % boss_every == 0
+	var comp := Balance.section("waves/composition")
 	## Chaff flood: every wave visibly bigger than the last.
-	var grunts := 20 + wave * 8
-	var runners := 10 + wave * 6 if wave >= 2 else 0
+	var grunts: int = int(comp.get("grunt_base", 20)) + wave * int(comp.get("grunt_per_wave", 8))
+	var runners: int = int(comp.get("runner_base", 10)) + wave * int(comp.get("runner_per_wave", 6)) \
+			if wave >= int(comp.get("runner_from_wave", 2)) else 0
 	@warning_ignore("integer_division")
-	var brutes := wave / 4
+	var brutes: int = wave / int(comp.get("brute_divisor", 4))
 	@warning_ignore("integer_division")
-	var mages := mini(wave / 6, 3)
+	var mages: int = mini(wave / int(comp.get("mage_divisor", 6)), int(comp.get("mage_cap", 3)))
 	@warning_ignore("integer_division")
-	var wasps := mini((wave / 6) * 4, 24)
+	var wasps: int = mini((wave / int(comp.get("wasp_divisor", 6))) * int(comp.get("wasp_per_step", 4)), int(comp.get("wasp_cap", 24)))
 	## Armored air brutes trickle in from wave 8: flak sponges for the swarm.
 	@warning_ignore("integer_division")
-	var drones := wave / 8
+	var drones: int = wave / int(comp.get("drone_divisor", 8))
 	## From wave 14 the sky joins the horde: wasps flood in like ground chaff.
-	if wave >= 14:
-		wasps = 12 + (wave - 14) * 4
+	var flood_wave: int = int(comp.get("wasp_flood_wave", 14))
+	if wave >= flood_wave:
+		wasps = int(comp.get("wasp_flood_base", 12)) + (wave - flood_wave) * int(comp.get("wasp_flood_per_wave", 4))
 	if boss_wave:
 		# Boss waves: the boss plus half the normal composition.
 		grunts /= 2
@@ -130,11 +145,11 @@ func _start_wave() -> void:
 	var idx := 0
 	while idx < queue.size():
 		## At the alive cap: hold the queue until towers thin the horde.
-		while _alive >= MAX_ALIVE:
+		while _alive >= max_alive:
 			await get_tree().create_timer(spawn_interval, false).timeout
-		var burst: int = CHAFF_BURST if CHAFF.has(queue[idx]) else 1
+		var burst: int = chaff_burst if CHAFF.has(queue[idx]) else 1
 		for b in burst:
-			if idx >= queue.size() or (b > 0 and not CHAFF.has(queue[idx])) or _alive >= MAX_ALIVE:
+			if idx >= queue.size() or (b > 0 and not CHAFF.has(queue[idx])) or _alive >= max_alive:
 				break
 			_spawn_kind(queue[idx])
 			idx += 1
@@ -145,11 +160,15 @@ func _start_wave() -> void:
 
 ## Steep curve for the wall-breakers (brutes): they keep pace with upgrades.
 func _hp_scale() -> float:
-	return pow(1.12, wave - 1)
+	return pow(hp_scale_factor, wave - 1)
 
 ## Gentle curve for chaff: swarm count carries the threat, not per-unit HP.
 func _chaff_hp_scale() -> float:
-	return pow(1.06, wave - 1)
+	return pow(chaff_hp_scale_factor, wave - 1)
+
+## Per-type base HP from Balance, feeding the wave-scaling formulas below.
+func _base_hp(kind: String, fallback: float) -> float:
+	return Balance.num("enemies/%s/hp" % kind, fallback)
 
 ## Host-only: compute the wave stat overrides, then spawn through the
 ## replicated path so every peer builds the identical node.
@@ -158,25 +177,25 @@ func _spawn_kind(kind) -> void:
 	var ov := {}
 	match kind:
 		"brute":
-			ov = {"max_health": int(ceil(15.0 * _hp_scale())), "speed_delta": wave * 2.0}
+			ov = {"max_health": int(ceil(_base_hp("brute", 15.0) * _hp_scale())), "speed_delta": wave * 2.0}
 		"mage":
-			ov = {"max_health": int(ceil(6.0 * pow(1.09, wave - 1)))}
+			ov = {"max_health": int(ceil(_base_hp("mage", 6.0) * pow(mage_hp_scale_factor, wave - 1)))}
 		"wasp":
-			ov = {"max_health": int(ceil(3.0 * pow(1.07, wave - 1)))}
+			ov = {"max_health": int(ceil(_base_hp("wasp", 3.0) * pow(wasp_hp_scale_factor, wave - 1)))}
 		"drone":
 			## Brute curve: the air tank must outlast flak upgrades too.
-			ov = {"max_health": int(ceil(25.0 * _hp_scale()))}
+			ov = {"max_health": int(ceil(_base_hp("drone", 25.0) * _hp_scale()))}
 		"runner":
 			## Mirrors summoned runners: near-one-shot chaff at any wave.
-			ov = {"max_health": 1 + wave / 10, "speed_delta": wave * 2.0}
+			ov = {"max_health": Balance.inum("enemies/runner/hp", 1) + wave / 10, "speed_delta": wave * 2.0}
 		"boss":
-			var boss_number := wave / 10
-			ov = {"max_health": int(250.0 * boss_number * pow(1.5, boss_number - 1))}
+			var boss_number := wave / boss_every
+			ov = {"max_health": int(_base_hp("boss", 250.0) * boss_number * pow(boss_hp_growth, boss_number - 1))}
 		_:
 			kind = "grunt"
 			## Cheap per kill; ~2.5x count keeps wave income roughly flat.
-			ov = {"max_health": int(ceil(2.0 * _chaff_hp_scale())), "speed_delta": wave * 2.0,
-				"scrap_value": maxi(1 + (wave * 2) / 5, 1)}
+			ov = {"max_health": int(ceil(_base_hp("grunt", 2.0) * _chaff_hp_scale())), "speed_delta": wave * 2.0,
+				"scrap_value": maxi(Balance.inum("enemies/grunt/scrap", 1) + (wave * 2) / 5, 1)}
 	_spawn(kind, _spawn_position(), ov)
 
 ## Lets summoners (mage, boss) birth runners through the replicated spawn
@@ -209,13 +228,9 @@ func _spawn_enemy_node(data: Array) -> Node:
 	var enemy = _kind_scene(data[1]).instantiate()
 	enemy.name = "E%d" % data[0]
 	enemy.sync_id = data[0]
-	var ov: Dictionary = data[3]
-	if ov.has("max_health"):
-		enemy.max_health = ov["max_health"]
-	if ov.has("speed_delta"):
-		enemy.speed += ov["speed_delta"]
-	if ov.has("scrap_value"):
-		enemy.scrap_value = ov["scrap_value"]
+	## Stashed, not applied: enemy._ready() layers these over its Balance base
+	## stats, so the wave overrides keep authority regardless of balance.json.
+	enemy.spawn_overrides = data[3]
 	## Enemies container sits at the origin: position == global position.
 	enemy.position = data[2]
 	if Net.is_host():
