@@ -6,7 +6,6 @@ signal resources_changed(resources: Dictionary)
 signal upgrades_changed
 signal hotbar_changed
 
-const WORLD_SIZE := Vector2(2560, 1440)
 const HOTBAR_SIZE := 11
 
 const UPGRADES := {
@@ -141,7 +140,8 @@ func upgrade_cost(id: String) -> Dictionary:
 		return base
 	var scaled := {}
 	for kind in base:
-		scaled[kind] = int(ceil(base[kind] * pow(1.6, lvl)))
+		# minf guards against int64 overflow at absurd upgrade levels.
+		scaled[kind] = int(ceil(minf(base[kind] * pow(1.6, lvl), 1e12)))
 	# High-level repeatables demand gold, the Harvester-only late-game resource.
 	if lvl >= 5:
 		scaled["gold"] = int(ceil(15.0 * pow(1.5, lvl - 5)))

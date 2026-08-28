@@ -40,8 +40,7 @@ func _birth() -> void:
 	var wm = get_tree().get_first_node_in_group("wave_manager")
 	for i in BIRTH_COUNT:
 		var runner = RUNNER_SCENE.instantiate()
-		var pos: Vector2 = global_position + Vector2.from_angle(randf() * TAU) * 50.0
-		runner.global_position = pos.clamp(Vector2(24, 24), GameState.WORLD_SIZE - Vector2(24, 24))
+		runner.global_position = global_position + Vector2.from_angle(randf() * TAU) * 50.0
 		if wm != null and wm.has_method("register_enemy"):
 			wm.register_enemy(runner)
 		scene.add_child(runner)

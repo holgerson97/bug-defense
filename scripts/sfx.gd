@@ -14,6 +14,11 @@ const SOUNDS := {
 	"flak": preload("res://assets/sfx/flak.wav"),
 }
 
+func _ready() -> void:
+	# UI sounds fire while the tree is paused (research purchases); without
+	# this, players queue up frozen and burst all at once on unpause.
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
 ## Play a sound. Pass a Vector2 for positional 2D audio, null for UI/global.
 func play(sound: String, at = null, volume_db: float = 0.0, pitch_jitter: float = 0.08) -> void:
 	if not SOUNDS.has(sound):

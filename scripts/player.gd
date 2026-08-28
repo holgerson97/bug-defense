@@ -16,8 +16,9 @@ const RECOIL_RECOVER := 14.0
 
 const BUILD_RANGE := 300.0
 const WALL_GRID := 32.0
-# Placement collides against player (1), deposits (16) and buildings (32).
-const PLACE_QUERY_MASK := 1 | 16 | 32
+# Placement collides against player (1), ground enemies (2), deposits (16)
+# and buildings (32) — no building on top of any of them.
+const PLACE_QUERY_MASK := 1 | 2 | 16 | 32
 const BUILDING_SCENES := {
 	"wall": preload("res://scenes/wall.tscn"),
 	"mg_tower": preload("res://scenes/mg_tower.tscn"),
@@ -101,7 +102,9 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = input_dir * GameState.player_speed(base_speed)
 	move_and_slide()
-	look_at(get_global_mouse_position())
+	var mouse := get_global_mouse_position()
+	if global_position.distance_squared_to(mouse) > 16.0:
+		look_at(mouse)
 
 	var regen := GameState.player_regen()
 	if regen > 0.0 and health < _max_health:

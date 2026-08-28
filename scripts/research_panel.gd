@@ -175,6 +175,10 @@ func _on_upgrade_pressed(id: String) -> void:
 		Sfx.play("levelup")
 
 func _refresh() -> void:
+	# Resources change every shot/kill; restyling ~30 nodes while hidden is
+	# wasted work (visibility_changed re-refreshes on open).
+	if not visible:
+		return
 	_scrap_value.text = str(GameState.resources.get("scrap", 0))
 	_crystal_value.text = str(GameState.resources.get("crystal", 0))
 	for id in _buttons:

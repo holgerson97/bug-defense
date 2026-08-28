@@ -46,6 +46,9 @@ func _fire() -> void:
 	bullet.global_position = _muzzle.global_position
 	bullet.rotation = _head.global_rotation
 	bullet.damage = 1 + GameState.tower_damage_bonus()
+	# Tower bullets fly over deposits (mask without 16) — otherwise an ore
+	# block in the firing line eats shots and mints free crystal.
+	bullet.collision_mask = 2 | 64
 	get_tree().current_scene.add_child(bullet)
 	Effects.muzzle_flash(self, _muzzle.global_position, _head.global_rotation)
 	Sfx.play("shoot", _muzzle.global_position, -12.0)

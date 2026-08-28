@@ -37,8 +37,7 @@ func _summon() -> void:
 		if _summons.size() >= MAX_SUMMONS:
 			return
 		var runner = RUNNER_SCENE.instantiate()
-		var pos: Vector2 = global_position + Vector2.from_angle(randf() * TAU) * 40.0
-		runner.global_position = pos.clamp(Vector2(24, 24), GameState.WORLD_SIZE - Vector2(24, 24))
+		runner.global_position = global_position + Vector2.from_angle(randf() * TAU) * 40.0
 		_summons.append(runner)
 		if wm != null and wm.has_method("register_enemy"):
 			wm.register_enemy(runner)
