@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- AA Flak Cannon: gray platform, elevated dual barrels + flak puff -->
+  <rect x="4" y="4" width="24" height="24" rx="3" fill="#4a5158"/>
+  <circle cx="26.5" cy="6.5" r="2.4" fill="#9aa1a8" opacity="0.85"/>
+  <polygon points="10.8,22.9 26.8,10.4 25.2,8.6 9.2,21.1" fill="#22262b"/>
+  <polygon points="13.4,25.4 29.4,12.9 27.8,11.1 11.8,23.6" fill="#343b42"/>
+  <polygon points="7.5,27 12,18.5 16.5,27" fill="#6b7480"/>
+  <rect x="5.5" y="25" width="13" height="3" rx="1.4" fill="#7d868f"/>
+</svg>

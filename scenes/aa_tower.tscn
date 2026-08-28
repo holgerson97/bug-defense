@@ -1,0 +1,64 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/aa_tower.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_aa"]
+size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_aa_sense"]
+size = Vector2(52, 52)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.3, 0.9, 0.4, 1)
+
+[node name="AATower" type="StaticBody2D" groups=["buildings"]]
+collision_layer = 32
+collision_mask = 0
+script = ExtResource("1")
+max_health = 110
+health_bar_offset = Vector2(-22, -36)
+
+[node name="Platform" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -14, -14, -20, 14, -20, 20, -14, 20, 14, 14, 20, -14, 20, -20, 14)
+color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="Head" type="Node2D" parent="."]
+
+[node name="Mount" type="Polygon2D" parent="Head"]
+polygon = PackedVector2Array(-9, -9, 9, -7, 11, 0, 9, 7, -9, 9)
+color = Color(0.32, 0.35, 0.38, 1)
+
+[node name="BarrelTop" type="Polygon2D" parent="Head"]
+polygon = PackedVector2Array(6, -6, 34, -5.2, 34, -2.8, 6, -2)
+color = Color(0.2, 0.22, 0.25, 1)
+
+[node name="BarrelBottom" type="Polygon2D" parent="Head"]
+polygon = PackedVector2Array(6, 2, 34, 2.8, 34, 5.2, 6, 6)
+color = Color(0.2, 0.22, 0.25, 1)
+
+[node name="Cradle" type="Polygon2D" parent="Head"]
+polygon = PackedVector2Array(-4, -7, 4, -7, 4, 7, -4, 7)
+color = Color(0.55, 0.58, 0.62, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_aa")
+
+[node name="Sense" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sense"]
+shape = SubResource("RectangleShape2D_aa_sense")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+top_level = true
+offset_right = 44.0
+offset_bottom = 5.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 110.0
+value = 110.0
+show_percentage = false

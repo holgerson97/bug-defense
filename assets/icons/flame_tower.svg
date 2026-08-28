@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Flamethrower Tower: rust base, layered flame — matches flame_tower.tscn colors -->
+  <rect x="4" y="4" width="24" height="24" rx="3" fill="#6b4d3d"/>
+  <path d="M 16 5.5 C 12 10 8.5 14 8.5 19 A 7.5 7.5 0 0 0 23.5 19 C 23.5 14 20 10 16 5.5 Z" fill="#e8641f"/>
+  <path d="M 16 12 C 13.8 14.8 12 17 12 19.8 A 4 4 0 0 0 20 19.8 C 20 17 18.2 14.8 16 12 Z" fill="#ffc247"/>
+</svg>
