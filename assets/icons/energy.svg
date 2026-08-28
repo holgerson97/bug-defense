@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Energy: lightning bolt -->
+  <path d="M 18 3 L 8 18 L 14 18 L 12 29 L 24 13 L 17 13 Z" fill="#ffd93b" stroke="#a8820a" stroke-width="1.2"/>
+  <path d="M 16.5 6.5 L 11 15 L 14 15 Z" fill="#fff3b0"/>
+</svg>

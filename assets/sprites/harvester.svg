@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Harvester drone: small yellow worker unit, top-down, facing right (+x) -->
+  <!-- treads -->
+  <rect x="12" y="10" width="20" height="6" rx="3" fill="#4a4436" stroke="#2c2820" stroke-width="1.2"/>
+  <rect x="12" y="32" width="20" height="6" rx="3" fill="#4a4436" stroke="#2c2820" stroke-width="1.2"/>
+  <!-- body -->
+  <rect x="10" y="14" width="22" height="20" rx="4" fill="#e8b52a" stroke="#8a6a0e" stroke-width="1.5"/>
+  <!-- hazard stripes -->
+  <path d="M 13 14.5 L 17 14.5 L 13 20 Z" fill="#4a4436"/>
+  <path d="M 13 28 L 17 33.5 L 13 33.5 Z" fill="#4a4436"/>
+  <!-- cargo bed -->
+  <rect x="13" y="18.5" width="10" height="11" rx="2" fill="#c0900f"/>
+  <!-- scoop arm at front -->
+  <rect x="32" y="21" width="7" height="6" rx="1" fill="#8a6a0e"/>
+  <path d="M 39 19 L 45 21.5 L 45 26.5 L 39 29 Z" fill="#5a5244" stroke="#2c2820" stroke-width="1.2"/>
+  <!-- cab light -->
+  <circle cx="28" cy="24" r="2.4" fill="#fff3b0" stroke="#8a6a0e" stroke-width="1"/>
+</svg>

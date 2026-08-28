@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Solar panel: tilted cell grid on a stand -->
+  <path d="M 5 8 L 27 8 L 24 19 L 8 19 Z" fill="#1d4e89" stroke="#0e2a4d" stroke-width="1.2"/>
+  <line x1="12.2" y1="8.5" x2="13.3" y2="18.5" stroke="#4a86c8" stroke-width="1"/>
+  <line x1="19.4" y1="8.5" x2="19.1" y2="18.5" stroke="#4a86c8" stroke-width="1"/>
+  <line x1="6.6" y1="11.5" x2="26" y2="11.5" stroke="#4a86c8" stroke-width="1"/>
+  <line x1="6" y1="15.2" x2="25.2" y2="15.2" stroke="#4a86c8" stroke-width="1"/>
+  <rect x="14.8" y="19" width="2.4" height="6" fill="#5a6572"/>
+  <rect x="10" y="25" width="12" height="2.4" rx="1" fill="#5a6572"/>
+  <circle cx="25" cy="5" r="2.6" fill="#ffd93b"/>
+</svg>
