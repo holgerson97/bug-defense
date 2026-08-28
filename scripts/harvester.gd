@@ -76,8 +76,10 @@ func _to_base() -> void:
 	if global_position.distance_to(command_center.global_position) <= STOP_DIST:
 		velocity = Vector2.ZERO
 		if cargo > 0:
-			GameState.add_resource("gold", cargo)
-			Sfx.play("place", global_position, -10.0)
+			## Silent delivery: a hauler chorus next to the base got annoying.
+			## Client drones are visual-only; the host's bank the real gold.
+			if Net.is_host():
+				GameState.add_resource("gold", cargo)
 			cargo = 0
 		_state = State.TO_MINE
 		return

@@ -5,27 +5,41 @@ extends "res://scripts/building.gd"
 const FIRE_INTERVAL := 0.9
 const ENERGY_PER_SHELL := 2
 const SHELL_SPEED := 600.0
-const MUZZLE_OFFSET := 30.0
+const MUZZLE_OFFSET := 34.0
+const IDLE_TURN_SPEED := 4.0
 
 var shell_scene: PackedScene = preload("res://scenes/flak_shell.tscn")
-var fire_range: float = GameState.BUILDINGS["aa_tower"]["range"]
+var base_range: float = GameState.BUILDINGS["aa_tower"]["range"]
+var fire_range: float = base_range
+var half_arc: float = deg_to_rad(GameState.BUILDINGS["aa_tower"]["arc"]) / 2.0
 var _fire_accum: float = 0.0
 var _target
 
 @onready var _head: Node2D = $Head
 
+func _ready() -> void:
+	super._ready()
+	energy_consumer = true
+	_head.rotation = facing
+
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
+	## Phase 5: combat is host-only; client copies idle (fire events = Phase 6).
+	if Net.is_online() and not Net.is_host():
+		return
+	## Extended Barrels research scales range live.
+	fire_range = base_range * GameState.tower_range_mult()
 	if _target != null and is_instance_valid(_target):
 		_head.rotation = (_target.global_position - global_position).angle()
 	else:
 		_target = null
+		_head.rotation = lerp_angle(_head.rotation, facing, minf(IDLE_TURN_SPEED * delta, 1.0))
 	_fire_accum += delta
 	if _fire_accum >= GameState.tower_interval(FIRE_INTERVAL):
 		_fire_accum = 0.0
-		_target = Util.nearest_in_group(self, "air_enemies", global_position, fire_range, [], true)
+		_target = Util.nearest_in_group(self, "air_enemies", global_position, fire_range, [], true, facing, half_arc)
 		if _target != null:
-			if GameState.try_spend_energy(ENERGY_PER_SHELL):
+			if grid_powered() and GameState.try_spend_energy(ENERGY_PER_SHELL):
 				set_powered(true)
 				_fire(_target)
 			else:
@@ -47,3 +61,4 @@ func _fire(target) -> void:
 	get_tree().current_scene.add_child(shell)
 	Effects.muzzle_flash(self, muzzle, _head.rotation)
 	Sfx.play("shoot", muzzle, -14.0)
+	FxEvents.aa_fire(self, muzzle, _head.rotation, predicted)

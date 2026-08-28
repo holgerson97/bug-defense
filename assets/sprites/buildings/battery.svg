@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 30 30">
+  <!-- Battery: steel housing around two charge cells, 30px footprint -->
+  <rect x="0.8" y="0.8" width="28.4" height="28.4" rx="2.5" fill="#596673" stroke="#2e3742" stroke-width="1.6"/>
+  <!-- inner bay -->
+  <rect x="3.6" y="3.6" width="22.8" height="22.8" rx="1" fill="#39434f" stroke="#2e3742" stroke-width="1.2"/>
+  <!-- left cell -->
+  <rect x="5.6" y="7" width="8" height="17" rx="1.2" fill="#2a7d4f" stroke="#174a2d" stroke-width="1.2"/>
+  <rect x="8.2" y="5" width="2.8" height="2.4" rx="0.6" fill="#8a97a5"/>
+  <rect x="6.4" y="8.2" width="6.4" height="4.6" fill="#5fc98a" opacity="0.85"/>
+  <rect x="6.4" y="13.6" width="6.4" height="4.6" fill="#5fc98a" opacity="0.55"/>
+  <rect x="6.4" y="19" width="6.4" height="4.2" fill="#5fc98a" opacity="0.25"/>
+  <!-- right cell -->
+  <rect x="16.4" y="7" width="8" height="17" rx="1.2" fill="#2a7d4f" stroke="#174a2d" stroke-width="1.2"/>
+  <rect x="19" y="5" width="2.8" height="2.4" rx="0.6" fill="#8a97a5"/>
+  <rect x="17.2" y="8.2" width="6.4" height="4.6" fill="#5fc98a" opacity="0.85"/>
+  <rect x="17.2" y="13.6" width="6.4" height="4.6" fill="#5fc98a" opacity="0.55"/>
+  <rect x="17.2" y="19" width="6.4" height="4.2" fill="#5fc98a" opacity="0.25"/>
+  <!-- frame screws -->
+  <circle cx="2.6" cy="2.6" r="0.9" fill="#8a97a5"/>
+  <circle cx="27.4" cy="2.6" r="0.9" fill="#8a97a5"/>
+  <circle cx="2.6" cy="27.4" r="0.9" fill="#8a97a5"/>
+  <circle cx="27.4" cy="27.4" r="0.9" fill="#8a97a5"/>
+  <!-- charge indicator -->
+  <path d="M 15.8 12.4 L 13.4 16.2 L 15 16.2 L 14.2 19.6 L 16.6 15.4 L 15 15.4 Z" fill="#ffd93b" stroke="#0e2a4d" stroke-width="0.6"/>
+</svg>

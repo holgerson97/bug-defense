@@ -1,0 +1,241 @@
+extends Node
+## Autoload: network seam. Owns the MultiplayerPeer (ENet for LAN, Steam later)
+## and the replicated player registry. Nothing else touches the transport.
+## No peer set = offline: the game behaves exactly like single-player.
+
+signal player_list_changed
+signal session_ended(reason: String)
+## Lobby status line for a client held in the auth phase (game in progress).
+signal late_join_status(message: String)
+
+const DEFAULT_PORT := 4514
+const MAX_PLAYERS := 4
+## Preset player colors, assigned by join order (host = first).
+const PLAYER_COLORS: Array[Color] = [
+	Color(0.55, 0.82, 1.0),
+	Color(0.4, 0.9, 0.55),
+	Color(1.0, 0.75, 0.35),
+	Color(0.9, 0.5, 0.9),
+]
+
+## peer_id -> {"name": String, "color": Color}. Host-authoritative; the full
+## registry is re-broadcast (reliable) on every change.
+var players: Dictionary = {}
+
+## World-gen seed for the current run: the host rolls it at game start and the
+## start RPC carries it, so every peer derives identical chunk/starter terrain
+## (MP plan Phase 4). Offline runs ignore it (main.gd rolls its own).
+var run_seed: int = 0
+
+## True from the start RPC until the session drops: gates the late-join hold.
+var game_running := false
+## Client: joined a running game; main.gd skips the normal ready handshake
+## (the host spawns us after registration instead).
+var late_joining := false
+
+var _peer: ENetMultiplayerPeer = null
+## Host: peers held in the auth phase until the next intermission.
+var _waiting_auth: Dictionary = {}
+
+func _ready() -> void:
+	multiplayer.peer_connected.connect(_on_peer_connected)
+	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	multiplayer.connected_to_server.connect(_on_connected_to_server)
+	multiplayer.connection_failed.connect(_on_connection_failed)
+	multiplayer.server_disconnected.connect(_on_server_disconnected)
+	## Phase 7 late join: every connection runs through SceneMultiplayer auth.
+	## The connection (and thus spawner catch-up replication) only completes
+	## once the client has the game scene loaded — so a late joiner receives
+	## every already-spawned player/building/enemy into a matching tree.
+	multiplayer.auth_callback = _on_auth_received
+	multiplayer.auth_timeout = 0.0
+	multiplayer.peer_authenticating.connect(_on_peer_authenticating)
+	multiplayer.peer_authentication_failed.connect(_on_peer_auth_failed)
+
+## True offline (OfflineMultiplayerPeer acts as server) and when hosting.
+func is_host() -> bool:
+	return _peer == null or multiplayer.is_server()
+
+## True while hosting or joined/joining a session.
+func is_online() -> bool:
+	return _peer != null
+
+func host(port := DEFAULT_PORT, max_players := MAX_PLAYERS) -> Error:
+	leave()
+	var peer := ENetMultiplayerPeer.new()
+	var err := peer.create_server(port, max_players - 1)
+	if err != OK:
+		return err
+	_peer = peer
+	multiplayer.multiplayer_peer = peer
+	var host_name := _os_name()
+	players[1] = {"name": host_name if host_name != "" else "Player 1", "color": PLAYER_COLORS[0]}
+	player_list_changed.emit()
+	return OK
+
+func join(ip: String, port := DEFAULT_PORT) -> Error:
+	leave()
+	var peer := ENetMultiplayerPeer.new()
+	var err := peer.create_client(ip, port)
+	if err != OK:
+		return err
+	_peer = peer
+	multiplayer.multiplayer_peer = peer
+	return OK
+
+## Drop the session and return to offline. Emits no session_ended; callers that
+## leave voluntarily already know why.
+func leave() -> void:
+	if _peer == null:
+		return
+	_peer.close()
+	_peer = null
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	players.clear()
+	game_running = false
+	late_joining = false
+	_waiting_auth.clear()
+	player_list_changed.emit()
+
+## Host-only: everyone (host included) switches to the game scene, seeded
+## with one shared world-gen seed.
+func start_game() -> void:
+	if not is_host():
+		return
+	_rpc_start_game.rpc(randi())
+
+## OS username, "" if unavailable (host substitutes "Player N").
+func _os_name() -> String:
+	var user := OS.get_environment("USER")
+	if user == "":
+		user = OS.get_environment("USERNAME")
+	return user
+
+## First color not yet taken; join order decides.
+func _next_color() -> Color:
+	for color in PLAYER_COLORS:
+		var taken := false
+		for info in players.values():
+			if info["color"] == color:
+				taken = true
+				break
+		if not taken:
+			return color
+	return PLAYER_COLORS[players.size() % PLAYER_COLORS.size()]
+
+func _end_session(reason: String) -> void:
+	leave()
+	session_ended.emit(reason)
+
+## Host, at intermission start: let held late joiners in. They load the game
+## scene, ack via auth, and only then does the connection (and the spawners'
+## catch-up replication) complete.
+func release_late_joiners() -> void:
+	if not multiplayer.is_server():
+		return
+	for id in _waiting_auth:
+		multiplayer.send_auth(id, var_to_bytes({"late": true, "seed": run_seed}))
+	_waiting_auth.clear()
+
+## -- auth phase (late-join gate) --
+
+func _on_peer_authenticating(id: int) -> void:
+	if not multiplayer.is_server():
+		return  ## Client: wait for the host's auth message.
+	if game_running:
+		_waiting_auth[id] = true
+		multiplayer.send_auth(id, var_to_bytes({"wait": true}))
+	else:
+		multiplayer.send_auth(id, var_to_bytes({"late": false}))
+
+func _on_auth_received(id: int, data: PackedByteArray) -> void:
+	var msg = bytes_to_var(data)
+	if not (msg is Dictionary):
+		return
+	if multiplayer.is_server():
+		## Client acked (scene loaded when late): finish the handshake.
+		if msg.get("ready", false):
+			_waiting_auth.erase(id)
+			multiplayer.complete_auth(id)
+		return
+	if msg.get("wait", false):
+		late_join_status.emit("Game in progress — joining at next intermission")
+	elif msg.get("late", false):
+		late_joining = true
+		run_seed = msg.get("seed", 0)
+		_finish_late_join()
+	else:
+		## Normal pre-game join: ack immediately.
+		multiplayer.send_auth(1, var_to_bytes({"ready": true}))
+		multiplayer.complete_auth(1)
+
+## Client: load the game scene FIRST, then ack — spawner catch-up packets
+## arrive at peer_connected and need the matching tree to land in.
+func _finish_late_join() -> void:
+	late_join_status.emit("Joining...")
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	while get_tree().current_scene == null or get_tree().current_scene.name != "Main":
+		await get_tree().process_frame
+	multiplayer.send_auth(1, var_to_bytes({"ready": true}))
+	multiplayer.complete_auth(1)
+
+func _on_peer_auth_failed(id: int) -> void:
+	if multiplayer.is_server():
+		_waiting_auth.erase(id)
+	else:
+		_end_session("Connection failed")
+
+## -- multiplayer signal handlers --
+
+func _on_peer_connected(_id: int) -> void:
+	# Registry entry waits for the client's _rpc_register name RPC.
+	pass
+
+func _on_peer_disconnected(id: int) -> void:
+	_waiting_auth.erase(id)
+	if multiplayer.is_server() and players.erase(id):
+		_broadcast_players()
+		player_list_changed.emit()
+
+func _on_connected_to_server() -> void:
+	_rpc_register.rpc_id(1, _os_name())
+
+func _on_connection_failed() -> void:
+	_end_session("Connection failed")
+
+func _on_server_disconnected() -> void:
+	_end_session("Host disconnected")
+
+## -- RPCs --
+
+## Client -> host: announce name; host assigns color and re-broadcasts.
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_register(player_name: String) -> void:
+	if not multiplayer.is_server():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if player_name.strip_edges() == "":
+		player_name = "Player %d" % (players.size() + 1)
+	players[id] = {"name": player_name, "color": _next_color()}
+	_broadcast_players()
+	player_list_changed.emit()
+	## Late joiner registering into a running game: the game scene spawns them.
+	if game_running:
+		var scene := get_tree().current_scene
+		if scene != null and scene.has_method("spawn_late_joiner"):
+			scene.spawn_late_joiner(id)
+
+func _broadcast_players() -> void:
+	_rpc_sync_players.rpc(players)
+
+## Host -> clients: full registry replace.
+@rpc("authority", "call_remote", "reliable")
+func _rpc_sync_players(registry: Dictionary) -> void:
+	players = registry
+	player_list_changed.emit()
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_start_game(seed_value: int) -> void:
+	run_seed = seed_value
+	game_running = true
+	get_tree().change_scene_to_file("res://scenes/main.tscn")

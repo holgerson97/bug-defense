@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/enemies/enemy_brute.svg" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_brute"]
-radius = 18.0
+radius = 24.0
 
 [node name="Brute" type="CharacterBody2D" groups=["enemies"]]
 collision_layer = 2
@@ -15,11 +15,10 @@ max_health = 15
 damage = 20
 attack_range = 44.0
 points = 30
-xp_value = 30
 scrap_value = 18
 
 [node name="Body" type="Sprite2D" parent="."]
-scale = Vector2(0.82, 0.82)
+scale = Vector2(0.205, 0.205)
 texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

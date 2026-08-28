@@ -18,32 +18,32 @@ fill_to = Vector2(0.5, 0)
 
 [node name="FlakBurst" type="Node2D"]
 script = ExtResource("1")
-life = 0.8
+life = 1.0
 flash_time = 0.1
 light_time = 0.15
 
 [node name="Flash" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(12, 0, 8, 8, 0, 12, -8, 8, -12, 0, -8, -8, 0, -12, 8, -8)
+polygon = PackedVector2Array(26, 0, 17, 17, 0, 26, -17, 17, -26, 0, -17, -17, 0, -26, 17, -17)
 color = Color(1, 0.9, 0.65, 1)
 
 [node name="Smoke" type="CPUParticles2D" parent="."]
 emitting = false
-amount = 16
-lifetime = 0.7
+amount = 34
+lifetime = 0.9
 one_shot = true
 explosiveness = 1.0
 spread = 180.0
 gravity = Vector2(0, -25)
-initial_velocity_min = 40.0
-initial_velocity_max = 110.0
+initial_velocity_min = 80.0
+initial_velocity_max = 220.0
 damping_min = 60.0
 damping_max = 130.0
-scale_amount_min = 4.0
-scale_amount_max = 8.0
+scale_amount_min = 6.0
+scale_amount_max = 14.0
 color_ramp = SubResource("Gradient_smoke")
 
 [node name="Light" type="PointLight2D" parent="."]
 color = Color(1, 0.85, 0.55, 1)
-energy = 1.8
+energy = 2.6
 texture = SubResource("GradientTexture2D_light")
-texture_scale = 2.8
+texture_scale = 5.0

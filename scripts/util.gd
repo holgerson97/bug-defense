@@ -6,7 +6,8 @@ const UNPOWERED_TINT := Color(0.6, 0.7, 1.0, 0.85)
 
 ## Nearest member of `group` to `from` within `max_dist`, skipping `exclude`.
 ## With `require_lit`, members standing in darkness are invisible to the caller.
-static func nearest_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false):
+## With `half_arc` < PI, only members inside the wedge around `facing` count.
+static func nearest_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false, facing := 0.0, half_arc := PI):
 	var nearest = null
 	var best := max_dist
 	for member in node.get_tree().get_nodes_in_group(group):
@@ -16,9 +17,35 @@ static func nearest_in_group(node, group: String, from: Vector2, max_dist: float
 		if dist <= best:
 			if require_lit and not is_lit(node, member.global_position):
 				continue
+			if not in_arc(from, facing, half_arc, member.global_position):
+				continue
 			best = dist
 			nearest = member
 	return nearest
+
+## True when no terrain (rocks, ore deposits — layer 16) blocks the line from
+## `from` to `to`. Player buildings never block sight: towers shoot over walls.
+static func has_los(node, from: Vector2, to: Vector2) -> bool:
+	var params := PhysicsRayQueryParameters2D.create(from, to, 16)
+	return node.get_world_2d().direct_space_state.intersect_ray(params).is_empty()
+
+## nearest_in_group filtered by terrain line of sight from `from`: tries up to
+## 4 nearest candidates before giving up (used on target acquisition only).
+static func nearest_visible_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false, facing := 0.0, half_arc := PI):
+	var tried: Array = exclude.duplicate()
+	for i in 4:
+		var target = nearest_in_group(node, group, from, max_dist, tried, require_lit, facing, half_arc)
+		if target == null or has_los(node, from, target.global_position):
+			return target
+		tried.append(target)
+	return null
+
+## True when `pos` lies inside the wedge of `half_arc` radians around `facing`.
+## A half arc of PI or more means omnidirectional.
+static func in_arc(from: Vector2, facing: float, half_arc: float, pos: Vector2) -> bool:
+	if half_arc >= PI:
+		return true
+	return absf(Vector2.from_angle(facing).angle_to(pos - from)) <= half_arc
 
 ## True when any light source (light pools, searchlight beams) reveals `pos`.
 static func is_lit(node, pos: Vector2) -> bool:
@@ -27,11 +54,14 @@ static func is_lit(node, pos: Vector2) -> bool:
 			return true
 	return false
 
-## Compact cost string like "120s 40c" from a cost dictionary.
+## Display suffix per resource kind; "scrap" renders as bug hearts.
+const DISPLAY_SUFFIX := {"scrap": "h", "crystal": "c", "gold": "g"}
+
+## Compact cost string like "120h 40c" from a cost dictionary.
 static func cost_text(cost: Dictionary) -> String:
 	var parts: Array = []
 	for kind in cost:
-		parts.append("%d%s" % [cost[kind], kind.substr(0, 1)])
+		parts.append("%d%s" % [cost[kind], DISPLAY_SUFFIX.get(kind, kind.substr(0, 1))])
 	return " ".join(parts)
 
 ## Energy-starved consumers dim blue and show a blinking bolt icon until

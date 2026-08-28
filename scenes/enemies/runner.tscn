@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/enemies/enemy_runner.svg" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_runner"]
-radius = 7.0
+radius = 9.0
 
 [node name="Runner" type="CharacterBody2D" groups=["enemies"]]
 collision_layer = 2
@@ -16,11 +16,10 @@ damage = 3
 attack_interval = 0.5
 attack_range = 28.0
 points = 1
-xp_value = 2
 scrap_value = 1
 
 [node name="Body" type="Sprite2D" parent="."]
-scale = Vector2(0.65, 0.65)
+scale = Vector2(0.1625, 0.1625)
 texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

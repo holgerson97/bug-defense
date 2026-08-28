@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+  <!-- Power pole, top-down: round concrete base, wooden mast, crossarm with ceramic insulators. 20px footprint -->
+  <circle cx="12" cy="12" r="6.6" fill="#6b7480" stroke="#2c3540" stroke-width="1.4"/>
+  <!-- base bolts -->
+  <circle cx="12" cy="6.9" r="0.8" fill="#8ca6bf"/>
+  <circle cx="17.1" cy="12" r="0.8" fill="#8ca6bf"/>
+  <circle cx="12" cy="17.1" r="0.8" fill="#8ca6bf"/>
+  <circle cx="6.9" cy="12" r="0.8" fill="#8ca6bf"/>
+  <!-- crossarm -->
+  <rect x="3.4" y="10.7" width="17.2" height="2.6" rx="1.2" fill="#7a5230" stroke="#3d2a16" stroke-width="1.1"/>
+  <!-- insulators at the arm tips -->
+  <circle cx="5" cy="12" r="1.7" fill="#8ccfd9" stroke="#2b6f86" stroke-width="1"/>
+  <circle cx="19" cy="12" r="1.7" fill="#8ccfd9" stroke="#2b6f86" stroke-width="1"/>
+  <!-- mast top -->
+  <circle cx="12" cy="12" r="2.6" fill="#8a5a33" stroke="#3d2a16" stroke-width="1.2"/>
+  <circle cx="12.6" cy="11.4" r="0.8" fill="#b07d4c"/>
+</svg>

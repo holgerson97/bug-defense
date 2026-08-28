@@ -1,15 +1,14 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/aa_tower.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/aa_tower_base.svg" id="2"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/aa_gun.svg" id="3"]
-[ext_resource type="Script" path="res://scripts/light_source.gd" id="4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_aa"]
-size = Vector2(40, 40)
+size = Vector2(44, 44)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_aa_sense"]
-size = Vector2(52, 52)
+size = Vector2(56, 56)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0, 0, 0, 0.6)
@@ -25,13 +24,13 @@ max_health = 110
 health_bar_offset = Vector2(-22, -36)
 
 [node name="Platform" type="Sprite2D" parent="."]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.575, 0.575)
 texture = ExtResource("2")
 
 [node name="Head" type="Node2D" parent="."]
 
 [node name="Sprite" type="Sprite2D" parent="Head"]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.575, 0.575)
 texture = ExtResource("3")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -53,7 +52,3 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 110.0
 value = 110.0
 show_percentage = false
-
-[node name="LightSource" type="PointLight2D" parent="."]
-script = ExtResource("4")
-radius = 90.0

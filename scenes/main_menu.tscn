@@ -41,6 +41,13 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 24
 text = "Play"
 
+[node name="Coop" type="Button" parent="Center/Menu"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 24
+text = "Co-op"
+
 [node name="SettingsButton" type="Button" parent="Center/Menu"]
 custom_minimum_size = Vector2(260, 48)
 layout_mode = 2
@@ -135,6 +142,70 @@ focus_mode = 0
 text = "Mute"
 
 [node name="Back" type="Button" parent="Center/SettingsMenu"]
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Back"
+
+[node name="LobbyMenu" type="VBoxContainer" parent="Center"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="LobbyTitle" type="Label" parent="Center/LobbyMenu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 42
+horizontal_alignment = 1
+text = "CO-OP"
+
+[node name="Status" type="Label" parent="Center/LobbyMenu"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "Host a game or join by IP"
+
+[node name="HostButton" type="Button" parent="Center/LobbyMenu"]
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Host Game"
+
+[node name="JoinRow" type="HBoxContainer" parent="Center/LobbyMenu"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Ip" type="LineEdit" parent="Center/LobbyMenu/JoinRow"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "Host IP"
+
+[node name="JoinButton" type="Button" parent="Center/LobbyMenu/JoinRow"]
+custom_minimum_size = Vector2(88, 44)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "Join"
+
+[node name="PlayersLabel" type="Label" parent="Center/LobbyMenu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Players"
+
+[node name="PlayerList" type="VBoxContainer" parent="Center/LobbyMenu"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StartButton" type="Button" parent="Center/LobbyMenu"]
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+focus_mode = 0
+disabled = true
+theme_override_font_sizes/font_size = 20
+text = "Start Game"
+
+[node name="LobbyBack" type="Button" parent="Center/LobbyMenu"]
 custom_minimum_size = Vector2(260, 44)
 layout_mode = 2
 focus_mode = 0

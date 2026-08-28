@@ -1,16 +1,15 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/research_panel.tscn" id="2"]
 [ext_resource type="Script" path="res://scripts/hotbar.gd" id="3"]
 [ext_resource type="Texture2D" path="res://assets/icons/wave.svg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/icons/crit.svg" id="5"]
-[ext_resource type="Texture2D" path="res://assets/icons/xp.svg" id="6"]
-[ext_resource type="Texture2D" path="res://assets/icons/scrap.svg" id="7"]
 [ext_resource type="Texture2D" path="res://assets/icons/crystal.svg" id="8"]
 [ext_resource type="Texture2D" path="res://assets/icons/research.svg" id="9"]
 [ext_resource type="Texture2D" path="res://assets/icons/gold.svg" id="10"]
 [ext_resource type="Texture2D" path="res://assets/icons/energy.svg" id="11"]
+[ext_resource type="Texture2D" path="res://assets/icons/bug_heart.svg" id="12"]
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
@@ -66,32 +65,24 @@ theme_override_font_sizes/font_size = 22
 vertical_alignment = 1
 text = "0"
 
+[node name="EnemiesPanel" type="PanelContainer" parent="TopRow"]
+visible = false
+layout_mode = 2
+
+[node name="Value" type="Label" parent="TopRow/EnemiesPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.68, 0.78, 1)
+theme_override_font_sizes/font_size = 18
+vertical_alignment = 1
+text = ""
+
 [node name="Spacer" type="Control" parent="TopRow"]
 custom_minimum_size = Vector2(14, 0)
 layout_mode = 2
 
-[node name="XPPanel" type="PanelContainer" parent="TopRow"]
-layout_mode = 2
-
-[node name="HBox" type="HBoxContainer" parent="TopRow/XPPanel"]
-layout_mode = 2
-theme_override_constants/separation = 7
-
-[node name="Icon" type="TextureRect" parent="TopRow/XPPanel/HBox"]
-custom_minimum_size = Vector2(20, 20)
-layout_mode = 2
-texture = ExtResource("6")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Value" type="Label" parent="TopRow/XPPanel/HBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-vertical_alignment = 1
-text = "Lv 1  0/100"
-
 [node name="ScrapPanel" type="PanelContainer" parent="TopRow"]
 layout_mode = 2
+tooltip_text = "Bug Hearts — dropped by kills, spent on research"
 
 [node name="HBox" type="HBoxContainer" parent="TopRow/ScrapPanel"]
 layout_mode = 2
@@ -100,7 +91,7 @@ theme_override_constants/separation = 7
 [node name="Icon" type="TextureRect" parent="TopRow/ScrapPanel/HBox"]
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
-texture = ExtResource("7")
+texture = ExtResource("12")
 expand_mode = 1
 stretch_mode = 5
 
@@ -175,6 +166,21 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 12
 vertical_alignment = 1
 text = ""
+
+[node name="WaveTimer" type="Label" parent="."]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 58.0
+offset_right = 180.0
+offset_bottom = 94.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.88, 0.78, 0.42, 1)
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+text = "Next wave in 5"
 
 [node name="ResearchButton" type="Button" parent="."]
 anchors_preset = 1

@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/enemies/enemy_boss_broodmother.svg" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
-radius = 40.0
+radius = 52.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_bg"]
 bg_color = Color(0, 0, 0, 0.6)
@@ -20,14 +20,13 @@ speed = 70.0
 max_health = 250
 damage = 25
 attack_interval = 1.2
-attack_range = 60.0
+attack_range = 72.0
 points = 250
-xp_value = 300
 scrap_value = 150
 crystal_value = 50
 
 [node name="Body" type="Sprite2D" parent="."]
-scale = Vector2(0.9, 0.9)
+scale = Vector2(0.225, 0.225)
 texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

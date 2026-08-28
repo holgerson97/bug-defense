@@ -8,6 +8,8 @@ const BLAST_RADIUS := 90.0
 const BLAST_DAMAGE := 3
 
 var target_point: Vector2
+## Phase 6 client replay: full arc + explosion FX/sfx, damage skipped.
+var cosmetic := false
 var _start: Vector2
 var _time: float = 0.0
 
@@ -24,10 +26,11 @@ func _physics_process(delta: float) -> void:
 		_explode()
 
 func _explode() -> void:
-	var blast_damage := GameState.tower_damage_roll(BLAST_DAMAGE)
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy.global_position.distance_to(global_position) <= BLAST_RADIUS and enemy.has_method("take_damage"):
-			enemy.take_damage(blast_damage)
+	if not cosmetic:
+		var blast_damage := GameState.tower_damage_roll(BLAST_DAMAGE)
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if enemy.global_position.distance_to(global_position) <= BLAST_RADIUS and enemy.has_method("take_damage"):
+				enemy.take_damage(blast_damage)
 	Effects.explosion(self, global_position)
 	Sfx.play("explosion", global_position, -4.0)
 	queue_free()

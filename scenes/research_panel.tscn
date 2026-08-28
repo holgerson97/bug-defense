@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/research_panel.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/icons/scrap.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/icons/bug_heart.svg" id="2"]
 [ext_resource type="Texture2D" path="res://assets/icons/crystal.svg" id="3"]
 
 [node name="ResearchPanel" type="Control"]

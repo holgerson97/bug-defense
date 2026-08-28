@@ -4,10 +4,10 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/wall.svg" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
-size = Vector2(32, 32)
+size = Vector2(46, 46)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_sense"]
-size = Vector2(44, 44)
+size = Vector2(58, 58)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0, 0, 0, 0.6)
@@ -19,11 +19,11 @@ bg_color = Color(0.3, 0.9, 0.4, 1)
 collision_layer = 32
 collision_mask = 0
 script = ExtResource("1")
-max_health = 60
-health_bar_offset = Vector2(-18, -30)
+max_health = 300
+health_bar_offset = Vector2(-22, -36)
 
 [node name="Sprite" type="Sprite2D" parent="."]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.75, 0.75)
 texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -38,7 +38,7 @@ shape = SubResource("RectangleShape2D_wall_sense")
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 top_level = true
-offset_right = 36.0
+offset_right = 44.0
 offset_bottom = 5.0
 theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")

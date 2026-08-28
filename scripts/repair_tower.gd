@@ -7,32 +7,46 @@ const HEAL_AMOUNT := 3
 const ENERGY_PER_PULSE := 1
 const BEAM_TIME := 0.4
 
-var heal_range: float = GameState.BUILDINGS["repair_tower"]["range"]
+var base_range: float = GameState.BUILDINGS["repair_tower"]["range"]
+var heal_range: float = base_range
 var _heal_accum: float = 0.0
 var _beam_timer: float = 0.0
 
 @onready var _beam: Line2D = $Beam
 
+func _ready() -> void:
+	super._ready()
+	energy_consumer = true
+
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
+	## Beam fade runs on every peer: Phase 6 REPAIR_BEAM events replay via
+	## _show_beam on client copies, which are otherwise idle below the gate.
+	if _beam_timer > 0.0:
+		_beam_timer -= delta
+		if _beam_timer <= 0.0:
+			_beam.visible = false
+	## Phase 5: healing is host-only; client copies idle (heal() no-ops there
+	## anyway, this just also silences beam FX + energy mirror reads).
+	if Net.is_online() and not Net.is_host():
+		return
+	## Extended Barrels research scales range live.
+	heal_range = base_range * GameState.tower_range_mult()
 	_heal_accum += delta
 	if _heal_accum >= HEAL_INTERVAL:
 		_heal_accum = 0.0
 		var target = _pick_target()
 		if target != null:
-			if GameState.try_spend_energy(ENERGY_PER_PULSE):
+			if grid_powered() and GameState.try_spend_energy(ENERGY_PER_PULSE):
 				set_powered(true)
 				target.heal(HEAL_AMOUNT)
 				_show_beam(target.global_position)
+				FxEvents.repair_beam(self, target.global_position)
 			else:
 				set_powered(false)
-	if _beam_timer > 0.0:
-		_beam_timer -= delta
-		if _beam_timer <= 0.0:
-			_beam.visible = false
 
 func _pick_target():
-	# Most-damaged building in range first (missing HP), then the player.
+	# Most-damaged building in range first (missing HP), then the nearest player.
 	var best = null
 	var best_missing := 0
 	for building in get_tree().get_nodes_in_group("buildings"):
@@ -44,10 +58,9 @@ func _pick_target():
 			best = building
 	if best != null:
 		return best
-	var player = get_tree().get_first_node_in_group("player")
-	if player != null and is_instance_valid(player):
-		if player.global_position.distance_to(global_position) <= heal_range and player.health < player.max_health():
-			return player
+	var player = Util.nearest_in_group(self, "player", global_position, heal_range)
+	if player != null and player.health < player.max_health():
+		return player
 	return null
 
 func _show_beam(target_pos: Vector2) -> void:

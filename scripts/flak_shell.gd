@@ -5,10 +5,13 @@ extends Node2D
 const FLAK_BURST_SCENE = preload("res://scenes/effects/flak_burst.tscn")
 
 const SPEED := 600.0
-const BURST_RADIUS := 70.0
+const BURST_RADIUS := 130.0
 const BURST_DAMAGE := 4
 
 var burst_point: Vector2
+## Phase 6 client replay: cosmetic shells fly the host's route but free
+## silently at the fuse point — the FLAK_BURST event carries burst FX + sfx.
+var cosmetic := false
 
 func _ready() -> void:
 	rotation = (burst_point - global_position).angle()
@@ -23,6 +26,9 @@ func _physics_process(delta: float) -> void:
 	global_position += to_burst / to_burst.length() * step
 
 func _detonate() -> void:
+	if cosmetic:
+		queue_free()
+		return
 	var damage := GameState.tower_damage_roll(BURST_DAMAGE)
 	for enemy in get_tree().get_nodes_in_group("air_enemies"):
 		if enemy.global_position.distance_to(global_position) <= BURST_RADIUS and enemy.has_method("take_damage"):
@@ -32,5 +38,6 @@ func _detonate() -> void:
 		var burst = FLAK_BURST_SCENE.instantiate()
 		burst.position = global_position
 		scene.add_child(burst)
-	Sfx.play("flak", global_position, -6.0)
+	Sfx.play("flak", global_position, -2.0)
+	FxEvents.flak_burst(self, global_position)
 	queue_free()

@@ -1,15 +1,17 @@
 extends Control
-## Research tree: branch columns, upgrades placed by tier (requires-depth),
-## with connector lines drawn behind the buttons.
+## Research tree: one column per branch, upgrades stacked top->bottom by
+## tier (requires-depth), with connector lines drawn behind the buttons.
 
 const BUTTON_SIZE := Vector2(164, 70)
 const LINE_OWNED := Color(0.3, 0.9, 0.4, 0.9)
 const LINE_LOCKED := Color(0.5, 0.5, 0.5, 0.35)
 const LOCK_ICON := "res://assets/icons/lock.svg"
+## Cost-pair icon overrides: the "scrap" key displays as Bug Hearts.
+const COST_ICONS := {"scrap": "res://assets/icons/bug_heart.svg"}
 
 const TAB_DEFS := [
 	{"title": "Player Stats", "branches": ["Offense", "Pilot"]},
-	{"title": "Unlocks", "branches": ["Industry"]},
+	{"title": "Unlocks", "branches": ["Defense", "Resource", "Electricity"]},
 	{"title": "Building Stats", "branches": ["Engineering"]},
 ]
 
@@ -59,43 +61,38 @@ func _build_tree() -> void:
 	var tiers := {}
 	for id in GameState.UPGRADES:
 		tiers[id] = _tier(id)
-	# One tab per TAB_DEFS entry; inside, branch columns (definition order)
-	# with one centered row per tier so tiers line up across branches.
+	# One tab per TAB_DEFS entry; inside, one column per branch (in the tab's
+	# branch order) with a header and every upgrade on its own row, stacked
+	# top->bottom by tier (roots first), ties in table order.
 	for tab in TAB_DEFS:
 		var tab_root := HBoxContainer.new()
 		tab_root.name = tab["title"]
+		tab_root.alignment = BoxContainer.ALIGNMENT_CENTER
 		tab_root.add_theme_constant_override("separation", 16)
 		_tabs.add_child(tab_root)
-		var max_tier := 0
-		for id in GameState.UPGRADES:
-			if GameState.UPGRADES[id]["branch"] in tab["branches"]:
-				max_tier = maxi(max_tier, tiers[id])
-		var branch_rows := {}
-		for id in GameState.UPGRADES:
-			var up: Dictionary = GameState.UPGRADES[id]
-			var branch: String = up["branch"]
-			if not branch in tab["branches"]:
-				continue
-			if not branch_rows.has(branch):
-				var col := VBoxContainer.new()
-				col.add_theme_constant_override("separation", 26)
-				var title := Label.new()
-				title.text = branch
-				title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-				title.add_theme_font_size_override("font_size", 24)
-				title.add_theme_color_override("font_color", UITheme.ACCENT)
-				col.add_child(title)
-				var rows: Array = []
-				for t in max_tier + 1:
-					var row := HBoxContainer.new()
-					row.alignment = BoxContainer.ALIGNMENT_CENTER
-					row.add_theme_constant_override("separation", 10)
-					row.custom_minimum_size = Vector2(0, BUTTON_SIZE.y)
-					col.add_child(row)
-					rows.append(row)
-				tab_root.add_child(col)
-				branch_rows[branch] = rows
-			branch_rows[branch][tiers[id]].add_child(_make_upgrade_button(id))
+		for branch in tab["branches"]:
+			var ids: Array = []
+			var max_tier := 0
+			for id in GameState.UPGRADES:
+				if GameState.UPGRADES[id]["branch"] == branch:
+					ids.append(id)
+					max_tier = maxi(max_tier, tiers[id])
+			var col := VBoxContainer.new()
+			col.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			col.add_theme_constant_override("separation", 26)
+			var title := Label.new()
+			title.text = branch
+			title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			title.add_theme_font_size_override("font_size", 24)
+			title.add_theme_color_override("font_color", UITheme.ACCENT)
+			col.add_child(title)
+			for t in max_tier + 1:
+				for id in ids:
+					if tiers[id] == t:
+						var btn := _make_upgrade_button(id)
+						btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+						col.add_child(btn)
+			tab_root.add_child(col)
 
 func _make_upgrade_button(id: String) -> Button:
 	var up: Dictionary = GameState.UPGRADES[id]
@@ -155,7 +152,7 @@ func _make_upgrade_button(id: String) -> Button:
 		kind_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		kind_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		kind_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		kind_icon.texture = _icon("res://assets/icons/%s.svg" % kind)
+		kind_icon.texture = _icon(COST_ICONS.get(kind, "res://assets/icons/%s.svg" % kind))
 		cost_row.add_child(kind_icon)
 		var amount := Label.new()
 		amount.text = str(up["cost"].get(kind, 0))

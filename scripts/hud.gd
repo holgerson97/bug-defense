@@ -1,18 +1,33 @@
 extends CanvasLayer
 
+## Fixed display order for the remaining-enemies readout.
+const ENEMY_ORDER := ["Boss", "Drone", "Grunt", "Runner", "Brute", "Wasp", "Mage"]
+
 @onready var _wave_label: Label = $TopRow/WavePanel/HBox/Value
+@onready var _wave_timer: Label = $WaveTimer
+@onready var _enemies_panel: Control = $TopRow/EnemiesPanel
+@onready var _enemies_label: Label = $TopRow/EnemiesPanel/Value
 @onready var _score_label: Label = $TopRow/ScorePanel/HBox/Value
-@onready var _xp_label: Label = $TopRow/XPPanel/HBox/Value
 @onready var _scrap_label: Label = $TopRow/ScrapPanel/HBox/Value
 @onready var _crystal_label: Label = $TopRow/CrystalPanel/HBox/Value
 @onready var _gold_label: Label = $TopRow/GoldPanel/HBox/Value
 @onready var _energy_label: Label = $TopRow/EnergyPanel/HBox/Value
 @onready var _energy_rate: Label = $TopRow/EnergyPanel/HBox/Rate
 @onready var _pause_panel: Control = $PausePanel
+@onready var _pause_hint: Label = $PausePanel/Center/VBox/Hint
 @onready var _game_over: Control = $GameOver
+@onready var _go_title: Label = $GameOver/Center/Panel/Margin/VBox/Title
+@onready var _go_hint: Label = $GameOver/Center/Panel/Margin/VBox/Hint
 @onready var _final_score: Label = $GameOver/Center/Panel/Margin/VBox/FinalScore
 @onready var _research_panel: Control = $ResearchPanel
 @onready var _research_button: Button = $ResearchButton
+
+## Seconds left in the current between-wave intermission (counted down locally).
+var _intermission_left: float = 0.0
+## Spectator banner (dead local player), styled like the wave timer.
+var _spectate_label: Label
+## Game-over panel doubles as the host-drop modal; R then leads to the menu.
+var _to_menu := false
 
 func _ready() -> void:
 	# Shared theme: assigned to every top-level control so children inherit it.
@@ -21,24 +36,69 @@ func _ready() -> void:
 		if child is Control:
 			child.theme = theme
 	_research_button.pressed.connect(toggle_research)
-	GameState.xp_changed.connect(_on_xp_changed)
 	GameState.resources_changed.connect(_on_resources_changed)
 	GameState.power_rates_changed.connect(_on_power_rates_changed)
+	# Wave manager registers its group before the HUD readies (tree order in main.tscn).
+	var wm = get_tree().get_first_node_in_group("wave_manager")
+	if wm != null:
+		wm.remaining_changed.connect(_on_remaining_changed)
+		wm.intermission_started.connect(_on_intermission_started)
+		wm.wave_started.connect(_on_wave_started)
+	## Spectator banner clones the wave timer's styling, sitting just below it.
+	_spectate_label = _wave_timer.duplicate()
+	_spectate_label.name = "SpectateBanner"
+	_spectate_label.visible = false
+	_spectate_label.offset_top = _wave_timer.offset_bottom + 4.0
+	_spectate_label.offset_bottom = _spectate_label.offset_top + 36.0
+	_spectate_label.add_theme_color_override("font_color", Color(0.62, 0.68, 0.78))
+	add_child(_spectate_label)
 
 func update_wave(wave: int) -> void:
 	_wave_label.text = "Wave %d" % wave
 
+## Local countdown mirroring the wave manager's intermission timer.
+func _on_intermission_started(seconds: float) -> void:
+	_intermission_left = seconds
+	_update_wave_timer()
+	_wave_timer.visible = true
+
+func _on_wave_started(_wave: int) -> void:
+	_wave_timer.visible = false
+
+func _process(delta: float) -> void:
+	## HUD processes while paused (process_mode 3); freeze with the game timer.
+	if not _wave_timer.visible or get_tree().paused:
+		return
+	_intermission_left -= delta
+	if _intermission_left <= 0.0:
+		_wave_timer.visible = false
+		return
+	_update_wave_timer()
+
+func _update_wave_timer() -> void:
+	_wave_timer.text = "Next wave in %d" % ceili(_intermission_left)
+
+## Per-type remaining counts; hidden between waves when nothing is alive.
+func _on_remaining_changed(counts: Dictionary) -> void:
+	var parts: Array[String] = []
+	for type_name in ENEMY_ORDER:
+		if counts.get(type_name, 0) > 0:
+			parts.append("%s %d" % [type_name, counts[type_name]])
+	for type_name in counts:
+		if not ENEMY_ORDER.has(type_name) and counts[type_name] > 0:
+			parts.append("%s %d" % [type_name, counts[type_name]])
+	_enemies_label.text = "  ".join(parts)
+	_enemies_panel.visible = not parts.is_empty()
+
 func update_score(score: int) -> void:
 	_score_label.text = str(score)
-
-func _on_xp_changed(xp: int, xp_needed: int, level: int) -> void:
-	_xp_label.text = "Lv %d  %d/%d" % [level, xp, xp_needed]
 
 func _on_resources_changed(resources: Dictionary) -> void:
 	_scrap_label.text = str(resources.get("scrap", 0))
 	_crystal_label.text = str(resources.get("crystal", 0))
 	_gold_label.text = str(resources.get("gold", 0))
-	_energy_label.text = str(resources.get("energy", 0))
+	# Stored energy over the current cap (batteries raise it).
+	_energy_label.text = "%d/%d" % [resources.get("energy", 0), GameState.energy_cap()]
 
 ## Energy demand/capacity readout: +production / −consumption per second.
 func _on_power_rates_changed(production: float, consumption: float) -> void:
@@ -50,25 +110,69 @@ func toggle_research() -> void:
 		return
 	_pause_panel.visible = false
 	_research_panel.visible = not _research_panel.visible
-	get_tree().paused = _research_panel.visible
+	## MP: the research panel never pauses the shared world — the waves keep
+	## running for everyone; only the local panel opens. (P pause -> Phase 7.)
+	get_tree().paused = _research_panel.visible and not Net.is_online()
 
+## P: offline pauses locally; online only the host may pause, and it pauses
+## everyone (replicated via main._rpc_set_paused). Client P is ignored.
 func toggle_pause() -> void:
 	if _game_over.visible or _research_panel.visible:
+		return
+	if Net.is_online():
+		if Net.is_host():
+			get_tree().current_scene._rpc_set_paused.rpc(not _pause_panel.visible)
 		return
 	_pause_panel.visible = not _pause_panel.visible
 	get_tree().paused = _pause_panel.visible
 
+## Replicated pause: show the panel on every peer; only the host can resume.
+func set_pause_panel(paused: bool) -> void:
+	_pause_hint.text = "Press P to resume" if Net.is_host() else "Host paused the game"
+	_pause_panel.visible = paused
+
+## -- spectator banner (dead local player, Phase 7) --
+
+func show_spectate(following: String) -> void:
+	_spectate_label.text = "Respawning next wave — following %s" % following
+	_spectate_label.visible = true
+
+func hide_spectate() -> void:
+	_spectate_label.visible = false
+
 func show_game_over(score: int, wave: int) -> void:
 	_research_panel.visible = false
 	_pause_panel.visible = false
+	hide_spectate()
+	_go_title.text = "YOU DIED"
 	_final_score.text = "You survived to wave %d — score %d" % [wave, score]
+	if not Net.is_online():
+		_go_hint.text = "Press R to restart"
+	else:
+		_go_hint.text = "Press R to restart for everyone" if Net.is_host() else "Waiting for the host to restart"
 	_game_over.visible = true
+
+## Host dropped: reuse the game-over panel as a modal; R returns to the menu.
+func show_session_end(reason: String) -> void:
+	show_game_over(0, 0)
+	_go_title.text = "DISCONNECTED"
+	_final_score.text = reason
+	_go_hint.text = "Press R for the main menu"
+	_to_menu = true
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _game_over.visible:
 		if event.is_action_pressed("restart"):
-			get_tree().paused = false
-			get_tree().reload_current_scene()
+			if _to_menu:
+				get_tree().paused = false
+				Net.leave()
+				get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+			elif not Net.is_online():
+				get_tree().paused = false
+				get_tree().reload_current_scene()
+			elif Net.is_host():
+				## Restart vote: host reloads everyone with a fresh world seed.
+				get_tree().current_scene._rpc_restart.rpc(randi())
 		return
 	if event.is_action_pressed("research"):
 		toggle_research()

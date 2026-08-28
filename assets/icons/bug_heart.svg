@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Bug Heart: red-pink heart with insect-wing accents -->
+  <ellipse cx="6.8" cy="8.6" rx="6" ry="3.2" transform="rotate(-30 6.8 8.6)" fill="#cfe4f2" stroke="#8fb2cc" stroke-width="1" opacity="0.85"/>
+  <ellipse cx="25.2" cy="8.6" rx="6" ry="3.2" transform="rotate(30 25.2 8.6)" fill="#cfe4f2" stroke="#8fb2cc" stroke-width="1" opacity="0.85"/>
+  <line x1="4" y1="9.4" x2="9.6" y2="7.8" stroke="#8fb2cc" stroke-width="0.8" opacity="0.6"/>
+  <line x1="28" y1="9.4" x2="22.4" y2="7.8" stroke="#8fb2cc" stroke-width="0.8" opacity="0.6"/>
+  <path d="M16 28.5 C 9 23 3.5 18.2 3.5 12 C 3.5 7.8 6.7 5.2 10.1 5.2 C 12.5 5.2 14.8 6.6 16 8.8 C 17.2 6.6 19.5 5.2 21.9 5.2 C 25.3 5.2 28.5 7.8 28.5 12 C 28.5 18.2 23 23 16 28.5 Z" fill="#e84a6f" stroke="#96203e" stroke-width="1.5"/>
+  <path d="M16 8.8 C 14.8 6.6 12.5 5.2 10.1 5.2 C 6.7 5.2 3.5 7.8 3.5 12 C 3.5 14.2 4.3 16.2 5.7 18 C 9.2 15.2 13 12.2 16 8.8 Z" fill="#f2708d" opacity="0.75"/>
+  <ellipse cx="10.4" cy="10" rx="2.5" ry="1.5" transform="rotate(-22 10.4 10)" fill="#ffffff" opacity="0.55"/>
+</svg>

@@ -1,15 +1,14 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/flame_tower.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/flame_tower_base.svg" id="2"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/flame_nozzle.svg" id="3"]
-[ext_resource type="Script" path="res://scripts/light_source.gd" id="4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_flame"]
-size = Vector2(40, 40)
+size = Vector2(44, 44)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_flame_sense"]
-size = Vector2(52, 52)
+size = Vector2(56, 56)
 
 [sub_resource type="Gradient" id="Gradient_jet"]
 offsets = PackedFloat32Array(0, 0.4, 1)
@@ -29,28 +28,28 @@ max_health = 110
 health_bar_offset = Vector2(-22, -36)
 
 [node name="Base" type="Sprite2D" parent="."]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.575, 0.575)
 texture = ExtResource("2")
 
 [node name="Nozzle" type="Node2D" parent="."]
 
 [node name="Sprite" type="Sprite2D" parent="Nozzle"]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.575, 0.575)
 texture = ExtResource("3")
 
 [node name="Jet" type="CPUParticles2D" parent="Nozzle"]
-position = Vector2(22, 0)
+position = Vector2(25, 0)
 emitting = false
-amount = 48
-lifetime = 0.45
-spread = 16.0
+amount = 20
+lifetime = 0.22
+spread = 18.0
 gravity = Vector2(0, 0)
-initial_velocity_min = 260.0
-initial_velocity_max = 380.0
-damping_min = 150.0
-damping_max = 260.0
+initial_velocity_min = 180.0
+initial_velocity_max = 280.0
+damping_min = 200.0
+damping_max = 320.0
 scale_amount_min = 3.0
-scale_amount_max = 6.0
+scale_amount_max = 5.0
 color_ramp = SubResource("Gradient_jet")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -72,7 +71,3 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 110.0
 value = 110.0
 show_percentage = false
-
-[node name="LightSource" type="PointLight2D" parent="."]
-script = ExtResource("4")
-radius = 90.0

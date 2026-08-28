@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Battery: upright cell with terminal cap and lightning bolt -->
+  <rect x="13" y="3" width="6" height="3" rx="1" fill="#8a97a5"/>
+  <rect x="8" y="6" width="16" height="22" rx="2" fill="#2a7d4f" stroke="#174a2d" stroke-width="1.4"/>
+  <rect x="9.6" y="8" width="12.8" height="5.6" fill="#5fc98a" opacity="0.85"/>
+  <rect x="9.6" y="15" width="12.8" height="5.6" fill="#5fc98a" opacity="0.5"/>
+  <rect x="9.6" y="22" width="12.8" height="4.6" fill="#5fc98a" opacity="0.22"/>
+  <path d="M 17.6 10 L 12.6 18 L 15.8 18 L 14.4 24.6 L 19.6 16.4 L 16.4 16.4 Z" fill="#ffd93b" stroke="#0e2a4d" stroke-width="1"/>
+</svg>

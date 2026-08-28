@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player_marine.svg" id="2"]
 [ext_resource type="Script" path="res://scripts/build_controller.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/light_source.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/enemy_arrows.gd" id="5"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 14.0
@@ -27,6 +28,23 @@ corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_player"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:velocity")
+properties/2/spawn = false
+properties/2/replication_mode = 1
+properties/3/path = NodePath(".:health")
+properties/3/spawn = true
+properties/3/replication_mode = 2
+properties/4/path = NodePath(".:dead")
+properties/4/spawn = true
+properties/4/replication_mode = 2
+
 [node name="Player" type="CharacterBody2D" groups=["player"]]
 collision_layer = 1
 collision_mask = 50
@@ -38,7 +56,7 @@ texture = ExtResource("2")
 
 [node name="LightSource" type="PointLight2D" parent="."]
 script = ExtResource("4")
-radius = 180.0
+radius = 540.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_player")
@@ -52,6 +70,13 @@ position_smoothing_speed = 8.0
 
 [node name="BuildController" type="Node2D" parent="."]
 script = ExtResource("3")
+
+[node name="EnemyArrows" type="Node2D" parent="."]
+script = ExtResource("5")
+
+[node name="Sync" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.05
+replication_config = SubResource("SceneReplicationConfig_player")
 
 [node name="HealthBar" type="ProgressBar" parent="."]
 top_level = true

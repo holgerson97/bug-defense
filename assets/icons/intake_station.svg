@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
+  <!-- Intake station: furnace box with chimney, smoke and a crystal fire -->
+  <circle cx="24.5" cy="6.5" r="2.2" fill="#9aa3ac" opacity="0.5"/>
+  <circle cx="26.5" cy="3.8" r="1.6" fill="#9aa3ac" opacity="0.35"/>
+  <rect x="22" y="8" width="5" height="10" fill="#4a545f" stroke="#2c3540" stroke-width="1.2"/>
+  <rect x="3.5" y="14" width="22" height="14" rx="2" fill="#5a6572" stroke="#2c3540" stroke-width="1.6"/>
+  <rect x="7" y="18" width="12" height="8.5" rx="1" fill="#1c232c" stroke="#2c3540" stroke-width="1.2"/>
+  <path d="M 8.5 26.5 L 10.8 20.5 L 12.6 23.5 L 14.6 19.5 L 16.4 23.8 L 17.6 21.8 L 17.8 26.5 Z" fill="#ff9a3d"/>
+  <path d="M 11 26.5 L 13.4 22.8 L 15 25 L 16 23.6 L 16.4 26.5 Z" fill="#ffd93b"/>
+  <path d="M 27.2 27.8 L 29 23.5 L 30.8 27.8 Z" fill="#7ad9f2" stroke="#2b6f86" stroke-width="0.9"/>
+</svg>

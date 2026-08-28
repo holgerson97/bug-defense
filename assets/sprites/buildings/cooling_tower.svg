@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 30 30">
+  <!-- Cooling tower, top-down: concrete rings around a dark throat, faint steam. 28px footprint -->
+  <circle cx="15" cy="15" r="13.8" fill="#7d8894" stroke="#2c3540" stroke-width="1.6"/>
+  <circle cx="15" cy="15" r="10.6" fill="#97a2ad" stroke="#5a6572" stroke-width="1.2"/>
+  <circle cx="15" cy="15" r="7.6" fill="#5a6572" stroke="#39434f" stroke-width="1.2"/>
+  <circle cx="15" cy="15" r="5.2" fill="#232b33"/>
+  <!-- rim bolts -->
+  <circle cx="15" cy="2.6" r="0.9" fill="#8ca6bf"/>
+  <circle cx="27.4" cy="15" r="0.9" fill="#8ca6bf"/>
+  <circle cx="15" cy="27.4" r="0.9" fill="#8ca6bf"/>
+  <circle cx="2.6" cy="15" r="0.9" fill="#8ca6bf"/>
+  <!-- faint steam wisps over the throat -->
+  <ellipse cx="13" cy="13" rx="3" ry="2.2" fill="#e8eef2" opacity="0.35"/>
+  <ellipse cx="17.5" cy="16.5" rx="2.2" ry="1.7" fill="#e8eef2" opacity="0.25"/>
+</svg>

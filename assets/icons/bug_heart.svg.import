@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5uym35snteh6"
-path="res://.godot/imported/enemy_healer.svg-2a0932a0215afee359b8ce6521898b30.ctex"
+uid="uid://btdhycjy4x3om"
+path="res://.godot/imported/bug_heart.svg-a48bb28112a29d394ba09bd6dd2bbe9b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/enemies/enemy_healer.svg"
-dest_files=["res://.godot/imported/enemy_healer.svg-2a0932a0215afee359b8ce6521898b30.ctex"]
+source_file="res://assets/icons/bug_heart.svg"
+dest_files=["res://.godot/imported/bug_heart.svg-a48bb28112a29d394ba09bd6dd2bbe9b.ctex"]
 
 [params]
 

@@ -4,6 +4,7 @@ extends RefCounted
 ## Callers pass themselves (any node in the tree) so effects are never
 ## parented to something that may be freed on the same frame.
 
+const ONE_SHOT_EFFECT = preload("res://scripts/effects/one_shot_effect.gd")
 const MUZZLE_FLASH_SCENE = preload("res://scenes/effects/muzzle_flash.tscn")
 const IMPACT_SCENE = preload("res://scenes/effects/impact.tscn")
 const BLOOD_SCENE = preload("res://scenes/effects/blood_burst.tscn")
@@ -13,6 +14,15 @@ const EXPLOSION_SCENE = preload("res://scenes/effects/explosion.tscn")
 const DEATH_BLOOD_AMOUNT := 26
 const MAX_SPLATTERS := 150
 const SPLAT_GROUP := "blood_splats"
+
+## Tesla bolt styling, shared by the host's real zap and the Phase 6 replay.
+const BOLT_LIFETIME := 0.15
+const BOLT_SEGMENT := 18.0
+const BOLT_JITTER := 7.0
+const BOLT_COLOR := Color(0.75, 0.95, 1.0, 0.9)
+const BOLT_CORE_COLOR := Color(0.95, 1.0, 1.0, 0.95)
+
+static var _bolt_light_texture: GradientTexture2D
 
 static func muzzle_flash(node, pos: Vector2, rot: float) -> void:
 	_spawn(node, MUZZLE_FLASH_SCENE.instantiate(), pos, rot)
@@ -36,6 +46,70 @@ static func blood_death(node, pos: Vector2, dir: Vector2) -> void:
 	burst.amount = DEATH_BLOOD_AMOUNT
 	_spawn(node, burst, pos, dir.angle())
 	_splatter(node, pos)
+
+## Small radial gradient texture for PointLight2D glows. Light diameter
+## on screen is `size` x texture_scale.
+static func radial_light_texture(inner: Color, outer: Color, size: int = 64) -> GradientTexture2D:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 1.0])
+	gradient.colors = PackedColorArray([inner, outer])
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.width = size
+	tex.height = size
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(0.5, 0.0)
+	return tex
+
+## Tesla chain lightning: one self-freeing node holding every jagged chain
+## segment (outer glow + bright core) plus a brief coil flash light.
+## Extracted from tesla_tower so client event replay draws the same bolt.
+static func tesla_bolts(node, points: PackedVector2Array) -> void:
+	if points.size() < 2:
+		return
+	var tree = node.get_tree()
+	var scene = tree.current_scene if tree != null else null
+	if scene == null:
+		return
+	if _bolt_light_texture == null:
+		_bolt_light_texture = radial_light_texture(Color(0.7, 0.95, 1.0, 1.0), Color(0.7, 0.95, 1.0, 0.0))
+	var fx := Node2D.new()
+	fx.set_script(ONE_SHOT_EFFECT)
+	fx.life = BOLT_LIFETIME
+	fx.light_time = BOLT_LIFETIME
+	fx.global_position = points[0]
+	fx.z_index = 40
+	for i in points.size() - 1:
+		var from: Vector2 = points[i] - points[0]
+		var to: Vector2 = points[i + 1] - points[0]
+		var bolt := Line2D.new()
+		bolt.points = _jagged_points(from, to)
+		bolt.width = 2.5
+		bolt.default_color = BOLT_COLOR
+		fx.add_child(bolt)
+		var core := Line2D.new()
+		core.points = bolt.points
+		core.width = 1.0
+		core.default_color = BOLT_CORE_COLOR
+		fx.add_child(core)
+	var light := PointLight2D.new()
+	light.name = "Light"
+	light.color = Color(0.7, 0.95, 1.0)
+	light.energy = 2.0
+	light.texture = _bolt_light_texture
+	light.texture_scale = 2.8
+	fx.add_child(light)
+	scene.add_child(fx)
+
+static func _jagged_points(from: Vector2, to: Vector2) -> PackedVector2Array:
+	var points := PackedVector2Array([from])
+	var segments := maxi(int(from.distance_to(to) / BOLT_SEGMENT), 2)
+	var normal := (to - from).normalized().orthogonal()
+	for i in range(1, segments):
+		points.append(from.lerp(to, float(i) / segments) + normal * randf_range(-BOLT_JITTER, BOLT_JITTER))
+	points.append(to)
+	return points
 
 static func _spawn(node, fx, pos: Vector2, rot: float) -> void:
 	var tree = node.get_tree()
