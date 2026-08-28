@@ -7,6 +7,7 @@ const BRUTE_SCENE = preload("res://scenes/enemies/brute.tscn")
 const HEALER_SCENE = preload("res://scenes/enemies/healer.tscn")
 const MAGE_SCENE = preload("res://scenes/enemies/mage.tscn")
 const BOSS_SCENE = preload("res://scenes/enemies/boss_broodmother.tscn")
+const WASP_SCENE = preload("res://scenes/enemies/wasp.tscn")
 
 @export var enemy_scene: PackedScene
 @export var time_between_waves: float = 4.0
@@ -36,6 +37,8 @@ func _start_wave() -> void:
 	var healers := wave / 5
 	@warning_ignore("integer_division")
 	var mages := mini(wave / 6, 3)
+	@warning_ignore("integer_division")
+	var wasps := mini((wave / 8) * 3, 12)
 	if boss_wave:
 		# Boss waves: the boss plus half the normal composition.
 		grunts /= 2
@@ -51,6 +54,8 @@ func _start_wave() -> void:
 		queue.append("healer")
 	for i in mages:
 		queue.append("mage")
+	for i in wasps:
+		queue.append("wasp")
 	queue.shuffle()
 	if boss_wave:
 		queue.push_front("boss")
@@ -80,6 +85,9 @@ func _spawn_kind(kind) -> void:
 		"mage":
 			enemy = MAGE_SCENE.instantiate()
 			enemy.max_health = int(ceil(6.0 * _hp_scale()))
+		"wasp":
+			enemy = WASP_SCENE.instantiate()
+			enemy.max_health = int(ceil(4.0 * _hp_scale()))
 		"boss":
 			var boss_number := wave / 10
 			enemy = BOSS_SCENE.instantiate()

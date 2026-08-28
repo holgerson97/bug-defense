@@ -9,6 +9,9 @@ const SOUNDS := {
 	"player_hurt": preload("res://assets/sfx/player_hurt.wav"),
 	"place": preload("res://assets/sfx/place.wav"),
 	"levelup": preload("res://assets/sfx/levelup.wav"),
+	"zap": preload("res://assets/sfx/zap.wav"),
+	"flame": preload("res://assets/sfx/flame.wav"),
+	"flak": preload("res://assets/sfx/flak.wav"),
 }
 
 ## Play a sound. Pass a Vector2 for positional 2D audio, null for UI/global.

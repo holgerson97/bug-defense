@@ -1,0 +1,79 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/flame_tower.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_flame"]
+size = Vector2(40, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_flame_sense"]
+size = Vector2(52, 52)
+
+[sub_resource type="Gradient" id="Gradient_jet"]
+offsets = PackedFloat32Array(0, 0.4, 1)
+colors = PackedColorArray(1, 0.92, 0.45, 0.9, 1, 0.5, 0.12, 0.65, 0.35, 0.1, 0.05, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.3, 0.9, 0.4, 1)
+
+[node name="FlameTower" type="StaticBody2D" groups=["buildings"]]
+collision_layer = 32
+collision_mask = 0
+script = ExtResource("1")
+max_health = 110
+health_bar_offset = Vector2(-22, -36)
+
+[node name="Base" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+color = Color(0.42, 0.3, 0.24, 1)
+
+[node name="Tank" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-14, -8, -6, -8, -6, 8, -14, 8)
+color = Color(0.75, 0.35, 0.15, 1)
+
+[node name="Nozzle" type="Node2D" parent="."]
+
+[node name="Body" type="Polygon2D" parent="Nozzle"]
+polygon = PackedVector2Array(-8, -8, 8, -6, 8, 6, -8, 8)
+color = Color(0.6, 0.48, 0.38, 1)
+
+[node name="Barrel" type="Polygon2D" parent="Nozzle"]
+polygon = PackedVector2Array(6, -3, 20, -4.5, 22, 0, 20, 4.5, 6, 3)
+color = Color(0.28, 0.24, 0.2, 1)
+
+[node name="Jet" type="CPUParticles2D" parent="Nozzle"]
+position = Vector2(22, 0)
+emitting = false
+amount = 48
+lifetime = 0.45
+spread = 16.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 260.0
+initial_velocity_max = 380.0
+damping_min = 150.0
+damping_max = 260.0
+scale_amount_min = 3.0
+scale_amount_max = 6.0
+color_ramp = SubResource("Gradient_jet")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_flame")
+
+[node name="Sense" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sense"]
+shape = SubResource("RectangleShape2D_flame_sense")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+top_level = true
+offset_right = 44.0
+offset_bottom = 5.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 110.0
+value = 110.0
+show_percentage = false

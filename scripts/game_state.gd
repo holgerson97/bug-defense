@@ -7,7 +7,7 @@ signal upgrades_changed
 signal hotbar_changed
 
 const WORLD_SIZE := Vector2(2560, 1440)
-const HOTBAR_SIZE := 6
+const HOTBAR_SIZE := 9
 
 const UPGRADES := {
 	"damage_1": {"icon": "res://assets/icons/blaster.svg", "name": "Sharper Rounds", "branch": "Offense", "desc": "+1 bullet damage", "cost": {"scrap": 50}, "requires": [], "effects": {"damage_bonus": 1.0}},
@@ -31,6 +31,9 @@ const UPGRADES := {
 	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Industry", "desc": "Unlocks the MG Tower", "cost": {"scrap": 150, "crystal": 30}, "requires": ["walls_1"], "effects": {}},
 	"grenade_tower_1": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "branch": "Industry", "desc": "Unlocks the Grenade Tower", "cost": {"scrap": 200, "crystal": 60}, "requires": ["mg_tower_1"], "effects": {}},
 	"repair_tower_1": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Beam Tower", "branch": "Industry", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 150, "crystal": 60}, "requires": ["walls_1"], "effects": {}},
+	"tesla_tower_1": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "branch": "Industry", "desc": "Unlocks the Tesla Tower", "cost": {"scrap": 250, "crystal": 80}, "requires": ["mg_tower_1"], "effects": {}},
+	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Industry", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 200, "crystal": 60}, "requires": ["walls_1"], "effects": {}},
+	"aa_tower_1": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "branch": "Industry", "desc": "Unlocks the anti-air Flak Cannon", "cost": {"scrap": 250, "crystal": 100}, "requires": ["mg_tower_1"], "effects": {}},
 	"building_hp_1": {"icon": "res://assets/icons/wall.svg", "name": "Reinforced Structures", "branch": "Engineering", "desc": "+25% building health", "cost": {"scrap": 100}, "requires": ["walls_1"], "effects": {"building_hp_mult": 0.25}},
 	"tower_damage_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 150, "crystal": 50}, "requires": ["mg_tower_1"], "effects": {"tower_damage": 1.0}},
 	"miner_yield_1": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 100, "crystal": 30}, "requires": ["miner_1"], "effects": {"miner_yield": 1.0}},
@@ -42,6 +45,9 @@ const BUILDINGS := {
 	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"scrap": 120, "crystal": 40}, "research": "mg_tower_1"},
 	"grenade_tower": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "cost": {"scrap": 160, "crystal": 60}, "research": "grenade_tower_1"},
 	"repair_tower": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Tower", "cost": {"scrap": 120, "crystal": 50}, "research": "repair_tower_1"},
+	"tesla_tower": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "cost": {"scrap": 140, "crystal": 60}, "research": "tesla_tower_1"},
+	"flame_tower": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "cost": {"scrap": 130, "crystal": 50}, "research": "flame_tower_1"},
+	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"scrap": 150, "crystal": 70}, "research": "aa_tower_1"},
 }
 
 var xp: int = 0
@@ -59,7 +65,7 @@ func reset() -> void:
 	level = 1
 	resources = {"scrap": 0, "crystal": 0}
 	purchased = {}
-	hotbar = [{"id": "blaster", "name": "Blaster", "icon": "res://assets/icons/blaster.svg"}, null, null, null, null, null]
+	hotbar = [{"id": "blaster", "name": "Blaster", "icon": "res://assets/icons/blaster.svg"}, null, null, null, null, null, null, null, null]
 	selected_slot = 0
 	xp_changed.emit(xp, xp_needed(), level)
 	resources_changed.emit(resources)
@@ -155,6 +161,12 @@ func purchase(id: String) -> bool:
 			set_hotbar_item(4, {"id": "grenade_tower", "name": "Grenade Tower", "icon": "res://assets/icons/grenade_tower.svg"})
 		"repair_tower_1":
 			set_hotbar_item(5, {"id": "repair_tower", "name": "Repair Tower", "icon": "res://assets/icons/repair_tower.svg"})
+		"tesla_tower_1":
+			set_hotbar_item(6, {"id": "tesla_tower", "name": "Tesla Tower", "icon": "res://assets/icons/tesla_tower.svg"})
+		"flame_tower_1":
+			set_hotbar_item(7, {"id": "flame_tower", "name": "Flamethrower Tower", "icon": "res://assets/icons/flame_tower.svg"})
+		"aa_tower_1":
+			set_hotbar_item(8, {"id": "aa_tower", "name": "AA Flak Cannon", "icon": "res://assets/icons/aa_tower.svg"})
 	upgrades_changed.emit()
 	return true
 
