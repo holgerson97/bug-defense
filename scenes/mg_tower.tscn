@@ -1,6 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/mg_tower.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/mg_tower_base.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/mg_tower_head.svg" id="3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mg"]
 size = Vector2(40, 40)
@@ -21,19 +23,15 @@ script = ExtResource("1")
 max_health = 120
 health_bar_offset = Vector2(-22, -36)
 
-[node name="Base" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
-color = Color(0.35, 0.42, 0.5, 1)
+[node name="Base" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2")
 
 [node name="Head" type="Node2D" parent="."]
 
-[node name="Turret" type="Polygon2D" parent="Head"]
-polygon = PackedVector2Array(-10, -10, 10, -6, 10, 6, -10, 10)
-color = Color(0.55, 0.65, 0.75, 1)
-
-[node name="Barrel" type="Polygon2D" parent="Head"]
-polygon = PackedVector2Array(8, -3, 26, -3, 26, 3, 8, 3)
-color = Color(0.2, 0.24, 0.3, 1)
+[node name="Sprite" type="Sprite2D" parent="Head"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3")
 
 [node name="Muzzle" type="Marker2D" parent="Head"]
 position = Vector2(28, 0)

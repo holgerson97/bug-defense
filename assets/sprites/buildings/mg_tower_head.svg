@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="80" viewBox="0 0 64 40">
+  <!-- MG turret head, pivot at (32,20), barrel pointing +x. Muzzle tip at x=60 (= +28 from pivot). -->
+  <!-- barrel -->
+  <rect x="42" y="17" width="16" height="6" rx="1" fill="#333d4d" stroke="#1c232d" stroke-width="1.6"/>
+  <!-- muzzle brake -->
+  <rect x="55" y="15.8" width="5" height="8.4" rx="1.2" fill="#1c232d"/>
+  <line x1="57.5" y1="16.5" x2="57.5" y2="23.5" stroke="#4a5a6c" stroke-width="1"/>
+  <!-- barrel shroud -->
+  <rect x="41" y="15.6" width="7" height="8.8" rx="1.6" fill="#2c3540"/>
+  <!-- turret body: tapered toward the barrel -->
+  <path d="M 21 11.5 L 38 14 L 44 17 L 44 23 L 38 26 L 21 28.5 A 3 3 0 0 1 18 25.5 L 18 14.5 A 3 3 0 0 1 21 11.5 Z"
+        fill="#8ca6bf" stroke="#2c3540" stroke-width="2"/>
+  <!-- roof plate -->
+  <path d="M 23 15 L 36 16.8 L 36 23.2 L 23 25 Z" fill="#a9bfd2"/>
+  <!-- ammo box on the side -->
+  <rect x="22" y="8.5" width="10" height="6" rx="1.2" fill="#596b80" stroke="#2c3540" stroke-width="1.5"/>
+  <line x1="27" y1="9.2" x2="27" y2="13.8" stroke="#2c3540" stroke-width="1"/>
+  <!-- optic -->
+  <circle cx="26.5" cy="20" r="2.6" fill="#c3d5e4" stroke="#2c3540" stroke-width="1.2"/>
+  <circle cx="27.2" cy="19.3" r="0.9" fill="#ffffff"/>
+  <!-- rear vent lines -->
+  <line x1="20.5" y1="14.5" x2="20.5" y2="25.5" stroke="#5c7186" stroke-width="1.2"/>
+</svg>

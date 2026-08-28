@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 40 40">
+  <!-- MG tower base: slate armored pad with turret ring, 40px footprint -->
+  <rect x="1" y="1" width="38" height="38" rx="4" fill="#596b80" stroke="#2c3540" stroke-width="2"/>
+  <!-- corner armor wedges -->
+  <path d="M 2.5 10 L 2.5 5.5 A 3 3 0 0 1 5.5 2.5 L 10 2.5 Z" fill="#6d8095"/>
+  <path d="M 30 2.5 L 34.5 2.5 A 3 3 0 0 1 37.5 5.5 L 37.5 10 Z" fill="#6d8095"/>
+  <path d="M 37.5 30 L 37.5 34.5 A 3 3 0 0 1 34.5 37.5 L 30 37.5 Z" fill="#6d8095"/>
+  <path d="M 10 37.5 L 5.5 37.5 A 3 3 0 0 1 2.5 34.5 L 2.5 30 Z" fill="#6d8095"/>
+  <!-- inner plate -->
+  <rect x="6" y="6" width="28" height="28" rx="2.5" fill="#4a5a6c" stroke="#2c3540" stroke-width="1.6"/>
+  <!-- turret ring -->
+  <circle cx="20" cy="20" r="11" fill="#3d4b5b" stroke="#2c3540" stroke-width="1.8"/>
+  <circle cx="20" cy="20" r="8" fill="#333f4d"/>
+  <!-- ring bolts -->
+  <circle cx="20" cy="10.6" r="1.1" fill="#8ca6bf"/>
+  <circle cx="29.4" cy="20" r="1.1" fill="#8ca6bf"/>
+  <circle cx="20" cy="29.4" r="1.1" fill="#8ca6bf"/>
+  <circle cx="10.6" cy="20" r="1.1" fill="#8ca6bf"/>
+  <!-- corner bolts -->
+  <circle cx="4.8" cy="4.8" r="1.4" fill="#8ca6bf"/>
+  <circle cx="35.2" cy="4.8" r="1.4" fill="#8ca6bf"/>
+  <circle cx="4.8" cy="35.2" r="1.4" fill="#8ca6bf"/>
+  <circle cx="35.2" cy="35.2" r="1.4" fill="#8ca6bf"/>
+  <!-- top edge highlight -->
+  <path d="M 6.5 4 L 33.5 4" stroke="#8ca6bf" stroke-width="1.4" stroke-linecap="round" opacity="0.6"/>
+</svg>

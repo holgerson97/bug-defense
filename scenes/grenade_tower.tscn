@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/grenade_tower.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/grenade_tower_base.svg" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_gren"]
 size = Vector2(40, 40)
@@ -21,17 +22,9 @@ script = ExtResource("1")
 max_health = 120
 health_bar_offset = Vector2(-22, -36)
 
-[node name="Base" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
-color = Color(0.45, 0.5, 0.32, 1)
-
-[node name="Mortar" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-10, -10, 10, -10, 14, 0, 10, 10, -10, 10, -14, 0)
-color = Color(0.6, 0.66, 0.4, 1)
-
-[node name="Tube" type="Polygon2D" parent="."]
-polygon = PackedVector2Array(-5, -5, 5, -5, 5, 5, -5, 5)
-color = Color(0.22, 0.26, 0.16, 1)
+[node name="Sprite" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_gren")

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 40 40">
+  <!-- Miner: small orange drill rig, drill pointing UP (-y). Pivot at (20,20); body 24px, drill tip at y=0 (= -20 from pivot). -->
+  <!-- drill bit -->
+  <path d="M 13.5 10 L 26.5 10 L 20 0.8 Z" fill="#d9731a" stroke="#8f4c08" stroke-width="1.8"/>
+  <path d="M 16.5 10 L 23.5 10 L 20 5 Z" fill="#a8540f"/>
+  <line x1="15.6" y1="7.6" x2="24.4" y2="7.6" stroke="#8f4c08" stroke-width="1.1"/>
+  <line x1="17.4" y1="5" x2="22.6" y2="5" stroke="#8f4c08" stroke-width="1.1"/>
+  <!-- drill collar -->
+  <rect x="13" y="8.6" width="14" height="3.4" rx="1.4" fill="#c76c14" stroke="#8f4c08" stroke-width="1.4"/>
+  <!-- body -->
+  <rect x="8" y="11" width="24" height="21" rx="3" fill="#ff9a26" stroke="#8f4c08" stroke-width="2"/>
+  <!-- cab panel -->
+  <rect x="11" y="14" width="18" height="6.5" rx="1.5" fill="#ffc266"/>
+  <!-- hazard stripes -->
+  <path d="M 9 29 L 13 32 L 9 32 Z" fill="#4a4436"/>
+  <path d="M 31 29 L 27 32 L 31 32 Z" fill="#4a4436"/>
+  <!-- vents -->
+  <rect x="11.5" y="23.5" width="7" height="2" rx="1" fill="#c76c14"/>
+  <rect x="11.5" y="27" width="7" height="2" rx="1" fill="#c76c14"/>
+  <!-- status light -->
+  <circle cx="25.5" cy="26.5" r="2.6" fill="#fff3b0" stroke="#8f4c08" stroke-width="1.2"/>
+  <circle cx="25.5" cy="26.5" r="1" fill="#ffde59"/>
+</svg>

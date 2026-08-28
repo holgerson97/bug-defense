@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="80" viewBox="0 0 72 40">
+  <!-- AA flak gun, pivot at (36,20), dual barrels pointing +x. Muzzle brakes span x=62-68 (tips = +32 from pivot; shells spawn at +30). -->
+  <!-- barrels -->
+  <rect x="44" y="13" width="20" height="4" rx="0.8" fill="#333840" stroke="#1b1e23" stroke-width="1.4"/>
+  <rect x="44" y="23" width="20" height="4" rx="0.8" fill="#333840" stroke="#1b1e23" stroke-width="1.4"/>
+  <!-- muzzle brakes -->
+  <rect x="62" y="12" width="6" height="6" rx="1.2" fill="#1b1e23"/>
+  <rect x="62" y="22" width="6" height="6" rx="1.2" fill="#1b1e23"/>
+  <line x1="65" y1="12.8" x2="65" y2="17.2" stroke="#5c6168" stroke-width="1"/>
+  <line x1="65" y1="22.8" x2="65" y2="27.2" stroke="#5c6168" stroke-width="1"/>
+  <!-- recoil sleeves -->
+  <rect x="43" y="11.8" width="7" height="6.4" rx="1.4" fill="#22262b"/>
+  <rect x="43" y="21.8" width="7" height="6.4" rx="1.4" fill="#22262b"/>
+  <!-- gun cradle spanning both barrels -->
+  <rect x="38" y="10.5" width="8" height="19" rx="2" fill="#8c949e" stroke="#22262b" stroke-width="1.8"/>
+  <!-- mount body -->
+  <path d="M 27 10.5 L 39 12.5 L 42 16 L 42 24 L 39 27.5 L 27 29.5 A 3 3 0 0 1 24 26.5 L 24 13.5 A 3 3 0 0 1 27 10.5 Z"
+        fill="#4a5158" stroke="#22262b" stroke-width="2"/>
+  <!-- top plate -->
+  <path d="M 28.5 14 L 37.5 15.5 L 37.5 24.5 L 28.5 26 Z" fill="#5c6168"/>
+  <!-- gunner seat + rangefinder -->
+  <rect x="24.5" y="7.2" width="9" height="5" rx="1.4" fill="#333840" stroke="#22262b" stroke-width="1.4"/>
+  <circle cx="31" cy="20" r="2.6" fill="#9aa1a8" stroke="#22262b" stroke-width="1.2"/>
+  <circle cx="31.7" cy="19.3" r="0.9" fill="#d5dade"/>
+  <!-- ammo clip rack on lower side -->
+  <rect x="25" y="28" width="8" height="4.6" rx="1" fill="#6b7480" stroke="#22262b" stroke-width="1.3"/>
+  <line x1="27.6" y1="28.6" x2="27.6" y2="32" stroke="#22262b" stroke-width="1"/>
+  <line x1="30.2" y1="28.6" x2="30.2" y2="32" stroke="#22262b" stroke-width="1"/>
+</svg>
