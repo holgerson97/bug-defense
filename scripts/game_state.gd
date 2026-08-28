@@ -20,11 +20,11 @@ const UPGRADES := {
 	# purchase raises the level (effect stacks) and the price (x1.6 per level).
 	"damage": {"icon": "res://assets/icons/blaster.svg", "name": "Damage", "branch": "Offense", "desc": "+1 bullet damage", "cost": {"scrap": 35}, "requires": [], "effects": {"damage_bonus": 1.0}},
 	"attack_speed": {"icon": "res://assets/icons/blaster.svg", "name": "Attack Speed", "branch": "Offense", "desc": "+10% fire rate", "cost": {"scrap": 52}, "requires": [], "effects": {"fire_rate_cut": 0.1}},
-	"crit_chance": {"icon": "res://assets/icons/crit.svg", "name": "Crit Chance", "branch": "Offense", "desc": "+5% crit chance", "cost": {"scrap": 70, "crystal": 14}, "requires": [], "effects": {"crit_chance": 0.05}},
-	"crit_damage": {"icon": "res://assets/icons/crit.svg", "name": "Crit Damage", "branch": "Offense", "desc": "+25% crit damage", "cost": {"scrap": 84, "crystal": 21}, "requires": [], "effects": {"crit_mult": 0.25}},
+	"crit_chance": {"icon": "res://assets/icons/crit.svg", "name": "Crit Chance", "branch": "Offense", "desc": "+5% crit chance", "cost": {"scrap": 110}, "requires": [], "effects": {"crit_chance": 0.05}},
+	"crit_damage": {"icon": "res://assets/icons/crit.svg", "name": "Crit Damage", "branch": "Offense", "desc": "+25% crit damage", "cost": {"scrap": 140}, "requires": [], "effects": {"crit_mult": 0.25}},
 	"speed": {"icon": "res://assets/icons/xp.svg", "name": "Move Speed", "branch": "Pilot", "desc": "+10% move speed", "cost": {"scrap": 35}, "requires": [], "effects": {"speed_mult": 0.1}},
 	"health": {"icon": "res://assets/icons/health.svg", "name": "Max Health", "branch": "Pilot", "desc": "+25 max health", "cost": {"scrap": 52}, "requires": [], "effects": {"player_hp_bonus": 25.0}},
-	"regen": {"icon": "res://assets/icons/health.svg", "name": "Regeneration", "branch": "Pilot", "desc": "+1 HP/s regen", "cost": {"scrap": 84, "crystal": 21}, "requires": [], "effects": {"player_regen": 1.0}},
+	"regen": {"icon": "res://assets/icons/health.svg", "name": "Regeneration", "branch": "Pilot", "desc": "+1 HP/s regen", "cost": {"scrap": 140}, "requires": [], "effects": {"player_regen": 1.0}},
 	"player_light": {"icon": "res://assets/icons/light_pole.svg", "name": "Headlamp", "branch": "Pilot", "desc": "+15% light radius", "cost": {"scrap": 42}, "requires": [], "effects": {"light_radius": 0.15}},
 	"build_range": {"icon": "res://assets/icons/wall.svg", "name": "Build Range", "branch": "Pilot", "desc": "+10% build range", "cost": {"scrap": 52}, "requires": [], "effects": {"build_range": 0.1}},
 	"heal_range": {"icon": "res://assets/icons/repair_tower.svg", "name": "Beam Range", "branch": "Pilot", "desc": "+15% heal beam range", "cost": {"scrap": 42}, "requires": [], "effects": {"heal_range": 0.15}},
@@ -33,28 +33,28 @@ const UPGRADES := {
 	"player_power_range": {"icon": "res://assets/icons/power_pole.svg", "name": "Reactor Aura", "branch": "Pilot", "desc": "+15% suit power radius", "cost": {"scrap": 56}, "requires": [], "effects": {"player_cover": 0.15}},
 	"miner_1": {"icon": "res://assets/icons/miner.svg", "name": "Miner", "branch": "Resource", "desc": "Unlocks the Miner building", "cost": {"scrap": 105}, "requires": [], "effects": {}},
 	"walls_1": {"icon": "res://assets/icons/wall.svg", "name": "Walls", "branch": "Defense", "desc": "Unlocks buildable Walls", "cost": {"scrap": 52}, "requires": [], "effects": {}},
-	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Defense", "desc": "Unlocks the MG Tower", "cost": {"scrap": 150, "crystal": 30}, "requires": ["walls_1"], "effects": {}},
-	"grenade_tower_1": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "branch": "Defense", "desc": "Unlocks the Grenade Tower", "cost": {"scrap": 200, "crystal": 60}, "requires": ["mg_tower_1"], "effects": {}},
-	"repair_tower_1": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Beam Tower", "branch": "Defense", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 150, "crystal": 60}, "requires": ["walls_1"], "effects": {}},
-	"tesla_tower_1": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "branch": "Defense", "desc": "Unlocks the Tesla Tower", "cost": {"scrap": 250, "crystal": 80}, "requires": ["mg_tower_1"], "effects": {}},
-	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Defense", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 200, "crystal": 60}, "requires": ["walls_1"], "effects": {}},
-	"aa_tower_1": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "branch": "Defense", "desc": "Unlocks the anti-air Flak Cannon", "cost": {"scrap": 250, "crystal": 100}, "requires": ["mg_tower_1"], "effects": {}},
-	"building_walk": {"icon": "res://assets/icons/wall.svg", "name": "Phase Stride", "branch": "Defense", "desc": "Walk across buildings", "cost": {"scrap": 2500, "crystal": 800, "gold": 300}, "requires": ["walls_1"], "effects": {}},
+	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Defense", "desc": "Unlocks the MG Tower", "cost": {"scrap": 230}, "requires": ["walls_1"], "effects": {}},
+	"grenade_tower_1": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "branch": "Defense", "desc": "Unlocks the Grenade Tower", "cost": {"scrap": 320}, "requires": ["mg_tower_1"], "effects": {}},
+	"repair_tower_1": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Beam Tower", "branch": "Defense", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 270}, "requires": ["walls_1"], "effects": {}},
+	"tesla_tower_1": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "branch": "Defense", "desc": "Unlocks the Tesla Tower", "cost": {"scrap": 410}, "requires": ["mg_tower_1"], "effects": {}},
+	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Defense", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 320}, "requires": ["walls_1"], "effects": {}},
+	"aa_tower_1": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "branch": "Defense", "desc": "Unlocks the anti-air Flak Cannon", "cost": {"scrap": 450}, "requires": ["mg_tower_1"], "effects": {}},
+	"building_walk": {"icon": "res://assets/icons/wall.svg", "name": "Phase Stride", "branch": "Defense", "desc": "Walk across buildings", "cost": {"scrap": 6000}, "requires": ["walls_1"], "effects": {}},
 	# Building stats: flat repeatable categories like player stats above.
 	"building_hp": {"icon": "res://assets/icons/wall.svg", "name": "Reinforced Structures", "branch": "Engineering", "desc": "+25% building health", "cost": {"scrap": 70}, "requires": [], "effects": {"building_hp_mult": 0.25}},
-	"tower_damage": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 105, "crystal": 35}, "requires": [], "effects": {"tower_damage": 1.0}},
-	"miner_yield": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 70, "crystal": 21}, "requires": [], "effects": {"miner_yield": 1.0}},
-	"tower_speed": {"icon": "res://assets/icons/mg_tower.svg", "name": "Rapid Servos", "branch": "Engineering", "desc": "+15% tower attack speed", "cost": {"scrap": 105, "crystal": 28}, "requires": [], "effects": {"tower_speed": 0.15}},
-	"tower_range": {"icon": "res://assets/icons/mg_tower.svg", "name": "Extended Barrels", "branch": "Engineering", "desc": "+10% tower range", "cost": {"scrap": 120, "crystal": 40}, "requires": [], "effects": {"tower_range": 0.1}},
-	"tower_crit_chance": {"icon": "res://assets/icons/crit.svg", "name": "Targeting Optics", "branch": "Engineering", "desc": "+5% tower crit chance", "cost": {"scrap": 140, "crystal": 42}, "requires": [], "effects": {"tower_crit_chance": 0.05}},
-	"tower_crit_damage": {"icon": "res://assets/icons/crit.svg", "name": "Overcharged Cells", "branch": "Engineering", "desc": "+50% tower crit damage", "cost": {"scrap": 175, "crystal": 56}, "requires": [], "effects": {"tower_crit_mult": 0.5}},
+	"tower_damage": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 175}, "requires": [], "effects": {"tower_damage": 1.0}},
+	"miner_yield": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 115}, "requires": [], "effects": {"miner_yield": 1.0}},
+	"tower_speed": {"icon": "res://assets/icons/mg_tower.svg", "name": "Rapid Servos", "branch": "Engineering", "desc": "+15% tower attack speed", "cost": {"scrap": 160}, "requires": [], "effects": {"tower_speed": 0.15}},
+	"tower_range": {"icon": "res://assets/icons/mg_tower.svg", "name": "Extended Barrels", "branch": "Engineering", "desc": "+10% tower range", "cost": {"scrap": 200}, "requires": [], "effects": {"tower_range": 0.1}},
+	"tower_crit_chance": {"icon": "res://assets/icons/crit.svg", "name": "Targeting Optics", "branch": "Engineering", "desc": "+5% tower crit chance", "cost": {"scrap": 225}, "requires": [], "effects": {"tower_crit_chance": 0.05}},
+	"tower_crit_damage": {"icon": "res://assets/icons/crit.svg", "name": "Overcharged Cells", "branch": "Engineering", "desc": "+50% tower crit damage", "cost": {"scrap": 285}, "requires": [], "effects": {"tower_crit_mult": 0.5}},
 	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Electricity", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 35}, "requires": [], "effects": {}},
-	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Resource", "desc": "Unlocks the Command Center", "cost": {"scrap": 300, "crystal": 100}, "requires": ["miner_1"], "effects": {}},
+	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Resource", "desc": "Unlocks the Command Center", "cost": {"scrap": 500}, "requires": ["miner_1"], "effects": {}},
 	"light_pole_1": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "branch": "Electricity", "desc": "Unlocks the Light Pole", "cost": {"scrap": 28}, "requires": [], "effects": {}},
-	"searchlight_1": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "branch": "Electricity", "desc": "Unlocks the rotating Searchlight", "cost": {"scrap": 150, "crystal": 40}, "requires": ["light_pole_1"], "effects": {}},
-	"battery_1": {"icon": "res://assets/icons/battery.svg", "name": "Battery", "branch": "Electricity", "desc": "Unlocks the Battery (+100 energy cap each)", "cost": {"scrap": 100, "crystal": 20}, "requires": ["solar_1"], "effects": {}},
+	"searchlight_1": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "branch": "Electricity", "desc": "Unlocks the rotating Searchlight", "cost": {"scrap": 230}, "requires": ["light_pole_1"], "effects": {}},
+	"battery_1": {"icon": "res://assets/icons/battery.svg", "name": "Battery", "branch": "Electricity", "desc": "Unlocks the Battery (+100 energy cap each)", "cost": {"scrap": 140}, "requires": ["solar_1"], "effects": {}},
 	"power_pole_1": {"icon": "res://assets/icons/power_pole.svg", "name": "Power Pole", "branch": "Electricity", "desc": "Unlocks the Power Pole (carries grid power)", "cost": {"scrap": 50}, "requires": ["solar_1"], "effects": {}},
-	"intake_station_1": {"icon": "res://assets/icons/intake_station.svg", "name": "Intake Station", "branch": "Electricity", "desc": "Unlocks the crystal-burning Intake Station", "cost": {"scrap": 250, "crystal": 80}, "requires": ["battery_1"], "effects": {}},
+	"intake_station_1": {"icon": "res://assets/icons/intake_station.svg", "name": "Intake Station", "branch": "Electricity", "desc": "Unlocks the crystal-burning Intake Station", "cost": {"scrap": 410}, "requires": ["battery_1"], "effects": {}},
 	"cooling_tower_1": {"icon": "res://assets/icons/cooling_tower.svg", "name": "Cooling Tower", "branch": "Electricity", "desc": "Unlocks the Cooling Tower (boosts the Intake Station)", "cost": {"scrap": 100}, "requires": ["battery_1"], "effects": {}},
 }
 
@@ -70,25 +70,25 @@ const UPGRADES := {
 # The power pole's "range" is its grid coverage radius (PowerGrid.COVER_RANGE);
 # the intake station's is its complex radius (COMPLEX_RANGE) — both only feed
 # the ghost's placement circle.
-## Buildings cost crystal only; bug hearts (internal key "scrap") are the
-## research-only currency.
+## Buildings cost crystal (plus gold for premium ones); bug hearts
+## (internal key "scrap") are spent exclusively on research.
 const BUILDINGS := {
 	"miner": {"icon": "res://assets/icons/miner.svg", "name": "Miner", "cost": {"crystal": 15}, "research": "miner_1", "slot": 1},
 	"wall": {"icon": "res://assets/icons/wall.svg", "name": "Wall", "cost": {"crystal": 6}, "research": "walls_1", "slot": 2},
 	"mg_tower": {"icon": "res://assets/icons/mg_tower.svg", "name": "MG Tower", "cost": {"crystal": 90}, "research": "mg_tower_1", "slot": 3, "range": 350.0, "arc": 90.0, "tower": true},
 	"grenade_tower": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "cost": {"crystal": 120}, "research": "grenade_tower_1", "slot": 4, "range": 450.0, "arc": 120.0, "tower": true},
 	"repair_tower": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Tower", "cost": {"crystal": 100}, "research": "repair_tower_1", "slot": 5, "range": 250.0, "tower": true},
-	"tesla_tower": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "cost": {"crystal": 115}, "research": "tesla_tower_1", "slot": 6, "range": 360.0, "tower": true},
+	"tesla_tower": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "cost": {"crystal": 115, "gold": 15}, "research": "tesla_tower_1", "slot": 6, "range": 360.0, "tower": true},
 	"flame_tower": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "cost": {"crystal": 105}, "research": "flame_tower_1", "slot": 7, "range": 260.0, "arc": 90.0, "tower": true},
-	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"crystal": 130}, "research": "aa_tower_1", "slot": 8, "range": 550.0, "arc": 120.0, "tower": true},
+	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"crystal": 130, "gold": 20}, "research": "aa_tower_1", "slot": 8, "range": 550.0, "arc": 120.0, "tower": true},
 	"solar_panel": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "cost": {"crystal": 12}, "research": "solar_1", "slot": 9},
 	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"crystal": 160}, "research": "command_center_1", "slot": 10},
 	"light_pole": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "cost": {"crystal": 8}, "research": "light_pole_1", "slot": 11},
-	"searchlight": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "cost": {"crystal": 70}, "research": "searchlight_1", "slot": 12, "range": 500.0, "cone": 36.0, "sweep": 140.0},
+	"searchlight": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "cost": {"crystal": 70, "gold": 10}, "research": "searchlight_1", "slot": 12, "range": 500.0, "cone": 36.0, "sweep": 140.0},
 	"battery": {"icon": "res://assets/icons/battery.svg", "name": "Battery", "cost": {"crystal": 45}, "research": "battery_1", "slot": 13},
 	"power_pole": {"icon": "res://assets/icons/power_pole.svg", "name": "Power Pole", "cost": {"crystal": 10}, "research": "power_pole_1", "slot": 14, "range": 160.0},
-	"intake_station": {"icon": "res://assets/icons/intake_station.svg", "name": "Intake Station", "cost": {"crystal": 130}, "research": "intake_station_1", "slot": 15, "range": 110.0},
-	"cooling_tower": {"icon": "res://assets/icons/cooling_tower.svg", "name": "Cooling Tower", "cost": {"crystal": 55}, "research": "cooling_tower_1", "slot": 16},
+	"intake_station": {"icon": "res://assets/icons/intake_station.svg", "name": "Intake Station", "cost": {"crystal": 130, "gold": 25}, "research": "intake_station_1", "slot": 15, "range": 110.0},
+	"cooling_tower": {"icon": "res://assets/icons/cooling_tower.svg", "name": "Cooling Tower", "cost": {"crystal": 55, "gold": 10}, "research": "cooling_tower_1", "slot": 16},
 }
 
 ## Global bounty boost: kills pay 1.25x their listed bug-heart value.
@@ -294,9 +294,6 @@ func upgrade_cost(id: String) -> Dictionary:
 	for kind in base:
 		# minf guards against int64 overflow at absurd upgrade levels.
 		scaled[kind] = int(ceil(minf(base[kind] * pow(1.6, lvl), 1e12)))
-	# High-level repeatables demand gold, the Harvester-only late-game resource.
-	if lvl >= 5:
-		scaled["gold"] = int(ceil(15.0 * pow(1.5, lvl - 5)))
 	return scaled
 
 func is_purchased(id: String) -> bool:
