@@ -14,6 +14,18 @@
 		"reactor": { "interval": 2.0, "amount": 12.0, "cover_range": 150.0 }
 	},
 
+	"classes": {
+		"_readme": "Selectable player classes. 'stats' values are MULTIPLIERS over the 'player' bases above (1.0 = unchanged); keys ending in '_add' are flat adds instead. 'tint' is [r,g,b] 0-1, multiplied subtly onto the marine sprite. Add or tune classes freely; delete this whole section and everyone plays a neutral Assault. Class multipliers layer AFTER research bonuses.",
+		"assault":  { "name": "Assault",  "desc": "Balanced frontline fighter", "tint": [1.0, 1.0, 1.0],
+			"stats": { "max_health": 1.0, "damage": 1.0, "speed": 1.0, "fire_cooldown": 1.0, "auto_attack_range": 1.0, "light_radius": 1.0, "build_range": 1.0 } },
+		"heavy":    { "name": "Heavy",    "desc": "Tough and hard-hitting, but slow", "tint": [1.0, 0.45, 0.3],
+			"stats": { "max_health": 1.6, "damage": 1.5, "speed": 0.75, "fire_cooldown": 1.25, "light_radius": 0.9 } },
+		"scout":    { "name": "Scout",    "desc": "Fast and far-sighted, but fragile", "tint": [0.75, 1.0, 0.35],
+			"stats": { "speed": 1.4, "fire_cooldown": 0.8, "auto_attack_range": 1.3, "light_radius": 1.25, "max_health": 0.65, "damage": 0.75 } },
+		"engineer": { "name": "Engineer", "desc": "Builds far, powers and heals the base", "tint": [0.35, 0.95, 1.0],
+			"stats": { "build_range": 1.5, "reactor_amount": 1.5, "reactor_cover": 1.4, "heal_beam_heal_add": 2, "heal_beam_range": 1.3, "max_health": 0.85, "damage": 0.7, "speed": 0.95 } }
+	},
+
 	"towers": {
 		"mg_tower":      { "hp": 120, "damage": 1, "range": 350.0, "arc": 90.0,  "burst_size": 30, "shot_interval": 0.05, "cooldown": 0.5, "energy_per_burst": 5 },
 		"grenade_tower": { "hp": 120, "range": 450.0, "arc": 120.0, "interval": 2.5, "energy_per_lob": 2, "blast_radius": 90.0, "blast_damage": 3 },

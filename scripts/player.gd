@@ -13,6 +13,12 @@ const RECOIL_KICK := 5.0
 const RECOIL_MAX := 14.0
 const RECOIL_RECOVER := 14.0
 var auto_attack_range: float = Balance.num("player/auto_attack_range", 250.0)
+var _base_auto_range: float = auto_attack_range
+## This player's class id, resolved from the Net registry (offline: the local
+## menu pick). Stat layering everywhere: base (balance.json "player") ->
+## research bonuses (GameState helpers) -> class multiplier/flat add outermost,
+## so research keeps applying and flats scale with class identity.
+var _class_id: String = "assault"
 ## Physics layer 6 ("buildings") as a bit value; Phase Stride masks it out.
 const BUILDING_LAYER_BIT := 32
 ## Heal beam (hold F): mends the most damaged building in range every tick.
@@ -43,6 +49,7 @@ var _reactor_carry: float = 0.0
 var _auto_label: Label
 var _god_label: Label
 var _name_label: Label
+var _class_label: Label
 var _base_light_radius: float
 ## Spectate (online death): the hidden player node glides after a living
 ## teammate so the local camera simply follows; wheel cycles targets.
@@ -63,7 +70,12 @@ func _ready() -> void:
 	GameState.upgrades_changed.connect(_on_upgrades_changed)
 	base_speed = Balance.num("player/speed", base_speed)
 	base_fire_rate = Balance.num("player/fire_cooldown", base_fire_rate)
-	_max_health = GameState.player_max_health()
+	_class_id = Net.player_class(get_multiplayer_authority())
+	## Late-join races: the spawner can beat the registry broadcast, so re-check
+	## the class (and identity tint/labels) whenever the registry lands.
+	Net.player_list_changed.connect(_refresh_class)
+	auto_attack_range = _base_auto_range * class_mult("auto_attack_range")
+	_max_health = _computed_max_health()
 	_base_light_radius = Balance.num("player/light_radius", _light.radius)
 	_apply_light_radius()
 	_apply_building_walk()
@@ -101,30 +113,71 @@ func _ready() -> void:
 	_god_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	add_child(_god_label)
 
-## Online identity: tint the body toward the registry color; puppets also get
-## a small dim name tag so teammates are tellable apart.
+## -- player class plumbing --
+
+## Class stat multiplier for this player (public: build_controller and
+## power_grid layer it onto their per-player reach checks).
+func class_mult(key: String) -> float:
+	return GameState.class_mult(_class_id, key)
+
+func _class_add(key: String) -> float:
+	return GameState.class_add(_class_id, key)
+
+## Class layer applied OUTERMOST, after research (see layering note up top).
+func _computed_max_health() -> int:
+	return maxi(int(round(GameState.player_max_health() * class_mult("max_health"))), 1)
+
+func _class_damage() -> int:
+	return maxi(int(round(GameState.player_damage() * class_mult("damage"))), 1)
+
+## Registry (re)sync: re-resolve the class once the entry lands and re-apply
+## class-derived stats + visuals. Classes are locked once the run starts (Net
+## rejects changes), so this only ever fires the initial catch-up.
+func _refresh_class() -> void:
+	var cls := Net.player_class(get_multiplayer_authority())
+	if cls == _class_id:
+		return
+	_class_id = cls
+	auto_attack_range = _base_auto_range * class_mult("auto_attack_range")
+	_on_upgrades_changed()
+	_apply_identity()
+
+## Identity: class tint multiplies subtly onto the body; online the join color
+## layers on top and puppets get a dim name tag + class line so teammates are
+## tellable apart.
 func _apply_identity() -> void:
+	var body := Color.WHITE.lerp(GameState.class_tint(_class_id), 0.35)
 	var info: Dictionary = Net.players.get(get_multiplayer_authority(), {})
-	if info.is_empty():
+	if not info.is_empty():
+		body *= Color.WHITE.lerp(info["color"], 0.4)
+	$Body.modulate = body
+	if info.is_empty() or is_multiplayer_authority():
 		return
 	var color: Color = info["color"]
-	$Body.modulate = Color.WHITE.lerp(color, 0.4)
-	if is_multiplayer_authority():
-		return
-	_name_label = Label.new()
+	if _name_label == null:
+		_name_label = Label.new()
+		_name_label.top_level = true
+		_name_label.z_index = 60
+		_name_label.add_theme_font_size_override("font_size", 10)
+		add_child(_name_label)
+		_class_label = Label.new()
+		_class_label.top_level = true
+		_class_label.z_index = 60
+		_class_label.add_theme_font_size_override("font_size", 9)
+		add_child(_class_label)
 	_name_label.text = info["name"]
-	_name_label.top_level = true
-	_name_label.z_index = 60
-	_name_label.add_theme_font_size_override("font_size", 10)
 	_name_label.add_theme_color_override("font_color", Color(color, 0.75))
-	add_child(_name_label)
+	_class_label.text = GameState.class_title(_class_id)
+	_class_label.add_theme_color_override("font_color", Color(UITheme.TEXT_DIM, 0.75))
 
 func _physics_process(delta: float) -> void:
 	_health_bar.global_position = global_position + Vector2(-22, -40)
 	## Puppet: transform/health arrive via the synchronizer; only track labels.
 	if not is_multiplayer_authority():
 		if _name_label != null:
-			_name_label.global_position = global_position + Vector2(-_name_label.size.x / 2.0, -58)
+			_name_label.global_position = global_position + Vector2(-_name_label.size.x / 2.0, -71)
+		if _class_label != null:
+			_class_label.global_position = global_position + Vector2(-_class_label.size.x / 2.0, -58)
 		return
 
 	# Camera recoil eases back to zero; offset doesn't fight position smoothing.
@@ -138,7 +191,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = input_dir * GameState.player_speed(base_speed)
+	velocity = input_dir * GameState.player_speed(base_speed) * class_mult("speed")
 	move_and_slide()
 	# Space toggles auto-attack: aim and fire at the closest enemy in sight.
 	if Input.is_action_just_pressed("auto_attack"):
@@ -175,14 +228,16 @@ func _physics_process(delta: float) -> void:
 	var firing := auto_target != null or (selected == "blaster" and Input.is_action_pressed("shoot"))
 	if firing and _fire_cooldown <= 0.0:
 		_shoot()
-		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate)
+		## Class scales the base cooldown; research then divides and the
+		## min-cooldown floor clamps last (multipliers commute, floor stays).
+		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate * class_mult("fire_cooldown"))
 
 	## Suit reactor: passive energy through the normal path so it shows in the
 	## HUD production rate; carry banks fractional output from multipliers.
 	_reactor_accum += delta
 	if _reactor_accum >= reactor_interval:
 		_reactor_accum -= reactor_interval
-		_reactor_carry += reactor_amount * GameState.player_power_mult()
+		_reactor_carry += reactor_amount * GameState.player_power_mult() * class_mult("reactor_amount")
 		var whole := int(_reactor_carry)
 		_reactor_carry -= whole
 		GameState.add_resource("energy", whole)
@@ -199,7 +254,7 @@ func _physics_process(delta: float) -> void:
 			if _heal_target != null:
 				## request_heal routes to the host online (heal() itself
 				## no-ops on clients — building HP is host-owned, Phase 4).
-				_heal_target.request_heal(heal_base + GameState.player_heal_bonus())
+				_heal_target.request_heal(heal_base + GameState.player_heal_bonus() + int(_class_add("heal_beam_heal_add")))
 	else:
 		_heal_accum = heal_tick
 		_heal_target = null
@@ -208,7 +263,7 @@ func _physics_process(delta: float) -> void:
 
 ## Most-damaged building in beam range (repair tower pick, minus player heal).
 func _pick_heal_target():
-	var reach := heal_beam_range * GameState.player_heal_range_mult()
+	var reach := heal_beam_range * GameState.player_heal_range_mult() * class_mult("heal_beam_range")
 	var best = null
 	var best_missing := 0
 	for building in get_tree().get_nodes_in_group("buildings"):
@@ -234,7 +289,7 @@ func _update_heal_beam() -> void:
 ## can't land locally: online clients send a fire intent to the host (which
 ## spawns the authoritative bullet) and keep a cosmetic tracer for feel.
 func _shoot() -> void:
-	var dmg := GameState.player_damage()
+	var dmg := _class_damage()
 	var crit := randf() < GameState.player_crit_chance()
 	if crit:
 		dmg = int(ceil(dmg * GameState.player_crit_mult()))
@@ -269,7 +324,10 @@ func _rpc_fire(pos: Vector2, rot: float, dmg: int, crit: bool) -> void:
 		return
 	if multiplayer.get_remote_sender_id() != get_multiplayer_authority():
 		return
-	var cap := int(ceil(GameState.player_damage() * maxf(GameState.player_crit_mult(), 1.0)))
+	## Cap includes the shooter's class multiplier: this node resolved the
+	## sender's class from the registry, so a Heavy's x1.5 shots pass while a
+	## tampered client still can't exceed its own class ceiling.
+	var cap := int(ceil(_class_damage() * maxf(GameState.player_crit_mult(), 1.0)))
 	_spawn_bullet(pos, rot, clampi(dmg, 1, cap), crit, false)
 	## Phase 6: the shooter already played its own flash/tracer — the host
 	## renders the remote shot locally and relays it to the other clients.
@@ -435,7 +493,7 @@ func _update_health_bar() -> void:
 	_health_bar.value = health
 
 func _on_upgrades_changed() -> void:
-	var new_max := GameState.player_max_health()
+	var new_max := _computed_max_health()
 	if new_max != _max_health:
 		var gained := maxi(new_max - _max_health, 0)
 		_max_health = new_max
@@ -459,5 +517,5 @@ func _apply_building_walk() -> void:
 
 ## Headlamp research: scale the light pool and its texture from the base radius.
 func _apply_light_radius() -> void:
-	_light.radius = _base_light_radius * GameState.player_light_mult()
+	_light.radius = _base_light_radius * GameState.player_light_mult() * class_mult("light_radius")
 	_light.texture_scale = _light.radius * 2.0 / _light.TEXTURE_SIZE

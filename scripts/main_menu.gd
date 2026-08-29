@@ -16,8 +16,17 @@ extends Control
 @onready var _sfx_volume: HSlider = $Center/SettingsMenu/SfxRow/SfxVolume
 @onready var _mute: CheckButton = $Center/SettingsMenu/Mute
 
+## Class picker widgets (built in code; classes are data-driven from balance).
+var _class_buttons: Dictionary = {}
+var _class_desc: Label
+var _lobby_class: OptionButton
+var _lobby_class_desc: Label
+
 func _ready() -> void:
 	theme = UITheme.build()
+	_build_class_picker()
+	_build_lobby_class_row()
+	_sync_class_ui()
 	$Center/Menu/Play.pressed.connect(_on_play)
 	$Center/Menu/Coop.pressed.connect(_show_lobby.bind(true))
 	$Center/Menu/SettingsButton.pressed.connect(_show_settings.bind(true))
@@ -55,6 +64,80 @@ func _sync_controls() -> void:
 func _on_play() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
+## -- class selection --
+
+## Main menu (single player): one toggle button per class above Play, with a
+## dim one-line description underneath. Persists via Settings/Net.local_class.
+func _build_class_picker() -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	var group := ButtonGroup.new()
+	for id in GameState.CLASSES:
+		var button := Button.new()
+		button.toggle_mode = true
+		button.button_group = group
+		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(0, 40)
+		button.text = GameState.class_title(id)
+		button.add_theme_color_override("font_color", UITheme.TEXT_COLOR.lerp(GameState.class_tint(id), 0.5))
+		button.pressed.connect(_on_class_picked.bind(id))
+		row.add_child(button)
+		_class_buttons[id] = button
+	_class_desc = Label.new()
+	_class_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_class_desc.add_theme_font_size_override("font_size", 14)
+	_class_desc.add_theme_color_override("font_color", UITheme.TEXT_DIM)
+	var menu := $Center/Menu
+	menu.add_child(row)
+	menu.move_child(row, $Center/Menu/Play.get_index())
+	menu.add_child(_class_desc)
+	menu.move_child(_class_desc, $Center/Menu/Play.get_index())
+
+## Lobby: dropdown above the player list — each peer picks its own class and
+## the choice replicates through the Net registry. Late joiners parked here
+## pick the same way; the pick rides their registration at the intermission.
+func _build_lobby_class_row() -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var label := Label.new()
+	label.text = "Your class"
+	row.add_child(label)
+	_lobby_class = OptionButton.new()
+	_lobby_class.focus_mode = Control.FOCUS_NONE
+	_lobby_class.custom_minimum_size = Vector2(160, 32)
+	for id in GameState.CLASSES:
+		_lobby_class.add_item(GameState.class_title(id))
+	_lobby_class.item_selected.connect(_on_lobby_class_picked)
+	row.add_child(_lobby_class)
+	_lobby_class_desc = Label.new()
+	_lobby_class_desc.add_theme_font_size_override("font_size", 13)
+	_lobby_class_desc.add_theme_color_override("font_color", UITheme.TEXT_DIM)
+	var anchor := $Center/LobbyMenu/PlayersLabel.get_index()
+	_lobby.add_child(row)
+	_lobby.move_child(row, anchor)
+	_lobby.add_child(_lobby_class_desc)
+	_lobby.move_child(_lobby_class_desc, anchor + 1)
+
+func _on_class_picked(id: String) -> void:
+	Net.set_local_class(id)
+	_sync_class_ui()
+
+func _on_lobby_class_picked(index: int) -> void:
+	var ids: Array = GameState.CLASSES.keys()
+	if index >= 0 and index < ids.size():
+		Net.set_local_class(ids[index])
+	_sync_class_ui()
+
+## Reflect Net.local_class in both pickers + description lines.
+func _sync_class_ui() -> void:
+	var cls: String = Net.local_class
+	for id in _class_buttons:
+		_class_buttons[id].set_pressed_no_signal(id == cls)
+	_class_desc.text = GameState.class_desc(cls)
+	_lobby_class.select(maxi(GameState.CLASSES.keys().find(cls), 0))
+	_lobby_class_desc.text = GameState.class_desc(cls)
+
 func _show_settings(show_settings: bool) -> void:
 	_menu.visible = not show_settings
 	_settings.visible = show_settings
@@ -66,6 +149,7 @@ func _show_lobby(show_lobby: bool) -> void:
 	_lobby.visible = show_lobby
 	if show_lobby:
 		_lobby_status.text = "Host a game or join by IP"
+		_sync_class_ui()
 		_refresh_lobby()
 
 func _on_host() -> void:
@@ -101,10 +185,18 @@ func _refresh_lobby() -> void:
 		child.queue_free()
 	for peer_id in Net.players:
 		var info: Dictionary = Net.players[peer_id]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
 		var label := Label.new()
 		label.text = info["name"] + (" (Host)" if peer_id == 1 else "")
 		label.add_theme_color_override("font_color", info["color"])
-		_player_list.add_child(label)
+		row.add_child(label)
+		## Replicated class pick, visible to everyone in the lobby.
+		var cls := Label.new()
+		cls.text = "— " + GameState.class_title(str(info.get("class", "assault")))
+		cls.add_theme_color_override("font_color", UITheme.TEXT_DIM)
+		row.add_child(cls)
+		_player_list.add_child(row)
 	if Net.players.is_empty() and _lobby.visible:
 		var hint := Label.new()
 		hint.text = "No session"

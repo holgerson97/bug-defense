@@ -50,10 +50,12 @@ func covered(pos: Vector2) -> bool:
 	for p in _pole_positions:
 		if p.distance_squared_to(pos) <= COVER_RANGE * COVER_RANGE:
 			return true
-	## Reactor Aura research widens the walking-reactor radius.
+	## Reactor Aura research widens the walking-reactor radius; the class
+	## multiplier (Engineer) layers on top, per player.
 	var cover := PLAYER_COVER * GameState.player_cover_mult()
 	for player in get_tree().get_nodes_in_group("player"):
-		if player.global_position.distance_squared_to(pos) <= cover * cover:
+		var reach: float = cover * player.class_mult("reactor_cover")
+		if player.global_position.distance_squared_to(pos) <= reach * reach:
 			return true
 	return false
 

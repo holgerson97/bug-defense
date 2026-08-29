@@ -18,9 +18,14 @@ const PLAYER_COLORS: Array[Color] = [
 	Color(0.9, 0.5, 0.9),
 ]
 
-## peer_id -> {"name": String, "color": Color}. Host-authoritative; the full
-## registry is re-broadcast (reliable) on every change.
+## peer_id -> {"name": String, "color": Color, "class": String}. Host-
+## authoritative; the full registry is re-broadcast (reliable) on every change.
 var players: Dictionary = {}
+
+## Local player's chosen class id: persisted via Settings, carried into the
+## registry when hosting/registering. Offline (zero peers, empty registry)
+## player_class() serves it directly to the spawned player node.
+var local_class: String = "assault"
 
 ## World-gen seed for the current run: the host rolls it at game start and the
 ## start RPC carries it, so every peer derives identical chunk/starter terrain
@@ -51,6 +56,9 @@ func _ready() -> void:
 	multiplayer.auth_timeout = 0.0
 	multiplayer.peer_authenticating.connect(_on_peer_authenticating)
 	multiplayer.peer_authentication_failed.connect(_on_peer_auth_failed)
+	local_class = Settings.player_class
+	if not GameState.CLASSES.has(local_class):
+		local_class = GameState.CLASSES.keys()[0]
 
 ## True offline (OfflineMultiplayerPeer acts as server) and when hosting.
 func is_host() -> bool:
@@ -69,7 +77,7 @@ func host(port := DEFAULT_PORT, max_players := MAX_PLAYERS) -> Error:
 	_peer = peer
 	multiplayer.multiplayer_peer = peer
 	var host_name := _os_name()
-	players[1] = {"name": host_name if host_name != "" else "Player 1", "color": PLAYER_COLORS[0]}
+	players[1] = {"name": host_name if host_name != "" else "Player 1", "color": PLAYER_COLORS[0], "class": local_class}
 	player_list_changed.emit()
 	return OK
 
@@ -110,6 +118,33 @@ func _os_name() -> String:
 	if user == "":
 		user = OS.get_environment("USERNAME")
 	return user
+
+## Class id for a peer: registry entry when online, the local pick offline
+## (single player runs with an empty registry). Missing key = assault.
+func player_class(peer_id: int) -> String:
+	if players.has(peer_id):
+		return str(players[peer_id].get("class", "assault"))
+	return local_class
+
+## Menu/lobby class pick. Persists, and while in a lobby routes into the
+## registry (host directly, clients via RPC — dropped by the host once the run
+## starts, so a class is fixed at game start). A late joiner parked in the auth
+## phase can't RPC yet; its pick rides _rpc_register when the hold lifts.
+func set_local_class(cls: String) -> void:
+	if not GameState.CLASSES.has(cls):
+		return
+	local_class = cls
+	Settings.player_class = cls
+	Settings.save_settings()
+	if not is_online():
+		return
+	if is_host():
+		if not game_running and players.has(1):
+			players[1]["class"] = cls
+			_broadcast_players()
+			player_list_changed.emit()
+	elif not multiplayer.get_peers().is_empty():
+		_rpc_set_class.rpc_id(1, cls)
 
 ## First color not yet taken; join order decides.
 func _next_color() -> Color:
@@ -198,7 +233,7 @@ func _on_peer_disconnected(id: int) -> void:
 		player_list_changed.emit()
 
 func _on_connected_to_server() -> void:
-	_rpc_register.rpc_id(1, _os_name())
+	_rpc_register.rpc_id(1, _os_name(), local_class)
 
 func _on_connection_failed() -> void:
 	_end_session("Connection failed")
@@ -208,15 +243,19 @@ func _on_server_disconnected() -> void:
 
 ## -- RPCs --
 
-## Client -> host: announce name; host assigns color and re-broadcasts.
+## Client -> host: announce name + class pick; host assigns color and
+## re-broadcasts. Late joiners register at spawn time, so their class lands
+## exactly once, right before the player node is created.
 @rpc("any_peer", "call_remote", "reliable")
-func _rpc_register(player_name: String) -> void:
+func _rpc_register(player_name: String, cls := "assault") -> void:
 	if not multiplayer.is_server():
 		return
 	var id := multiplayer.get_remote_sender_id()
 	if player_name.strip_edges() == "":
 		player_name = "Player %d" % (players.size() + 1)
-	players[id] = {"name": player_name, "color": _next_color()}
+	if not GameState.CLASSES.has(cls):
+		cls = GameState.CLASSES.keys()[0]
+	players[id] = {"name": player_name, "color": _next_color(), "class": cls}
 	_broadcast_players()
 	player_list_changed.emit()
 	## Late joiner registering into a running game: the game scene spawns them.
@@ -224,6 +263,20 @@ func _rpc_register(player_name: String) -> void:
 		var scene := get_tree().current_scene
 		if scene != null and scene.has_method("spawn_late_joiner"):
 			scene.spawn_late_joiner(id)
+
+## Client -> host: lobby class change. Locked once the run starts — class
+## stats are baked into damage caps and spawned player stats, so a mid-run
+## flip would desync; the host simply drops the request.
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_set_class(cls: String) -> void:
+	if not multiplayer.is_server() or game_running:
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if not players.has(id) or not GameState.CLASSES.has(cls):
+		return
+	players[id]["class"] = cls
+	_broadcast_players()
+	player_list_changed.emit()
 
 func _broadcast_players() -> void:
 	_rpc_sync_players.rpc(players)
