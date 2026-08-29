@@ -29,7 +29,7 @@ const BUILDING_SCENES := {
 }
 ## Footprints on the shared 16px lattice: utility 32, walls/turrets 48 (1.5x),
 ## large structures 64 — all multiples of the base step so everything tiles.
-const BUILDING_FOOTPRINT := {"wall": 48.0, "mg_tower": 48.0, "grenade_tower": 48.0, "repair_tower": 48.0, "tesla_tower": 48.0, "flame_tower": 48.0, "aa_tower": 48.0, "solar_panel": 32.0, "command_center": 64.0, "light_pole": 32.0, "searchlight": 32.0, "battery": 32.0, "power_pole": 32.0, "intake_station": 64.0, "cooling_tower": 32.0}
+const BUILDING_FOOTPRINT := {"wall": 48.0, "mg_tower": 48.0, "grenade_tower": 48.0, "repair_tower": 48.0, "tesla_tower": 48.0, "flame_tower": 48.0, "aa_tower": 48.0, "solar_panel": 32.0, "command_center": 64.0, "light_pole": 32.0, "searchlight": 32.0, "battery": 32.0, "power_pole": 32.0, "intake_station": 64.0, "cooling_tower": 96.0}
 ## Placement query shrinks by this so flush neighbors don't block placement.
 const PLACE_EPSILON := 2.0
 const GHOST_VALID := Color(0.35, 1.0, 0.45, 0.45)

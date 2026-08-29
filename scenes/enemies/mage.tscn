@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/enemies/enemy_mage.svg" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_mage"]
-radius = 16.0
+radius = 40.0
 
 [node name="Mage" type="CharacterBody2D" groups=["enemies"]]
 collision_layer = 2
@@ -18,7 +18,7 @@ scrap_value = 24
 crystal_value = 5
 
 [node name="Body" type="Sprite2D" parent="."]
-scale = Vector2(0.1375, 0.1375)
+scale = Vector2(0.55, 0.55)
 texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
