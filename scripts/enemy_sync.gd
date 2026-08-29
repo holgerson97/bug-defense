@@ -99,6 +99,15 @@ func _rebuild_cache() -> void:
 	for enemy in _enemies.get_children():
 		_by_id[enemy.sync_id] = enemy
 
+## Puppet lookup by sync id for FX event replay (enemy ignite etc.); shares
+## the transform cache, rebuilding once on a miss like the packet path.
+func find_by_id(id: int):
+	var node = _by_id.get(id)
+	if node == null or not is_instance_valid(node):
+		_rebuild_cache()
+		node = _by_id.get(id)
+	return node
+
 ## Client: smooth every puppet toward its latest sample.
 func _process(delta: float) -> void:
 	var alpha := 1.0 - exp(-SMOOTH_RATE * delta)

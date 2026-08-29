@@ -42,13 +42,13 @@ func _physics_process(delta: float) -> void:
 		_birth_timer = 0.0
 		_birth(_brood_count())
 
-func take_damage(amount) -> void:
+func take_damage(amount, hit_fx := true) -> void:
 	# The broodmother bleeds hard on death: extra bursts around the body.
 	if not _dead and health - int(amount) <= 0:
 		for i in 4:
 			var off := Vector2.from_angle(randf() * TAU) * randf_range(8.0, 32.0)
 			Effects.blood_death(self, global_position + off, Vector2.from_angle(randf() * TAU))
-	super(amount)
+	super(amount, hit_fx)
 	_health_bar.value = health
 	## Rage broods at HP thresholds; while-loop catches big hits crossing several.
 	while not _dead and _rage_index < RAGE_THRESHOLDS.size() and health <= int(max_health * RAGE_THRESHOLDS[_rage_index]):

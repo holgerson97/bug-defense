@@ -19,8 +19,6 @@ var _throw_accum: float = 0.0
 var _retarget_accum: float = RETARGET_INTERVAL
 var _flare: float = 0.0
 var _target
-## Alive patches, shared with in-flight globs so the cap survives tower death.
-var _patches: Array = []
 
 @onready var _nozzle: Node2D = $Nozzle
 @onready var _jet: CPUParticles2D = $Nozzle/Jet
@@ -77,7 +75,6 @@ func _throw(target) -> void:
 	var glob := FireGlob.new()
 	glob.global_position = global_position + Vector2.from_angle(_nozzle.global_rotation) * NOZZLE_LENGTH
 	glob.target_point = point
-	glob.patches = _patches
 	get_tree().current_scene.add_child(glob)
 	_flare = FLARE_TIME
 	Sfx.play("flame", global_position, -14.0)
@@ -89,13 +86,11 @@ func _throw(target) -> void:
 class FireGlob extends Node2D:
 	const FIRE_PATCH := preload("res://scripts/effects/fire_patch.gd")
 	const FLIGHT_TIME := 0.45
-	const MAX_PATCHES := 4
 
 	var splash_radius: float = Balance.num("towers/flame_tower/splash_radius", 40.0)
 	var splash_mult: int = Balance.inum("towers/flame_tower/splash_mult", 2)
 	var damage_base: int = Balance.inum("towers/flame_tower/damage", 1)
 	var target_point: Vector2
-	var patches: Array = []
 	## Phase 6 client replay: no damage on land; the patch spawns with its
 	## damage ticking disabled (visual + light only).
 	var cosmetic := false
@@ -123,15 +118,14 @@ class FireGlob extends Node2D:
 		trail.initial_velocity_max = 20.0
 		trail.scale_amount_min = 2.0
 		trail.scale_amount_max = 4.0
-		var gradient := Gradient.new()
-		gradient.offsets = PackedFloat32Array([0.0, 1.0])
-		gradient.colors = PackedColorArray([Color(1.0, 0.7, 0.25, 0.8), Color(0.6, 0.15, 0.05, 0.0)])
-		trail.color_ramp = gradient
+		## Shared fire ramp: same yellow->red-orange->smoke look as the ground
+		## fires and burning enemies (one Gradient object for all of them).
+		trail.color_ramp = Effects.fire_gradient()
 		trail.emitting = true
 		add_child(trail)
 		## Tiny own light so the glob is visible against the night.
 		var light := PointLight2D.new()
-		light.texture = Effects.radial_light_texture(Color(1.0, 0.65, 0.3, 1.0), Color(1.0, 0.45, 0.15, 0.0))
+		light.texture = Effects.fire_light_texture()
 		light.texture_scale = 1.0
 		light.energy = 1.2
 		add_child(light)
@@ -140,13 +134,15 @@ class FireGlob extends Node2D:
 		_time += delta
 		var t := minf(_time / FLIGHT_TIME, 1.0)
 		global_position = _start.lerp(target_point, t)
-		var arc := 1.0 + 0.6 * sin(t * PI)
+		## Fake arc plus a slight burning pulse so the glob shimmers in flight.
+		var arc := (1.0 + 0.6 * sin(t * PI)) * randf_range(0.94, 1.06)
 		scale = Vector2(arc, arc)
 		if t >= 1.0:
 			_land()
 
-	## Punchy landing: small splash at double the patch tick damage, then
-	## the ground catches fire.
+	## Punchy landing: small splash at double the patch tick damage that also
+	## sets the victims on fire, then the ground catches fire. Dedupe, merge
+	## and the global cap all live in FirePatch.ignite_at.
 	func _land() -> void:
 		if not cosmetic:
 			@warning_ignore("integer_division")
@@ -156,28 +152,9 @@ class FireGlob extends Node2D:
 			for enemy in get_tree().get_nodes_in_group("enemies"):
 				if enemy.global_position.distance_to(global_position) <= splash_radius and enemy.has_method("take_damage"):
 					enemy.take_damage(damage)
-		var scene = get_tree().current_scene
-		if scene != null:
-			## Fire doesn't stack: a glob landing on a burning spot rekindles
-			## the existing patch instead of piling a second DoT on top.
-			for existing in patches:
-				if is_instance_valid(existing) and existing.global_position.distance_to(global_position) <= existing.radius * 0.8:
-					existing.refresh()
-					queue_free()
-					return
-			var patch: Node2D = FIRE_PATCH.new()
-			patch.cosmetic = cosmetic
-			patch.global_position = global_position
-			scene.add_child(patch)
-			## Per-tower cap: sustained fire must not blanket the map with
-			## scan loops — the oldest patch is cut short instead.
-			patches.append(patch)
-			while patches.size() > 0 and not is_instance_valid(patches[0]):
-				patches.pop_front()
-			while patches.size() > MAX_PATCHES:
-				var oldest = patches.pop_front()
-				if is_instance_valid(oldest):
-					oldest.force_fade()
+					if enemy.has_method("ignite"):
+						enemy.ignite()
+		FIRE_PATCH.ignite_at(self, global_position, cosmetic)
 		queue_free()
 
 	func _circle_points(radius: float) -> PackedVector2Array:

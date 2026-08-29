@@ -51,9 +51,15 @@ func _on_body_entered(body) -> void:
 				return
 			_burned[body] = true
 			body.take_damage(damage)
+			## Flame globs set their victims on fire (host-side DoT; the
+			## ignite call is a no-op on client puppets).
+			if flame and body.has_method("ignite"):
+				body.ignite()
 			Sfx.play("hit", global_position, -14.0)
 			return
 		body.take_damage(damage)
+		if flame and body.has_method("ignite"):
+			body.ignite()
 	Effects.impact(self, global_position, rotation + PI)
 	Sfx.play("hit", global_position, -12.0)
 	queue_free()

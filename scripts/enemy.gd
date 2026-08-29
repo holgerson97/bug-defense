@@ -97,6 +97,17 @@ var _rock_contact: float = 999.0       ## seconds since last rock touch
 var _ray: PhysicsRayQueryParameters2D
 var _body_radius: float = 16.0         ## collider radius (gnaw-sense ray length)
 
+## Fire DoT: any fire damage source (flame tower globs, ground fire patches,
+## Heavy flame globs) calls ignite(). The burn is HOST-simulated; clients see
+## it via throttled FxEvents ignite events driving a visual-only mirror.
+var _burn_left: float = 0.0        ## seconds of burn remaining (0 = not burning)
+var _burn_tick_damage: int = 0
+var _burn_tick_accum: float = 0.0
+var _burn_bcast_cd: float = 0.0    ## re-ignite event throttle (host)
+var _burn_time: float = 0.0        ## pulse/flicker clock
+var _burn_fx: Node2D = null        ## flames+embers+light, child of the enemy
+var _burn_light: PointLight2D = null
+
 var _path := PackedVector2Array()  ## active waypoints (empty = pure glide)
 var _path_i: int = 0
 var _path_cd: float = 0.0          ## per-enemy request throttle
@@ -130,6 +141,9 @@ func _ready() -> void:
 		_body_radius = cs.shape.radius
 
 func _physics_process(delta: float) -> void:
+	## Burn runs above the puppet gate: visuals tick on every peer, the
+	## damage inside is host-only.
+	_update_burn(delta)
 	## Puppets do nothing here; transforms arrive via enemy_sync. Variant
 	## overrides that share _behave/_steered_move are gated by this too.
 	if _is_puppet():
@@ -447,13 +461,128 @@ func _steering_reset() -> void:
 	_want_path = false
 	_drop_path()
 
+## -- fire DoT ------------------------------------------------------------
+
+## Catch fire (host): re-ignites REFRESH the running burn — duration back to
+## full, strongest tick damage wins — they never stack a second DoT.
+func ignite(tick_damage = -1, duration = -1.0) -> void:
+	if _dead or _is_puppet():
+		return
+	var dur := float(duration) if float(duration) > 0.0 else Balance.num("fire/burn_duration", 3.0)
+	var dmg := int(tick_damage) if int(tick_damage) > 0 else Balance.inum("fire/burn_tick_damage", 1)
+	var was_burning := _burn_left > 0.0
+	_burn_left = maxf(_burn_left, dur)
+	_burn_tick_damage = maxi(_burn_tick_damage, dmg) if was_burning else dmg
+	if not was_burning:
+		_burn_tick_accum = 0.0
+		_burn_fx_start()
+	## Clients mirror via FX events; refreshes are throttled to ~1/s per
+	## enemy so patch ticks re-igniting a horde don't spam the bus.
+	if Net.is_online() and Net.is_host() and (not was_burning or _burn_bcast_cd <= 0.0):
+		FxEvents.enemy_ignite(self, sync_id, _burn_left)
+		_burn_bcast_cd = 1.0
+
+## Client puppet: visual-only burn driven by the host's ignite events (the
+## timer runs in parallel; refresh events keep it from expiring early).
+func client_ignite(duration: float) -> void:
+	if _dead:
+		return
+	var was_burning := _burn_left > 0.0
+	_burn_left = maxf(_burn_left, float(duration))
+	if not was_burning:
+		_burn_fx_start()
+
+## Runs on every peer (above the puppet gate): pulse + flicker everywhere,
+## damage ticks host-only. Delta-accumulated, so pausing pauses the burn.
+func _update_burn(delta: float) -> void:
+	if _burn_left <= 0.0:
+		return
+	_burn_left -= delta
+	_burn_bcast_cd -= delta
+	_burn_time += delta
+	if _burn_left <= 0.0 or _dead:
+		_burn_end()
+		return
+	## Orange-hot pulse; the fx rig is counter-rotated every frame so the
+	## flames always rise screen-up while the enemy spins.
+	var heat := 0.7 + 0.3 * sin(_burn_time * 8.0)
+	modulate = Color(1.0, lerpf(1.0, 0.65, heat), lerpf(1.0, 0.35, heat))
+	if _burn_fx != null:
+		_burn_fx.global_rotation = 0.0
+		_burn_light.energy = 0.85 + 0.15 * sin(_burn_time * 9.0) + randf_range(-0.08, 0.08)
+	if _is_puppet():
+		return
+	_burn_tick_accum += delta
+	var tick := Balance.num("fire/burn_tick_interval", 0.5)
+	if _burn_tick_accum >= tick:
+		_burn_tick_accum -= tick
+		## Full death/reward flow via take_damage; no blood spray per tick.
+		take_damage(_burn_tick_damage, false)
+
+## Flames licking the victim: tiny shared-resource emitters + a flickering
+## light, parented to the enemy so death/queue_free frees them with the body.
+func _burn_fx_start() -> void:
+	if _burn_fx != null:
+		return
+	_burn_time = randf() * TAU  ## desync pulse phases across the horde
+	_burn_fx = Node2D.new()
+	_burn_fx.z_index = 3
+	var flames := CPUParticles2D.new()
+	flames.amount = 7
+	flames.lifetime = 0.45
+	flames.local_coords = false
+	flames.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	flames.emission_sphere_radius = _body_radius * 0.55
+	flames.direction = Vector2(0, -1)
+	flames.spread = 20.0
+	flames.gravity = Vector2(0, -90)
+	flames.initial_velocity_min = 8.0
+	flames.initial_velocity_max = 24.0
+	flames.scale_amount_min = 2.2
+	flames.scale_amount_max = 4.0
+	flames.color_ramp = Effects.fire_gradient()
+	flames.emitting = true
+	_burn_fx.add_child(flames)
+	var embers := CPUParticles2D.new()
+	embers.amount = 3
+	embers.lifetime = 0.6
+	embers.local_coords = false
+	embers.direction = Vector2(0, -1)
+	embers.spread = 45.0
+	embers.gravity = Vector2(0, -140)
+	embers.initial_velocity_min = 25.0
+	embers.initial_velocity_max = 60.0
+	embers.scale_amount_min = 1.0
+	embers.scale_amount_max = 1.6
+	embers.color_ramp = Effects.ember_gradient()
+	embers.emitting = true
+	_burn_fx.add_child(embers)
+	_burn_light = PointLight2D.new()
+	_burn_light.texture = Effects.fire_light_texture()
+	_burn_light.texture_scale = 0.9
+	_burn_light.energy = 1.0
+	_burn_fx.add_child(_burn_light)
+	add_child(_burn_fx)
+
+func _burn_end() -> void:
+	_burn_left = 0.0
+	modulate = Color.WHITE
+	if _burn_fx != null:
+		_burn_fx.queue_free()
+		_burn_fx = null
+		_burn_light = null
+
+## -------------------------------------------------------------------------
+
 func heal(amount) -> void:
 	## Puppet HP is host-owned (nothing heals client-side, belt and braces).
 	if _dead or _is_puppet():
 		return
 	health = mini(health + int(amount), max_health)
 
-func take_damage(amount) -> void:
+## hit_fx=false skips the non-lethal blood spray (burn ticks would bleed
+## every half-second otherwise); the death flow is identical either way.
+func take_damage(amount, hit_fx := true) -> void:
 	## Puppets never take damage locally: client bullets are cosmetic tracers
 	## and client towers idle; the despawn + death event arrive from the host.
 	if _dead or _is_puppet():
@@ -478,5 +607,5 @@ func take_damage(amount) -> void:
 			GameState.add_resource("crystal", crystal_value)
 		died.emit(points)
 		queue_free()
-	else:
+	elif hit_fx:
 		Effects.blood_hit(self, hit_pos, hit_dir)
