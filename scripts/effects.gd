@@ -24,6 +24,42 @@ const BOLT_CORE_COLOR := Color(0.95, 1.0, 1.0, 0.95)
 
 static var _bolt_light_texture: GradientTexture2D
 
+## Shared fire resources: every flame in the scene (burning enemies, ground
+## patches, glob trails) pulls the SAME texture/gradient objects — built once,
+## never per node, so massed fires cost no extra resource churn.
+static var _fire_light_texture: GradientTexture2D
+static var _fire_gradient: Gradient
+static var _ember_gradient: Gradient
+
+static func fire_light_texture() -> GradientTexture2D:
+	if _fire_light_texture == null:
+		_fire_light_texture = radial_light_texture(Color(1.0, 0.65, 0.3, 1.0), Color(1.0, 0.45, 0.15, 0.0))
+	return _fire_light_texture
+
+## Flame particle ramp: yellow core -> red-orange -> smoke-dark tips.
+static func fire_gradient() -> Gradient:
+	if _fire_gradient == null:
+		_fire_gradient = Gradient.new()
+		_fire_gradient.offsets = PackedFloat32Array([0.0, 0.4, 0.8, 1.0])
+		_fire_gradient.colors = PackedColorArray([
+			Color(1.0, 0.92, 0.5, 0.95),
+			Color(1.0, 0.45, 0.1, 0.7),
+			Color(0.45, 0.12, 0.05, 0.35),
+			Color(0.12, 0.08, 0.07, 0.0),
+		])
+	return _fire_gradient
+
+## Ember spark ramp: hot pinpoints that wink out.
+static func ember_gradient() -> Gradient:
+	if _ember_gradient == null:
+		_ember_gradient = Gradient.new()
+		_ember_gradient.offsets = PackedFloat32Array([0.0, 1.0])
+		_ember_gradient.colors = PackedColorArray([
+			Color(1.0, 0.85, 0.4, 1.0),
+			Color(1.0, 0.4, 0.1, 0.0),
+		])
+	return _ember_gradient
+
 static func muzzle_flash(node, pos: Vector2, rot: float) -> void:
 	_spawn(node, MUZZLE_FLASH_SCENE.instantiate(), pos, rot)
 

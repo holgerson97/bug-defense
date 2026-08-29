@@ -10,7 +10,7 @@ extends Node
 ## per-event `except` skips the peer whose own local visual exists (own fire
 ## tracer, own heal beam). Offline the bus is inert: emits no-op via _active.
 
-enum Kind { TOWER_FIRE, AA_FIRE, TESLA_BOLT, FLAME_GLOB, FLAK_BURST, GRENADE_LOB, REPAIR_BEAM, HEAL_BEAM, PLAYER_FIRE }
+enum Kind { TOWER_FIRE, AA_FIRE, TESLA_BOLT, FLAME_GLOB, FLAK_BURST, GRENADE_LOB, REPAIR_BEAM, HEAL_BEAM, PLAYER_FIRE, ENEMY_IGNITE }
 
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const FLAK_SHELL_SCENE := preload("res://scenes/flak_shell.tscn")
@@ -28,7 +28,6 @@ var _active := false
 var _queue: Array = []              ## [kind, except_peer, args]
 var debug_replayed: Dictionary = {} ## kind -> replay count (smoke tests)
 var _heal_beams: Dictionary = {}    ## peer_id -> [Line2D, player, target, timer]
-var _flame_patches: Dictionary = {} ## tower path -> patch array (per-tower cap)
 
 func _ready() -> void:
 	add_to_group("fx_events")
@@ -73,6 +72,13 @@ static func heal_beam(building: Node2D, peer_id: int) -> void:
 
 static func player_fire(player: Node2D, from: Vector2, angle: float, crit: bool, except: int = 0) -> void:
 	_emit(player, Kind.PLAYER_FIRE, [from, angle, crit], except)
+
+## Burn-state mirror: the host's enemy.ignite() emits this (throttled at the
+## source); clients start a visual-only burn on the puppet for `duration`
+## seconds. No extinguish event needed — the client timer expires in parallel
+## and refreshes ride further ignite events.
+static func enemy_ignite(enemy: Node, sync_id: int, duration: float) -> void:
+	_emit(enemy, Kind.ENEMY_IGNITE, [sync_id, duration])
 
 static func _emit(node: Node, kind: int, args: Array, except: int = 0) -> void:
 	var tree := node.get_tree()
@@ -141,6 +147,8 @@ func _rpc_events(events: Array) -> void:
 				Effects.muzzle_flash(self, a[0], a[1])
 				Sfx.play("shoot_player", a[0], -6.0)
 				_tracer(a[0], a[1], a[2], 80)
+			Kind.ENEMY_IGNITE:
+				_replay_enemy_ignite(a)
 
 ## MG shot: snap the head so client towers visibly track, then flash + sfx
 ## + a cosmetic tracer. Tail variant is the burst wind-down sfx only.
@@ -168,8 +176,8 @@ func _replay_aa_fire(a: Array) -> void:
 	_spawn_at(shell, a[1])
 
 ## Cosmetic glob: full arc + landing visual, no damage; its patch is spawned
-## with damage ticking disabled. Patches are keyed per source tower so the
-## per-tower cap/rekindle logic matches the host.
+## with damage ticking disabled. FirePatch.ignite_at dedupes/caps patches
+## globally on the client just like on the host.
 func _replay_flame_glob(a: Array) -> void:
 	var tower = get_node_or_null(a[0])
 	if tower != null:
@@ -180,9 +188,17 @@ func _replay_flame_glob(a: Array) -> void:
 	var glob = FLAME_TOWER.FireGlob.new()
 	glob.cosmetic = true
 	glob.target_point = a[2]
-	glob.patches = _flame_patches.get_or_add(a[0], [])
 	_spawn_at(glob, a[1])
 	Sfx.play("flame", a[1], -14.0)
+
+## Client: look the puppet up by its sync id and start the cosmetic burn.
+func _replay_enemy_ignite(a: Array) -> void:
+	var sync = get_tree().get_first_node_in_group("enemy_sync")
+	if sync == null:
+		return
+	var enemy = sync.find_by_id(a[0])
+	if enemy != null and enemy.has_method("client_ignite"):
+		enemy.client_ignite(a[1])
 
 ## Cosmetic grenade: arc + explosion FX/sfx at landing, damage skipped.
 func _replay_grenade_lob(a: Array) -> void:
