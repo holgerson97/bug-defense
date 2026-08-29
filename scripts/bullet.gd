@@ -11,6 +11,8 @@ var crit: bool = false
 ## Flame globs (Heavy's flamethrower): short-lived, fade out, and pierce
 ## through enemies (each victim burned once); walls and rocks still stop them.
 var flame: bool = false
+## Sniper rounds (Scout): long, fast, bright tracer; also piercing.
+var sniper: bool = false
 var pierce: bool = false
 
 var _max_life: float = 1.5
@@ -28,6 +30,11 @@ func _ready() -> void:
 		$Body.color = Color(1.0, 0.6, 0.2, 0.45 if crit else 0.3)
 		$Body.scale = Vector2(1.2, 1.2)
 		_trail.visible = false
+	elif sniper:
+		$Body.color = Color(1.0, 0.85, 0.5, 1.0) if crit else Color(0.8, 0.95, 1.0, 1.0)
+		$Body.scale = Vector2(2.6, 0.8)
+		_trail.width = 4.0
+		_trail.default_color = Color(0.65, 0.9, 1.0, 0.7)
 	elif crit:
 		# Crits read as bigger, hotter shots.
 		$Body.color = Color(1, 0.62, 0.2, 1)

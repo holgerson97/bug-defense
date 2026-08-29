@@ -16,7 +16,8 @@
 
 	"weapons": {
 		"_readme": "Class weapon profiles, referenced by a class's 'weapon' field (default: blaster). Flamethrower fires short-lived piercing flame globs; range = speed x lifetime; cooldown_mult scales the fire interval.",
-		"flamethrower": { "speed": 420.0, "lifetime": 0.45, "spread_deg": 12.0, "cooldown_mult": 0.75 }
+		"flamethrower": { "speed": 420.0, "lifetime": 0.45, "spread_deg": 12.0, "cooldown_mult": 0.75 },
+		"sniper": { "speed": 1600.0, "lifetime": 0.8, "spread_deg": 0.0, "cooldown_mult": 4.0, "damage_mult": 4.0 }
 	},
 
 	"classes": {
@@ -25,7 +26,7 @@
 			"stats": { "max_health": 1.0, "damage": 1.0, "speed": 1.0, "fire_cooldown": 1.0, "auto_attack_range": 1.0, "light_radius": 1.0, "build_range": 1.0 } },
 		"heavy":    { "name": "Heavy",    "desc": "Slow tank spraying a piercing flame stream", "tint": [1.0, 0.45, 0.3], "sprite": "res://assets/sprites/player_heavy.svg", "weapon": "flamethrower",
 			"stats": { "max_health": 2.0, "damage": 1.0, "speed": 0.75 } },
-		"scout":    { "name": "Scout",    "desc": "Fast and far-sighted, but fragile", "tint": [0.75, 1.0, 0.35], "sprite": "res://assets/sprites/player_scout.svg",
+		"scout":    { "name": "Scout",    "desc": "Fragile speedster with a piercing sniper rifle", "tint": [0.75, 1.0, 0.35], "sprite": "res://assets/sprites/player_scout.svg", "weapon": "sniper",
 			"stats": { "speed": 1.4, "fire_cooldown": 0.8, "auto_attack_range": 1.3, "light_radius": 1.25, "max_health": 0.65, "damage": 0.75 } },
 		"engineer": { "name": "Engineer", "desc": "Builds far, powers and heals the base; strides over buildings", "tint": [0.35, 0.95, 1.0], "sprite": "res://assets/sprites/player_engineer.svg", "building_walk": true,
 			"stats": { "build_range": 1.5, "reactor_amount": 1.5, "reactor_cover": 1.4, "heal_beam_heal_add": 2, "heal_beam_range": 1.3, "max_health": 0.85, "damage": 0.7, "speed": 0.95 } }

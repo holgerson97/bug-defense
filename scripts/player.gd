@@ -146,6 +146,9 @@ func _weapon_id() -> String:
 func _is_flamer() -> bool:
 	return _weapon_id() == "flamethrower"
 
+func _is_sniper() -> bool:
+	return _weapon_id() == "sniper"
+
 func class_mult(key: String) -> float:
 	return GameState.class_mult(_class_id, key)
 
@@ -271,7 +274,7 @@ func _physics_process(delta: float) -> void:
 		_shoot()
 		## Class scales the base cooldown; research then divides and the
 		## min-cooldown floor clamps last (multipliers commute, floor stays).
-		var weapon_mult := Balance.num("weapons/flamethrower/cooldown_mult", 0.75) if _is_flamer() else 1.0
+		var weapon_mult := Balance.num("weapons/%s/cooldown_mult" % _weapon_id(), 1.0)
 		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate * class_mult("fire_cooldown") * weapon_mult)
 
 	## Suit reactor: passive energy through the normal path so it shows in the
@@ -332,6 +335,7 @@ func _update_heal_beam() -> void:
 ## spawns the authoritative bullet) and keep a cosmetic tracer for feel.
 func _shoot() -> void:
 	var dmg := _class_damage()
+	dmg = int(ceil(dmg * Balance.num("weapons/%s/damage_mult" % _weapon_id(), 1.0)))
 	var crit := randf() < GameState.player_crit_chance()
 	if crit:
 		dmg = int(ceil(dmg * GameState.player_crit_mult()))
@@ -350,7 +354,9 @@ func _shoot() -> void:
 	if not _is_flamer():
 		Effects.muzzle_flash(self, $Muzzle.global_position, rot)
 	Sfx.play("flame" if _is_flamer() else "shoot_player", $Muzzle.global_position, -10.0 if _is_flamer() else -6.0)
-	_recoil = (_recoil - transform.x * RECOIL_KICK).limit_length(RECOIL_MAX)
+	## Snipers kick three times harder for the heavy-shot feel.
+	var kick := RECOIL_KICK * (3.0 if _is_sniper() else 1.0)
+	_recoil = (_recoil - transform.x * kick).limit_length(RECOIL_MAX)
 
 func _spawn_bullet(pos: Vector2, rot: float, dmg: int, crit: bool, cosmetic: bool) -> void:
 	var bullet = bullet_scene.instantiate()
@@ -367,6 +373,11 @@ func _spawn_bullet(pos: Vector2, rot: float, dmg: int, crit: bool, cosmetic: boo
 		## muzzle cone burning briefly — the cone IS the weapon's visual.
 		_ensure_flame_jet()
 		_jet_hold = 0.18
+	elif _is_sniper():
+		bullet.sniper = true
+		bullet.pierce = true
+		bullet.speed = Balance.num("weapons/sniper/speed", 1600.0)
+		bullet.lifetime = Balance.num("weapons/sniper/lifetime", 0.8)
 	if cosmetic:
 		## Tracer flies through (collision-less puppet) enemies; walls/rocks
 		## still stop it so the visual reads right.
