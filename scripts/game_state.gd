@@ -464,6 +464,10 @@ func class_desc(id: String) -> String:
 func class_sprite(id: String) -> String:
 	return str(class_info(id).get("sprite", ""))
 
+## Innate class perk: walk over buildings without the Phase Stride research.
+func class_building_walk(id: String) -> bool:
+	return bool(class_info(id).get("building_walk", false))
+
 func class_tint(id: String) -> Color:
 	var t = class_info(id).get("tint")
 	if t is Array and t.size() >= 3:

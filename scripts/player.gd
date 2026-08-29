@@ -514,10 +514,11 @@ func _on_upgrades_changed() -> void:
 	if _god_label != null:
 		_god_label.visible = GameState.godmode
 
-## Phase Stride research: drop the buildings bit from the collision mask so the
-## player walks over structures; restored when unowned (fresh run after reset).
+## Phase Stride research — or an innate class perk (Engineer) — drops the
+## buildings bit from the collision mask so the player walks over structures;
+## restored when neither applies (fresh run after reset).
 func _apply_building_walk() -> void:
-	if GameState.is_purchased("building_walk"):
+	if GameState.is_purchased("building_walk") or GameState.class_building_walk(_class_id):
 		collision_mask &= ~BUILDING_LAYER_BIT
 	else:
 		collision_mask |= BUILDING_LAYER_BIT
