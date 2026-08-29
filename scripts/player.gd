@@ -117,6 +117,13 @@ func _ready() -> void:
 
 ## Class stat multiplier for this player (public: build_controller and
 ## power_grid layer it onto their per-player reach checks).
+## Class weapon profile ("weapon" on the class def; default blaster).
+func _weapon_id() -> String:
+	return str(GameState.class_info(_class_id).get("weapon", "blaster"))
+
+func _is_flamer() -> bool:
+	return _weapon_id() == "flamethrower"
+
 func class_mult(key: String) -> float:
 	return GameState.class_mult(_class_id, key)
 
@@ -237,7 +244,8 @@ func _physics_process(delta: float) -> void:
 		_shoot()
 		## Class scales the base cooldown; research then divides and the
 		## min-cooldown floor clamps last (multipliers commute, floor stays).
-		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate * class_mult("fire_cooldown"))
+		var weapon_mult := Balance.num("weapons/flamethrower/cooldown_mult", 0.75) if _is_flamer() else 1.0
+		_fire_cooldown = GameState.player_fire_cooldown(base_fire_rate * class_mult("fire_cooldown") * weapon_mult)
 
 	## Suit reactor: passive energy through the normal path so it shows in the
 	## HUD production rate; carry banks fractional output from multipliers.
@@ -300,15 +308,20 @@ func _shoot() -> void:
 	var crit := randf() < GameState.player_crit_chance()
 	if crit:
 		dmg = int(ceil(dmg * GameState.player_crit_mult()))
+	## Flamethrower sprays with random spread; the spread rides the rot arg so
+	## clients, host and FX replays all see the same glob direction.
+	var rot := rotation
+	if _is_flamer():
+		rot += deg_to_rad(randf_range(-1.0, 1.0) * Balance.num("weapons/flamethrower/spread_deg", 12.0))
 	if Net.is_online() and not Net.is_host():
-		_rpc_fire.rpc_id(1, $Muzzle.global_position, rotation, dmg, crit)
-		_spawn_bullet($Muzzle.global_position, rotation, 0, crit, true)
+		_rpc_fire.rpc_id(1, $Muzzle.global_position, rot, dmg, crit)
+		_spawn_bullet($Muzzle.global_position, rot, 0, crit, true)
 	else:
-		_spawn_bullet($Muzzle.global_position, rotation, dmg, crit, false)
+		_spawn_bullet($Muzzle.global_position, rot, dmg, crit, false)
 		## Phase 6: the host's own shots replay on every client.
-		FxEvents.player_fire(self, $Muzzle.global_position, rotation, crit)
-	Effects.muzzle_flash(self, $Muzzle.global_position, rotation)
-	Sfx.play("shoot_player", $Muzzle.global_position, -6.0)
+		FxEvents.player_fire(self, $Muzzle.global_position, rot, crit)
+	Effects.muzzle_flash(self, $Muzzle.global_position, rot)
+	Sfx.play("flame" if _is_flamer() else "shoot_player", $Muzzle.global_position, -10.0 if _is_flamer() else -6.0)
 	_recoil = (_recoil - transform.x * RECOIL_KICK).limit_length(RECOIL_MAX)
 
 func _spawn_bullet(pos: Vector2, rot: float, dmg: int, crit: bool, cosmetic: bool) -> void:
@@ -317,6 +330,11 @@ func _spawn_bullet(pos: Vector2, rot: float, dmg: int, crit: bool, cosmetic: boo
 	bullet.rotation = rot
 	bullet.damage = dmg
 	bullet.crit = crit
+	if _is_flamer():
+		bullet.flame = true
+		bullet.pierce = true
+		bullet.speed = Balance.num("weapons/flamethrower/speed", 420.0)
+		bullet.lifetime = Balance.num("weapons/flamethrower/lifetime", 0.45)
 	if cosmetic:
 		## Tracer flies through (collision-less puppet) enemies; walls/rocks
 		## still stop it so the visual reads right.
