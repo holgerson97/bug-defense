@@ -38,6 +38,8 @@ var _max_health: int
 var _fire_cooldown: float = 0.0
 var _regen_accum: float = 0.0
 var _recoil: Vector2 = Vector2.ZERO
+var _flame_jet: CPUParticles2D
+var _jet_hold: float = 0.0
 var _auto_attack: bool = false
 ## Starts full so the first heal tick lands the moment F is pressed.
 var _heal_accum: float = heal_tick
@@ -117,6 +119,26 @@ func _ready() -> void:
 
 ## Class stat multiplier for this player (public: build_controller and
 ## power_grid layer it onto their per-player reach checks).
+## Cone-shaped flame jet at the muzzle: the flamethrower's visible fire.
+func _ensure_flame_jet() -> void:
+	if _flame_jet != null:
+		return
+	var speed_v := Balance.num("weapons/flamethrower/speed", 420.0)
+	_flame_jet = CPUParticles2D.new()
+	_flame_jet.position = $Muzzle.position
+	_flame_jet.amount = 36
+	_flame_jet.lifetime = Balance.num("weapons/flamethrower/lifetime", 0.45)
+	_flame_jet.direction = Vector2(1, 0)
+	_flame_jet.spread = Balance.num("weapons/flamethrower/spread_deg", 12.0)
+	_flame_jet.gravity = Vector2.ZERO
+	_flame_jet.initial_velocity_min = speed_v * 0.7
+	_flame_jet.initial_velocity_max = speed_v * 1.05
+	_flame_jet.scale_amount_min = 1.8
+	_flame_jet.scale_amount_max = 3.4
+	_flame_jet.color_ramp = Effects.fire_gradient()
+	_flame_jet.emitting = false
+	add_child(_flame_jet)
+
 ## Class weapon profile ("weapon" on the class def; default blaster).
 func _weapon_id() -> String:
 	return str(GameState.class_info(_class_id).get("weapon", "blaster"))
@@ -199,6 +221,11 @@ func _physics_process(delta: float) -> void:
 	if _recoil.length_squared() < 0.01:
 		_recoil = Vector2.ZERO
 	_camera.offset = _recoil
+
+	## The muzzle cone burns for a beat after each glob; stops when fire stops.
+	if _flame_jet != null:
+		_jet_hold = maxf(_jet_hold - delta, 0.0)
+		_flame_jet.emitting = _jet_hold > 0.0
 
 	if dead:
 		_spectate_tick(delta)
@@ -320,7 +347,8 @@ func _shoot() -> void:
 		_spawn_bullet($Muzzle.global_position, rot, dmg, crit, false)
 		## Phase 6: the host's own shots replay on every client.
 		FxEvents.player_fire(self, $Muzzle.global_position, rot, crit)
-	Effects.muzzle_flash(self, $Muzzle.global_position, rot)
+	if not _is_flamer():
+		Effects.muzzle_flash(self, $Muzzle.global_position, rot)
 	Sfx.play("flame" if _is_flamer() else "shoot_player", $Muzzle.global_position, -10.0 if _is_flamer() else -6.0)
 	_recoil = (_recoil - transform.x * RECOIL_KICK).limit_length(RECOIL_MAX)
 
@@ -335,6 +363,10 @@ func _spawn_bullet(pos: Vector2, rot: float, dmg: int, crit: bool, cosmetic: boo
 		bullet.pierce = true
 		bullet.speed = Balance.num("weapons/flamethrower/speed", 420.0)
 		bullet.lifetime = Balance.num("weapons/flamethrower/lifetime", 0.45)
+		## Any flame glob spawn (local shot, host relay, FX replay) keeps the
+		## muzzle cone burning briefly — the cone IS the weapon's visual.
+		_ensure_flame_jet()
+		_jet_hold = 0.18
 	if cosmetic:
 		## Tracer flies through (collision-less puppet) enemies; walls/rocks
 		## still stop it so the visual reads right.

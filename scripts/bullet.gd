@@ -23,10 +23,11 @@ func _ready() -> void:
 	_trail.add_point(global_position)
 	_max_life = lifetime
 	if flame:
-		$Body.color = Color(1.0, 0.55, 0.15, 0.95) if not crit else Color(1.0, 0.8, 0.3, 1.0)
-		$Body.scale = Vector2(2.4, 2.4)
-		_trail.width = 7.0
-		_trail.default_color = Color(1.0, 0.45, 0.1, 0.5)
+		## Faint carrier: the visible fire is the muzzle cone jet on the
+		## shooter; globs just glow softly inside it.
+		$Body.color = Color(1.0, 0.6, 0.2, 0.45 if crit else 0.3)
+		$Body.scale = Vector2(1.2, 1.2)
+		_trail.visible = false
 	elif crit:
 		# Crits read as bigger, hotter shots.
 		$Body.color = Color(1, 0.62, 0.2, 1)
