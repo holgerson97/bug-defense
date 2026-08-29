@@ -15,14 +15,14 @@
 	},
 
 	"classes": {
-		"_readme": "Selectable player classes. 'stats' values are MULTIPLIERS over the 'player' bases above (1.0 = unchanged); keys ending in '_add' are flat adds instead. 'tint' is [r,g,b] 0-1, multiplied subtly onto the marine sprite. Add or tune classes freely; delete this whole section and everyone plays a neutral Assault. Class multipliers layer AFTER research bonuses.",
-		"assault":  { "name": "Assault",  "desc": "Balanced frontline fighter", "tint": [1.0, 1.0, 1.0],
+		"_readme": "Selectable player classes. 'stats' values are MULTIPLIERS over the 'player' bases above (1.0 = unchanged); keys ending in '_add' are flat adds instead. 'sprite' is the class marine texture; 'tint' ([r,g,b] 0-1) is used for classes without one. Add or tune classes freely; delete this whole section and everyone plays a neutral Assault. Class multipliers layer AFTER research bonuses.",
+		"assault":  { "name": "Assault",  "desc": "Balanced frontline fighter", "tint": [1.0, 1.0, 1.0], "sprite": "res://assets/sprites/player_marine.svg",
 			"stats": { "max_health": 1.0, "damage": 1.0, "speed": 1.0, "fire_cooldown": 1.0, "auto_attack_range": 1.0, "light_radius": 1.0, "build_range": 1.0 } },
-		"heavy":    { "name": "Heavy",    "desc": "Tough and hard-hitting, but slow", "tint": [1.0, 0.45, 0.3],
+		"heavy":    { "name": "Heavy",    "desc": "Tough and hard-hitting, but slow", "tint": [1.0, 0.45, 0.3], "sprite": "res://assets/sprites/player_heavy.svg",
 			"stats": { "max_health": 1.6, "damage": 1.5, "speed": 0.75, "fire_cooldown": 1.25, "light_radius": 0.9 } },
-		"scout":    { "name": "Scout",    "desc": "Fast and far-sighted, but fragile", "tint": [0.75, 1.0, 0.35],
+		"scout":    { "name": "Scout",    "desc": "Fast and far-sighted, but fragile", "tint": [0.75, 1.0, 0.35], "sprite": "res://assets/sprites/player_scout.svg",
 			"stats": { "speed": 1.4, "fire_cooldown": 0.8, "auto_attack_range": 1.3, "light_radius": 1.25, "max_health": 0.65, "damage": 0.75 } },
-		"engineer": { "name": "Engineer", "desc": "Builds far, powers and heals the base", "tint": [0.35, 0.95, 1.0],
+		"engineer": { "name": "Engineer", "desc": "Builds far, powers and heals the base", "tint": [0.35, 0.95, 1.0], "sprite": "res://assets/sprites/player_engineer.svg",
 			"stats": { "build_range": 1.5, "reactor_amount": 1.5, "reactor_cover": 1.4, "heal_beam_heal_add": 2, "heal_beam_range": 1.3, "max_health": 0.85, "damage": 0.7, "speed": 0.95 } }
 	},
 

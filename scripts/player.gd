@@ -146,7 +146,14 @@ func _refresh_class() -> void:
 ## layers on top and puppets get a dim name tag + class line so teammates are
 ## tellable apart.
 func _apply_identity() -> void:
-	var body := Color.WHITE.lerp(GameState.class_tint(_class_id), 0.35)
+	# Classes with a dedicated sprite swap the marine model and skip the tint
+	# (the art is already colored); tint-only classes (custom JSON ones) lerp.
+	var sprite_path := GameState.class_sprite(_class_id)
+	var body := Color.WHITE
+	if sprite_path != "":
+		$Body.texture = load(sprite_path)
+	else:
+		body = Color.WHITE.lerp(GameState.class_tint(_class_id), 0.35)
 	var info: Dictionary = Net.players.get(get_multiplayer_authority(), {})
 	if not info.is_empty():
 		body *= Color.WHITE.lerp(info["color"], 0.4)

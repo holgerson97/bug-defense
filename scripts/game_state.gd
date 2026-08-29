@@ -461,6 +461,9 @@ func class_title(id: String) -> String:
 func class_desc(id: String) -> String:
 	return str(class_info(id).get("desc", ""))
 
+func class_sprite(id: String) -> String:
+	return str(class_info(id).get("sprite", ""))
+
 func class_tint(id: String) -> Color:
 	var t = class_info(id).get("tint")
 	if t is Array and t.size() >= 3:
