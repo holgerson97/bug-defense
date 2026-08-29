@@ -17,6 +17,8 @@ var resolution: Vector2i = Vector2i(1280, 720)
 var master_volume: float = 1.0
 var sfx_volume: float = 1.0
 var muted: bool = false
+## Last picked player class id (validated against GameState.CLASSES by Net).
+var player_class: String = "assault"
 
 func _ready() -> void:
 	_ensure_sfx_bus()
@@ -40,6 +42,7 @@ func load_settings() -> void:
 	master_volume = cfg.get_value("audio", "master_volume", master_volume)
 	sfx_volume = cfg.get_value("audio", "sfx_volume", sfx_volume)
 	muted = cfg.get_value("audio", "muted", muted)
+	player_class = cfg.get_value("game", "player_class", player_class)
 
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
@@ -49,6 +52,7 @@ func save_settings() -> void:
 	cfg.set_value("audio", "master_volume", master_volume)
 	cfg.set_value("audio", "sfx_volume", sfx_volume)
 	cfg.set_value("audio", "muted", muted)
+	cfg.set_value("game", "player_class", player_class)
 	cfg.save(PATH)
 
 func apply() -> void:

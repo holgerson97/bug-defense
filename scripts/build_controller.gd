@@ -56,6 +56,10 @@ var _snap_enabled := true
 
 @onready var _player = get_parent()
 
+## Placement reach: base -> Build Range research -> class multiplier (Engineer).
+func _build_reach() -> float:
+	return build_range * GameState.build_range_mult() * _player.class_mult("build_range")
+
 func _ready() -> void:
 	_build_ghost()
 	## Buying Extended Barrels mid-placement must refresh the preview ring.
@@ -163,7 +167,7 @@ func _build_position(id: String) -> Vector2:
 func _placement_valid(id: String, pos: Vector2) -> bool:
 	if not GameState.can_afford(GameState.BUILDINGS[id]["cost"]):
 		return false
-	if _player.global_position.distance_to(pos) > build_range * GameState.build_range_mult():
+	if _player.global_position.distance_to(pos) > _build_reach():
 		return false
 	## Query slightly inside the footprint so flush neighbors don't collide.
 	var query: float = BUILDING_FOOTPRINT[id] - PLACE_EPSILON
@@ -286,7 +290,7 @@ func _update_tooltip(id: String, pos: Vector2, valid: bool) -> void:
 	if not valid:
 		if not GameState.can_afford(b["cost"]):
 			text += "\nNot enough resources"
-		elif _player.global_position.distance_to(pos) > build_range * GameState.build_range_mult():
+		elif _player.global_position.distance_to(pos) > _build_reach():
 			text += "\nToo far away"
 		else:
 			text += "\nBlocked"

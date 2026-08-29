@@ -103,6 +103,10 @@ var SCRAP_GAIN_MULT: float = Balance.num("upgrades/economy/scrap_gain_mult", 1.2
 ## Balance-fed live tables (same shape as the *_DEFAULTS consts above).
 var UPGRADES: Dictionary = {}
 var BUILDINGS: Dictionary = {}
+## Player classes, purely from balance.json "classes" (data-driven: the owner
+## adds/tunes classes there). Missing/empty section degrades to a lone neutral
+## Assault, so everyone keeps today's baseline stats.
+var CLASSES: Dictionary = {}
 
 ## Balance-fed bases for the stat helpers below (fallback = shipped value).
 var _cost_scale: float = Balance.num("upgrades/cost_scale", 1.6)
@@ -136,6 +140,15 @@ func _init() -> void:
 			if b.has(key):
 				b[key] = Balance.num("%s/%s" % [sec, key], b[key])
 		BUILDINGS[id] = b
+	## Classes: "stats" values are MULTIPLIERS over the "player" bases (1.0 =
+	## unchanged); keys ending in "_add" are flat adds. Underscore keys
+	## ("_readme") are documentation, not classes.
+	var class_section: Dictionary = Balance.section("classes")
+	for id in class_section:
+		if not str(id).begins_with("_") and class_section[id] is Dictionary:
+			CLASSES[id] = class_section[id]
+	if CLASSES.is_empty():
+		CLASSES = {"assault": {"name": "Assault", "desc": "Balanced frontline fighter", "tint": [1.0, 1.0, 1.0], "stats": {}}}
 
 var power_production: float = 0.0
 var power_consumption: float = 0.0
@@ -429,6 +442,45 @@ func player_power_mult() -> float:
 
 func player_cover_mult() -> float:
 	return 1.0 + stat("player_cover")
+
+## -- player classes --
+## Per-player, NOT research: the shared helpers above stay class-agnostic and
+## each consumer layers its own class on top. Stat layering order everywhere:
+##   base (balance.json "player") -> research bonuses (helpers above)
+##   -> class multiplier / flat add (outermost).
+## Flat bases (max HP, damage, heal) are deliberately scaled AFTER research so
+## class identity holds late-game (a Heavy's +25 HP research is worth x1.6).
+
+func class_info(id: String) -> Dictionary:
+	var c = CLASSES.get(id)
+	return c if c is Dictionary else {}
+
+func class_title(id: String) -> String:
+	return str(class_info(id).get("name", id.capitalize()))
+
+func class_desc(id: String) -> String:
+	return str(class_info(id).get("desc", ""))
+
+func class_tint(id: String) -> Color:
+	var t = class_info(id).get("tint")
+	if t is Array and t.size() >= 3:
+		return Color(float(t[0]), float(t[1]), float(t[2]))
+	return Color.WHITE
+
+func _class_stat(id: String, key: String):
+	var stats = class_info(id).get("stats")
+	return stats.get(key) if stats is Dictionary else null
+
+## Multiplier over a player base stat; unknown class/key = neutral 1.0 (so a
+## missing "classes" section means everyone plays Assault).
+func class_mult(id: String, key: String) -> float:
+	var v = _class_stat(id, key)
+	return float(v) if (v is float or v is int) else 1.0
+
+## Flat add ("*_add" keys) over a player base stat; unknown = 0.0.
+func class_add(id: String, key: String) -> float:
+	var v = _class_stat(id, key)
+	return float(v) if (v is float or v is int) else 0.0
 
 # Building stats (Engineering research).
 func building_hp_mult() -> float:
