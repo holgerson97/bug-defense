@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 96 96">
+  <!-- Heavy marine: bulky red-orange juggernaut, top-down, facing right (+x). Twin-barrel cannon on the centerline. -->
+  <!-- thruster glow -->
+  <ellipse cx="12" cy="39" rx="7" ry="4" fill="#ffb07a" opacity="0.75"/>
+  <ellipse cx="12" cy="57" rx="7" ry="4" fill="#ffb07a" opacity="0.75"/>
+  <!-- heavy backpack -->
+  <rect x="13" y="28" width="19" height="40" rx="6" fill="#7a3524" stroke="#3d1710" stroke-width="2.2"/>
+  <line x1="22.5" y1="31" x2="22.5" y2="65" stroke="#3d1710" stroke-width="1.8"/>
+  <!-- twin cannon -->
+  <rect x="52" y="41" width="24" height="5.5" rx="1.8" fill="#3a3f47" stroke="#20242a" stroke-width="1.5"/>
+  <rect x="52" y="49.5" width="24" height="5.5" rx="1.8" fill="#3a3f47" stroke="#20242a" stroke-width="1.5"/>
+  <rect x="72" y="39.5" width="6" height="17" rx="2" fill="#20242a"/>
+  <rect x="54" y="40" width="8" height="16" rx="2" fill="#2c3138"/>
+  <!-- arms -->
+  <rect x="44" y="30" width="18" height="9" rx="4.5" fill="#7a3524" stroke="#3d1710" stroke-width="1.8" transform="rotate(22 44 34.5)"/>
+  <rect x="44" y="57" width="18" height="9" rx="4.5" fill="#7a3524" stroke="#3d1710" stroke-width="1.8" transform="rotate(-22 44 61.5)"/>
+  <!-- massive pauldrons with spikes -->
+  <ellipse cx="38" cy="26" rx="17" ry="11" fill="#b04a2c" stroke="#3d1710" stroke-width="2.2"/>
+  <ellipse cx="38" cy="70" rx="17" ry="11" fill="#b04a2c" stroke="#3d1710" stroke-width="2.2"/>
+  <path d="M 27 20 L 30 13 L 34 19 Z" fill="#7a3524"/>
+  <path d="M 27 76 L 30 83 L 34 77 Z" fill="#7a3524"/>
+  <ellipse cx="42" cy="25" rx="8" ry="5" fill="#e07a4a"/>
+  <ellipse cx="42" cy="71" rx="8" ry="5" fill="#e07a4a"/>
+  <!-- broad torso -->
+  <ellipse cx="43" cy="48" rx="19" ry="17" fill="#96412a" stroke="#3d1710" stroke-width="2.2"/>
+  <!-- armor plate chevrons -->
+  <path d="M 33 41 L 44 48 L 33 55" fill="none" stroke="#5e2418" stroke-width="3.5"/>
+  <path d="M 42 39 L 53 48 L 42 57" fill="none" stroke="#e07a4a" stroke-width="2.8"/>
+  <!-- rivets -->
+  <circle cx="31" cy="44" r="1.4" fill="#e07a4a"/>
+  <circle cx="31" cy="52" r="1.4" fill="#e07a4a"/>
+  <!-- reinforced helmet -->
+  <circle cx="58" cy="48" r="11" fill="#b04a2c" stroke="#3d1710" stroke-width="2.2"/>
+  <path d="M 58 38 A 10 10 0 0 1 58 58" fill="none" stroke="#7a3524" stroke-width="3.5"/>
+  <!-- visor glow strip -->
+  <path d="M 65.5 43 A 8.5 8.5 0 0 1 65.5 53" fill="none" stroke="#ffb07a" stroke-width="2.8"/>
+  <line x1="49" y1="48" x2="55" y2="48" stroke="#ffd93b" stroke-width="2.2"/>
+</svg>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 96 96">
+  <!-- Scout marine: slim yellow-green skirmisher, top-down, facing right (+x). Long slender marksman rifle. -->
+  <!-- bright thruster glow (fast mover) -->
+  <ellipse cx="13" cy="43" rx="8" ry="2.8" fill="#d4ff7a" opacity="0.8"/>
+  <ellipse cx="13" cy="53" rx="8" ry="2.8" fill="#d4ff7a" opacity="0.8"/>
+  <!-- compact backpack -->
+  <rect x="19" y="35" width="13" height="26" rx="4" fill="#4a6b2c" stroke="#22350f" stroke-width="1.8"/>
+  <!-- sensor antenna -->
+  <line x1="24" y1="35" x2="18" y2="24" stroke="#22350f" stroke-width="1.8"/>
+  <circle cx="18" cy="23" r="2" fill="#d4ff7a"/>
+  <!-- long slim rifle -->
+  <rect x="50" y="45.5" width="36" height="5" rx="1.6" fill="#3a3f47" stroke="#20242a" stroke-width="1.4"/>
+  <rect x="82" y="44.5" width="5" height="7" rx="1.4" fill="#20242a"/>
+  <rect x="60" y="43.5" width="6" height="9" rx="1.6" fill="#2c3138"/>
+  <!-- arms -->
+  <rect x="42" y="34" width="15" height="6.5" rx="3.2" fill="#4a6b2c" stroke="#22350f" stroke-width="1.4" transform="rotate(22 42 37)"/>
+  <rect x="42" y="56" width="15" height="6.5" rx="3.2" fill="#4a6b2c" stroke="#22350f" stroke-width="1.4" transform="rotate(-22 42 59)"/>
+  <!-- slim pauldrons -->
+  <ellipse cx="38" cy="32" rx="11" ry="7" fill="#7da33f" stroke="#22350f" stroke-width="1.8"/>
+  <ellipse cx="38" cy="64" rx="11" ry="7" fill="#7da33f" stroke="#22350f" stroke-width="1.8"/>
+  <ellipse cx="41" cy="31" rx="5.5" ry="3.4" fill="#b8d95e"/>
+  <ellipse cx="41" cy="65" rx="5.5" ry="3.4" fill="#b8d95e"/>
+  <!-- lean torso -->
+  <ellipse cx="43" cy="48" rx="14" ry="12.5" fill="#5c8034" stroke="#22350f" stroke-width="1.8"/>
+  <!-- speed stripes -->
+  <path d="M 34 43 L 48 43" stroke="#b8d95e" stroke-width="2.2"/>
+  <path d="M 34 48 L 51 48" stroke="#b8d95e" stroke-width="2.2"/>
+  <path d="M 34 53 L 48 53" stroke="#b8d95e" stroke-width="2.2"/>
+  <!-- sleek helmet -->
+  <circle cx="57" cy="48" r="8.5" fill="#7da33f" stroke="#22350f" stroke-width="1.8"/>
+  <!-- wide recon visor -->
+  <path d="M 62.5 41.5 A 8 8 0 0 1 62.5 54.5" fill="none" stroke="#4fe8e0" stroke-width="3"/>
+  <line x1="50" y1="48" x2="55" y2="48" stroke="#ffd93b" stroke-width="1.8"/>
+</svg>
