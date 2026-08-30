@@ -136,10 +136,10 @@
 		"composition": {
 			"grunt_base": 20, "grunt_per_wave": 8,
 			"runner_from_wave": 999999, "runner_base": 10, "runner_per_wave": 6,
-			"brute_divisor": 4,
-			"mage_from_wave": 5, "mage_divisor": 6, "mage_cap": 3,
-			"wasp_from_wave": 15, "wasp_divisor": 6, "wasp_per_step": 4, "wasp_cap": 24,
-			"wasp_flood_wave": 20, "wasp_flood_base": 12, "wasp_flood_per_wave": 4,
+			"brute_from_wave": 5, "brute_divisor": 4,
+			"mage_from_wave": 15, "mage_divisor": 6, "mage_cap": 3,
+			"wasp_from_wave": 25, "wasp_divisor": 6, "wasp_per_step": 4, "wasp_cap": 24,
+			"wasp_flood_wave": 30, "wasp_flood_base": 12, "wasp_flood_per_wave": 4,
 			"drone_from_wave": 25, "drone_divisor": 8
 		}
 	},

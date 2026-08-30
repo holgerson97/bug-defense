@@ -108,6 +108,10 @@ func _start_wave() -> void:
 			if wave >= int(comp.get("runner_from_wave", 2)) else 0
 	@warning_ignore("integer_division")
 	var brutes: int = wave / int(comp.get("brute_divisor", 4))
+	if wave < int(comp.get("brute_from_wave", 1)):
+		brutes = 0
+	else:
+		brutes = maxi(brutes, 1)
 	@warning_ignore("integer_division")
 	var mages: int = mini(wave / int(comp.get("mage_divisor", 6)), int(comp.get("mage_cap", 3)))
 	if wave >= int(comp.get("mage_from_wave", 999999)):
