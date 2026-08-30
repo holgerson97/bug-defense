@@ -235,6 +235,27 @@ func _seed_starter_rocks() -> void:
 			add_child(rock)
 			_starter_rects.append(rect)
 			break
+	## Cover scatter: a handful of SMALL rocks inside the starter ring so the
+	## opening fights have things to duck behind.
+	var small := maxi(Balance.inum("terrain/starter_small_rocks", 5), 0)
+	for i in small:
+		for attempt in 16:
+			var center := PLAYER_SPAWN + Vector2.from_angle(randf() * TAU) \
+				* randf_range(SPAWN_CLEARING + 60.0, 950.0)
+			var rock = rock_scene.instantiate()
+			rock.generate(_rock_budget("small", 5))
+			var bounds: Rect2 = rock.bounds
+			var anchor := (center - bounds.get_center()).snapped(Vector2(ROCK_TILE, ROCK_TILE))
+			var rect := Rect2(anchor + bounds.position, bounds.size)
+			if not _clears_spawn(rock, anchor) \
+					or _overlaps_rects(rect.grow(ROCK_DEPOSIT_CLEARANCE), _starter_rects):
+				rock.free()
+				continue
+			rock.position = anchor
+			rock.modulate = _rock_tint
+			add_child(rock)
+			_starter_rects.append(rect)
+			break
 
 ## One starter patch: a SINGLE block carrying the full `total`, placed at a
 ## random point on the starter ring.
@@ -322,6 +343,13 @@ func _seed_chunk(chunk: Vector2i) -> void:
 			var rect := _place_rock_formation(chunk, rock_rects, budget)
 			if rect.has_area():
 				rock_rects.append(rect)
+	## Small-rock scatter: extra cover pieces sprinkled between the big masses.
+	var scatter := randi_range(Balance.inum("terrain/scatter_min", 1), Balance.inum("terrain/scatter_max", 2))
+	for i in scatter:
+		if randf() < Balance.num("terrain/scatter_chance", 0.7):
+			var srect := _place_rock_formation(chunk, rock_rects, _rock_budget("small", 5))
+			if srect.has_area():
+				rock_rects.append(srect)
 	if randf() < Balance.num("resources/array_chunk_chance", 0.2):
 		_place_crystal_cluster(chunk, rock_rects,
 			Balance.inum("resources/array_patches_min", 5),

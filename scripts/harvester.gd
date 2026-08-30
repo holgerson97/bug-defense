@@ -7,7 +7,9 @@ extends CharacterBody2D
 enum State { TO_MINE, MINING, TO_BASE }
 
 const STOP_DIST := 40.0
-const SEARCH_RANGE := 1200.0
+## Harvesters only collect within their Command Center's radius (the ghost
+## ring shown at placement) — no cross-map hauling.
+var search_range: float = Balance.num("buildings/command_center/range", 600.0)
 const RESCAN_INTERVAL := 1.0
 const ORBIT_RADIUS := 70.0
 const ORBIT_SPEED := 0.9
@@ -71,7 +73,7 @@ func _mining(delta: float) -> void:
 	_sprite.position = Vector2(randf_range(-1.4, 1.4), randf_range(-1.4, 1.4))
 	if _mine_accum >= mine_time:
 		_sprite.position = Vector2.ZERO
-		cargo = _target_deposit.extract(mine_amount)
+		cargo = _target_deposit.extract(mine_amount + int(GameState.building_stat("command_center", "cargo")))
 		# The bite that emptied the block: haul what we got, hunt elsewhere next.
 		if _target_deposit.is_empty():
 			_target_deposit = null
@@ -93,7 +95,7 @@ func _to_base() -> void:
 ## Nearest gold block with ore left; empty husks are invisible to harvesters.
 func _nearest_gold():
 	var best = null
-	var best_dist := SEARCH_RANGE
+	var best_dist := search_range
 	for dep in get_tree().get_nodes_in_group("gold_deposits"):
 		if dep.is_empty():
 			continue

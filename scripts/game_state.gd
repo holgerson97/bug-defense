@@ -114,6 +114,7 @@ const BUILDING_UPGRADE_DEFAULTS := {
 	},
 	"command_center": {
 		"crew": {"name": "Crew", "desc": "+1 max harvester", "cost": {"scrap": 200}, "effects": {"crew": 1.0}},
+		"cargo": {"name": "Cargo Hold", "desc": "+5 gold per haul", "cost": {"scrap": 800}, "effects": {"cargo": 5.0}},
 	},
 }
 
@@ -144,7 +145,7 @@ const BUILDING_DEFAULTS := {
 	"flame_tower": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "cost": {"crystal": 105}, "research": "flame_tower_1", "slot": 7, "range": 260.0, "arc": 90.0, "tower": true},
 	"aa_tower": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "cost": {"crystal": 130, "gold": 20}, "research": "aa_tower_1", "slot": 8, "range": 550.0, "arc": 120.0, "tower": true},
 	"solar_panel": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "cost": {"crystal": 12}, "research": "solar_1", "slot": 9},
-	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"crystal": 160}, "research": "command_center_1", "slot": 10},
+	"command_center": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "cost": {"crystal": 160}, "research": "command_center_1", "slot": 10, "range": 600.0},
 	"light_pole": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "cost": {"crystal": 8}, "research": "light_pole_1", "slot": 11},
 	"searchlight": {"icon": "res://assets/icons/searchlight.svg", "name": "Searchlight", "cost": {"crystal": 70, "gold": 10}, "research": "searchlight_1", "slot": 12, "range": 500.0, "cone": 36.0, "sweep": 140.0},
 	"battery": {"icon": "res://assets/icons/battery.svg", "name": "Battery", "cost": {"crystal": 45}, "research": "battery_1", "slot": 13},
