@@ -38,6 +38,15 @@ const WAYPOINT_REACH := 20.0       ## px to consider a waypoint reached
 const PATH_TARGET_DRIFT := 200.0   ## target strays this far from path end -> drop
 const RESTUCK_WINDOW := 4.0        ## 2nd stuck event this close -> path even off-rock
 
+## Swarm anti-queueing (tunables in balance.json "navigation"): a local
+## separation push sampled from NavGrid's crowd hash fans packed enemies
+## sideways, per-enemy A* cost noise diversifies lanes, and a sidestep
+## reflex fires when the way is blocked by OTHER ENEMIES rather than terrain.
+const SEP_REFRESH_MASK := 7        ## crowd hash sampled every 8th frame (staggered)
+const SEP_ROCK_GRACE := 0.25       ## fresh rock contact mutes separation (glide wins)
+const CROWD_STALL_SPEED := 0.4     ## real speed below this fraction counts as stalled
+const SIDESTEP_GOAL_PULL := 0.55   ## forward blend while sidestepping
+
 ## Stable replication id assigned by the wave manager at spawn (node name
 ## "E<sync_id>" on every peer); the enemy_sync batcher keys packets on it.
 var sync_id: int = 0
@@ -109,6 +118,19 @@ var _path_goal: Vector2 = Vector2.ZERO  ## target pos at request time (drift ref
 var _want_path: bool = false       ## retry latch when NavGrid budget was spent
 var _since_stuck: float = 999.0    ## seconds since last stuck event
 
+var _nav_seed: int = 0             ## stable per-enemy salt (A* noise, side picks)
+var _lane_offset: float = 0.0      ## px aimed sideways of shared waypoints
+var _sep := Vector2.ZERO           ## cached crowd separation push (unit-capped)
+var _sep_radius: float = 44.0
+var _sep_strength: float = 0.9
+var _crowd_wait: float = 0.35      ## stalled-behind-enemies seconds before sidestep
+var _sidestep_time: float = 0.6    ## committed sidestep duration
+var _real_speed: float = 0.0       ## measured post-slide speed (crowd pressure cue)
+var _enemy_contact: float = 999.0  ## seconds since last enemy-body touch
+var _crowd_stall: float = 0.0
+var _sidestep_sign: float = 0.0
+var _sidestep_timer: float = 0.0
+
 ## Phase 5: online clients hold visual puppets only — the host simulates.
 func _is_puppet() -> bool:
 	return Net.is_online() and not Net.is_host()
@@ -133,6 +155,19 @@ func _ready() -> void:
 	var cs := get_node_or_null("CollisionShape2D")
 	if cs != null and cs.shape is CircleShape2D:
 		_body_radius = cs.shape.radius
+	## Swarm tunables. The reach grows and the strength shrinks with body
+	## size: big bodies (boss) shove the crowd, not the other way around.
+	_nav_seed = sync_id if sync_id != 0 else (get_instance_id() & 0x3FFFFFFF)
+	## Uniform in [-lane_spread, +lane_spread]; the boss is too wide to aim
+	## off its corner-safe waypoints, so it keeps the exact line.
+	if _body_radius < 32.0:
+		_lane_offset = (float((_nav_seed * 2654435761) & 1023) / 1023.0 * 2.0 - 1.0) \
+				* Balance.num("navigation/lane_spread", 22.0)
+	_sep_radius = Balance.num("navigation/separation_radius", 44.0) + maxf(_body_radius - 16.0, 0.0)
+	_sep_strength = Balance.num("navigation/separation_strength", 0.9) \
+			* clampf(16.0 / _body_radius, 0.35, 1.4)
+	_crowd_wait = Balance.num("navigation/crowd_sidestep_after", 0.35)
+	_sidestep_time = Balance.num("navigation/crowd_sidestep_time", 0.6)
 
 func _physics_process(delta: float) -> void:
 	## Burn runs above the puppet gate: visuals tick on every peer, the
@@ -195,8 +230,10 @@ func _behave(delta) -> void:
 func _steered_move(desired: Vector2, spd: float, delta: float) -> void:
 	_building_contact += delta
 	_rock_contact += delta
+	_enemy_contact += delta
 	_since_stuck += delta
 	_path_cd -= delta
+	_sidestep_timer -= delta
 	if _want_path:
 		_try_request_path()
 	desired = _path_desired(desired)
@@ -240,10 +277,46 @@ func _steered_move(desired: Vector2, spd: float, delta: float) -> void:
 	if _glide_sign != 0.0:
 		## Ride the surface tangent with a light goal pull to round corners.
 		dir = (_surf_normal.orthogonal() * _glide_sign + desired * GLIDE_GOAL_PULL).normalized()
+	## Crowd layer (below the terrain reflexes, so glide/gnaw always win):
+	## resample the shared crowd hash on a staggered cadence, escalate a
+	## stall behind enemy bodies into a committed sidestep, then blend the
+	## separation push in — hardest when nearly stationary, so queues
+	## dissolve outward into open ground. move_and_slide clamps the blended
+	## direction against rock/buildings, so separation can never tunnel.
+	if (Engine.get_physics_frames() + _nav_seed) & SEP_REFRESH_MASK == 0:
+		_sep = NavGrid.crowd_push(global_position, _sep_radius)
+	_update_crowd_stall(desired, spd, delta)
+	if _sidestep_timer > 0.0 and _glide_sign == 0.0:
+		dir = (desired * SIDESTEP_GOAL_PULL + desired.orthogonal() * _sidestep_sign).normalized()
+	if _sep != Vector2.ZERO and _rock_contact > SEP_ROCK_GRACE:
+		var press := 1.0 - clampf(_real_speed / maxf(spd, 1.0), 0.0, 1.0)
+		var blended := dir + _sep * (_sep_strength * (0.35 + 0.65 * press))
+		if blended.length_squared() > 0.04:
+			dir = blended.normalized()
 	velocity = dir * spd
 	move_and_slide()
+	_real_speed = get_real_velocity().length()
 	_read_contacts(desired)
 	_check_stuck(desired, delta)
+
+## Stalled while touching other ENEMIES (not rock/buildings): after
+## _crowd_wait seconds commit to a lateral step toward the freer flank —
+## the separation push points away from the crowd, so its lateral sign
+## picks the emptier side; ties split by enemy id.
+func _update_crowd_stall(desired: Vector2, spd: float, delta: float) -> void:
+	if _real_speed < spd * CROWD_STALL_SPEED and _enemy_contact < 0.3 \
+			and _rock_contact > 0.3 and _building_contact > CONTACT_GRACE:
+		_crowd_stall += delta
+	else:
+		_crowd_stall = 0.0
+	if _crowd_stall >= _crowd_wait and _sidestep_timer <= 0.0:
+		var lat := desired.orthogonal().dot(_sep)
+		if absf(lat) > 0.05:
+			_sidestep_sign = signf(lat)
+		else:
+			_sidestep_sign = 1.0 if (_nav_seed & 1) == 0 else -1.0
+		_sidestep_timer = _sidestep_time
+		_crowd_stall = 0.0
 
 ## One short ray ahead so the glide starts before face-planting.
 func _whisker(desired: Vector2, spd: float) -> void:
@@ -261,6 +334,8 @@ func _read_contacts(desired: Vector2) -> void:
 		if collider is not PhysicsBody2D:
 			continue
 		var layer: int = collider.collision_layer
+		if layer & 2:
+			_enemy_contact = 0.0   ## crowd-stall cue, not an obstacle
 		if layer & OBSTACLE_MASK == 0:
 			continue
 		_begin_glide(col.get_normal(), desired)
@@ -295,7 +370,14 @@ func _gnaw_sense() -> void:
 func _begin_glide(normal: Vector2, desired: Vector2) -> void:
 	_surf_normal = normal
 	if _glide_sign == 0.0:
-		_glide_sign = 1.0 if normal.orthogonal().dot(desired) >= 0.0 else -1.0
+		var side := normal.orthogonal().dot(desired)
+		if absf(side) < 0.15:
+			## Near head-on the goal gives no side preference; the whole column
+			## would fall to the same tiebreak and file off one way. Split by
+			## enemy id so a face-on swarm fans around BOTH flanks.
+			_glide_sign = 1.0 if (_nav_seed & 1) == 0 else -1.0
+		else:
+			_glide_sign = 1.0 if side >= 0.0 else -1.0
 	_glide_timer = GLIDE_COMMIT
 
 ## Every STUCK_WINDOW seconds: no real progress toward the goal while touching
@@ -352,7 +434,16 @@ func _path_desired(desired: Vector2) -> Vector2:
 		if _target.global_position.distance_to(global_position) > PATH_TARGET_DRIFT:
 			_want_path = true
 		return desired
-	return (_path[_path_i] - global_position).normalized()
+	## Lane offset: aim a per-enemy constant sideways of the shared waypoint
+	## while it's still far, converging on the true corner point up close.
+	## Steering-only (waypoints stay corner-safe): smoothing string-pulls every
+	## enemy onto the SAME corner anchors, so without this the whole horde
+	## walks one canonical line. Reach checks above still use the raw point.
+	var to_wp := _path[_path_i] - global_position
+	var dist := to_wp.length()
+	if dist > 3.0 * WAYPOINT_REACH and _lane_offset != 0.0:
+		return (to_wp + to_wp.orthogonal() * (_lane_offset / dist)).normalized()
+	return to_wp / maxf(dist, 0.001)
 
 ## Budgeted request: null means NavGrid's per-frame allowance was spent, so
 ## the latch stays set and we retry next physics frame. Empty result means
@@ -361,7 +452,7 @@ func _try_request_path() -> void:
 	if _path_cd > 0.0:
 		_want_path = false
 		return
-	var res = NavGrid.request_path(global_position, _target.global_position)
+	var res = NavGrid.request_path(global_position, _target.global_position, _nav_seed)
 	if res == null:
 		return
 	_want_path = false
@@ -400,6 +491,8 @@ func _steering_reset() -> void:
 	_stuck_timer = 0.0
 	_stuck_ref = global_position
 	_want_path = false
+	_crowd_stall = 0.0
+	_sidestep_timer = 0.0
 	_drop_path()
 
 ## -- fire DoT ------------------------------------------------------------

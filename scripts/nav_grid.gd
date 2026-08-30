@@ -23,6 +23,12 @@ const STEPS: Array[Vector2i] = [
 	Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1),
 ]
 
+## Crowd hash (anti-queueing): 64px buckets of ground-enemy positions,
+## rebuilt once per physics frame on the simulating peer. Enemies sample it
+## for a local separation push so swarms fan out instead of forming lines.
+const BUCKET := 64.0
+const SEP_MAX_SAMPLES := 10    ## neighbor cap per crowd_push query
+
 ## Vector2i cell -> [kind, count]. Refcounted: flush 48px walls share
 ## boundary cells, so one occupant dying must not clear a still-shared cell.
 var _cells := {}
@@ -30,9 +36,68 @@ var _cells := {}
 ## over every formation it clips, so a route AROUND a large rock always fits.
 var _rock_rects := {}
 var _budget: int = FRAME_BUDGET
+## Vector2i bucket -> Array[Vector2] of ground-enemy positions (one frame old).
+var _crowd := {}
+## Per-enemy A* cost noise amplitude (cells); 0 disables lane diversity.
+var _path_jitter: float = Balance.num("navigation/path_jitter", 0.45)
 
 func _physics_process(_delta: float) -> void:
 	_budget = FRAME_BUDGET
+	## Every 2nd frame: ~4px staleness at grunt speed, half the rebuild cost.
+	if Engine.get_physics_frames() & 1 == 0:
+		_rebuild_crowd()
+
+## Host-side only (clients hold puppets and never query). One pass over the
+## enemies group: ~350 dict inserts per rebuild, no per-enemy allocations kept.
+func _rebuild_crowd() -> void:
+	_crowd.clear()
+	if Net.is_online() and not Net.is_host():
+		return
+	for e in get_tree().get_nodes_in_group("enemies"):
+		## Layer bit 2 = ground enemies; flyers (wasp/drone, layer 64) neither
+		## block nor crowd the ground lanes.
+		if e.collision_layer & 2 == 0:
+			continue
+		var p: Vector2 = e.global_position
+		var b := Vector2i(floori(p.x / BUCKET), floori(p.y / BUCKET))
+		var arr = _crowd.get(b)
+		if arr == null:
+			_crowd[b] = [p]
+		else:
+			arr.append(p)
+
+## Sum of pushes away from nearby ground enemies, clamped to unit length.
+## The caller's own (one frame old) sample is skipped once by proximity.
+## Bounded: 3x3 buckets, at most SEP_MAX_SAMPLES neighbors accumulated.
+func crowd_push(pos: Vector2, radius: float) -> Vector2:
+	var b := Vector2i(floori(pos.x / BUCKET), floori(pos.y / BUCKET))
+	var push := Vector2.ZERO
+	var taken := 0
+	var r2 := radius * radius
+	var self_skipped := false
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var arr = _crowd.get(Vector2i(b.x + dx, b.y + dy))
+			if arr == null:
+				continue
+			for p in arr:
+				var d: Vector2 = pos - p
+				var d2 := d.length_squared()
+				if d2 >= r2:
+					continue
+				if d2 < 4.0:
+					if not self_skipped:
+						self_skipped = true
+						continue
+					## Truly overlapping stranger: push along a stable axis.
+					d = Vector2.RIGHT
+					d2 = 4.0
+				var dist := sqrt(d2)
+				push += (d / dist) * (1.0 - dist / radius)
+				taken += 1
+				if taken >= SEP_MAX_SAMPLES:
+					return push.limit_length(1.0)
+	return push.limit_length(1.0)
 
 func cell_of(p: Vector2) -> Vector2i:
 	return Vector2i(floori(p.x / CELL), floori(p.y / CELL))
@@ -100,17 +165,20 @@ func cells_in_polygon(poly: PackedVector2Array, offset: Vector2) -> Array[Vector
 ## Budgeted path request. Returns null when this frame's budget is spent
 ## (caller retries next frame), else a PackedVector2Array of cell-center
 ## waypoints — empty when the goal is out of window or walled off by rock.
-func request_path(from: Vector2, to: Vector2) -> Variant:
+## `noise_seed` != 0 salts per-cell cost noise so identical from/to pairs
+## produce per-enemy DISTINCT near-optimal lanes instead of one canonical
+## line hugging every rock edge.
+func request_path(from: Vector2, to: Vector2, noise_seed: int = 0) -> Variant:
 	if _budget <= 0:
 		return null
 	_budget -= 1
-	return _find_path(cell_of(from), cell_of(to))
+	return _find_path(cell_of(from), cell_of(to), noise_seed)
 
 ## Windowed 8-directional A* over the occupancy map. Rock cells are hard
 ## walls; building cells cost BUILDING_COST x (path around when reasonable,
 ## through when sealed in). Diagonals never cut past an occupied side cell,
 ## so every waypoint pair stays physically walkable.
-func _find_path(from: Vector2i, to: Vector2i) -> PackedVector2Array:
+func _find_path(from: Vector2i, to: Vector2i, noise_seed: int = 0) -> PackedVector2Array:
 	if _kind_at(to) == KIND_ROCK:
 		return PackedVector2Array()
 	## Far goals: the window anchors at a clamped point toward the goal and the
@@ -182,6 +250,11 @@ func _find_path(from: Vector2i, to: Vector2i) -> PackedVector2Array:
 			var cost: float = 1.414 if k >= 4 else 1.0
 			if kind == KIND_BUILDING:
 				cost *= BUILDING_COST
+			## Deterministic per-enemy cell noise (costs only ever grow, so the
+			## octile heuristic stays admissible and quality stays near-optimal).
+			if noise_seed != 0:
+				cost += _path_jitter * float((((nxt.x * 73856093) ^ (nxt.y * 19349663) ^ noise_seed) \
+						* 2654435761) & 1023) / 1023.0
 			var ng: float = g[cur] + cost
 			if ng < g.get(nxt, INF):
 				g[nxt] = ng
