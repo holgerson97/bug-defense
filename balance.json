@@ -83,6 +83,16 @@
 		"boss":   { "hp": 250, "speed": 70.0,  "damage": 25, "attack_interval": 1.2, "attack_range": 72.0, "points": 250, "scrap": 150, "crystal": 50, "birth_interval": 4.5, "max_alive_brood": 16, "max_per_brood": 8 }
 	},
 
+	"navigation": {
+		"_readme": "Swarm steering (host-simulated ground enemies only; wasps/drones fly and ignore this). separation_radius (px) / separation_strength: neighbor repulsion that fans crowded enemies sideways - radius grows with body size, strength shrinks, and the push ramps up the more an enemy is stalled, so queues dissolve outward into open ground. path_jitter: per-enemy A* step-cost noise in cell units (0 = every enemy expands the identical canonical search). lane_spread (px): each enemy aims a fixed personal offset sideways of shared path waypoints, so a horde rounds a rock in a band instead of one line (steering-only; ignored by bodies wider than a nav cell). crowd_sidestep_after / crowd_sidestep_time: seconds stalled behind OTHER ENEMIES (not terrain) before committing to a lateral step toward the freer flank, and how long that step is held.",
+		"separation_radius": 44.0,
+		"separation_strength": 1.1,
+		"path_jitter": 0.45,
+		"lane_spread": 24.0,
+		"crowd_sidestep_after": 0.35,
+		"crowd_sidestep_time": 0.6
+	},
+
 	"waves": {
 		"hp_scale": 1.12,
 		"chaff_hp_scale": 1.06,
