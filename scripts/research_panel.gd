@@ -11,7 +11,7 @@ const COST_ICONS := {"scrap": "res://assets/icons/bug_heart.svg"}
 
 const TAB_DEFS := [
 	{"title": "Player Stats", "branches": ["Offense", "Pilot"], "sheet": true},
-	{"title": "Unlocks", "branches": ["Defense", "Resource", "Electricity"]},
+	{"title": "Unlocks", "branches": ["Defense", "Fortification", "Resource", "Electricity"]},
 	{"title": "Building Stats", "branches": ["Buildings"], "buildings": true},
 ]
 

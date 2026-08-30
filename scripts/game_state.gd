@@ -13,7 +13,7 @@ var BASE_ENERGY_CAP: int = Balance.inum("upgrades/economy/energy_cap_base", 100)
 var BATTERY_CAP_BONUS: int = Balance.inum("buildings/battery/cap_bonus", 100)
 
 ## Branches holding one-shot building unlocks (everything else is repeatable).
-const UNLOCK_BRANCHES := ["Defense", "Resource", "Electricity"]
+const UNLOCK_BRANCHES := ["Defense", "Fortification", "Resource", "Electricity"]
 
 ## Shipped defaults for the research table; costs and effects are overlaid
 ## from balance.json ("upgrades/research/<id>") in _init — icons, names,
@@ -36,14 +36,14 @@ const UPGRADE_DEFAULTS := {
 	"player_power": {"icon": "res://assets/icons/solar_panel.svg", "name": "Reactor Output", "branch": "Pilot", "desc": "+20% suit energy output", "cost": {"scrap": 70}, "requires": [], "effects": {"player_power": 0.2}},
 	"player_power_range": {"icon": "res://assets/icons/power_pole.svg", "name": "Reactor Aura", "branch": "Pilot", "desc": "+15% suit power radius", "cost": {"scrap": 56}, "requires": [], "effects": {"player_cover": 0.15}},
 	"miner_1": {"icon": "res://assets/icons/miner.svg", "name": "Miner", "branch": "Resource", "desc": "Unlocks the Miner building", "cost": {"scrap": 105}, "requires": [], "effects": {}},
-	"walls_1": {"icon": "res://assets/icons/wall.svg", "name": "Walls", "branch": "Defense", "desc": "Unlocks buildable Walls", "cost": {"scrap": 52}, "requires": [], "effects": {}},
-	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Defense", "desc": "Unlocks the MG Tower", "cost": {"scrap": 230}, "requires": ["walls_1"], "effects": {}},
+	"walls_1": {"icon": "res://assets/icons/wall.svg", "name": "Walls", "branch": "Fortification", "desc": "Unlocks buildable Walls", "cost": {"scrap": 52}, "requires": [], "effects": {}},
+	"mg_tower_1": {"icon": "res://assets/icons/mg_tower.svg", "name": "Machine Gun Tower", "branch": "Defense", "desc": "Unlocks the MG Tower", "cost": {"scrap": 230}, "requires": [], "effects": {}},
 	"grenade_tower_1": {"icon": "res://assets/icons/grenade_tower.svg", "name": "Grenade Tower", "branch": "Defense", "desc": "Unlocks the Grenade Tower", "cost": {"scrap": 320}, "requires": ["mg_tower_1"], "effects": {}},
-	"repair_tower_1": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Beam Tower", "branch": "Defense", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 270}, "requires": ["walls_1"], "effects": {}},
+	"repair_tower_1": {"icon": "res://assets/icons/repair_tower.svg", "name": "Repair Beam Tower", "branch": "Defense", "desc": "Unlocks the Repair Tower", "cost": {"scrap": 270}, "requires": ["mg_tower_1"], "effects": {}},
 	"tesla_tower_1": {"icon": "res://assets/icons/tesla_tower.svg", "name": "Tesla Tower", "branch": "Defense", "desc": "Unlocks the Tesla Tower", "cost": {"scrap": 410}, "requires": ["mg_tower_1"], "effects": {}},
-	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Defense", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 320}, "requires": ["walls_1"], "effects": {}},
+	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Defense", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 320}, "requires": ["mg_tower_1"], "effects": {}},
 	"aa_tower_1": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "branch": "Defense", "desc": "Unlocks the anti-air Flak Cannon", "cost": {"scrap": 450}, "requires": ["mg_tower_1"], "effects": {}},
-	"building_walk": {"icon": "res://assets/icons/wall.svg", "name": "Phase Stride", "branch": "Defense", "desc": "Walk across buildings", "cost": {"scrap": 6000}, "requires": ["walls_1"], "effects": {}},
+	"building_walk": {"icon": "res://assets/icons/wall.svg", "name": "Phase Stride", "branch": "Fortification", "desc": "Walk across buildings", "cost": {"scrap": 6000}, "requires": ["walls_1"], "effects": {}},
 	"rock_mounts": {"icon": "res://assets/icons/mg_tower.svg", "name": "Rock Anchors", "branch": "Defense", "desc": "Place turrets on rock formations", "cost": {"scrap": 1500}, "requires": ["mg_tower_1"], "effects": {}},
 	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Electricity", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 35}, "requires": [], "effects": {}},
 	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Resource", "desc": "Unlocks the Command Center", "cost": {"scrap": 500}, "requires": ["miner_1"], "effects": {}},
