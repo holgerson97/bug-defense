@@ -1,32 +1,126 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 96 96">
-  <!-- Crystal ore: irregular rock with jutting shards and a baked glow halo -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 256 256">
+  <!-- Crystal deposit: translucent violet-blue shard cluster on a weathered stone base.
+       Authored 2x (512 doc / 256 viewBox). No baked glow halo — the deposit script owns
+       the light. Thin bright edge highlights instead of cartoon outlines. -->
   <defs>
-    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#a86ef0" stop-opacity="0.55"/>
-      <stop offset="60%" stop-color="#a86ef0" stop-opacity="0.22"/>
-      <stop offset="100%" stop-color="#a86ef0" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="shard" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#d9b8ff"/>
-      <stop offset="55%" stop-color="#9a5ce0"/>
-      <stop offset="100%" stop-color="#6a34a8"/>
+    <!-- lit crystal face: near-white tip light falling into deep violet -->
+    <linearGradient id="cFaceL" x1="0" y1="0" x2="0.65" y2="1">
+      <stop offset="0%" stop-color="#eee6ff"/>
+      <stop offset="28%" stop-color="#b6a0f2"/>
+      <stop offset="62%" stop-color="#7a58d2"/>
+      <stop offset="100%" stop-color="#4a2f9a"/>
     </linearGradient>
+    <!-- shadow crystal face: cool blue-violet depths -->
+    <linearGradient id="cFaceR" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#8f74e4"/>
+      <stop offset="38%" stop-color="#5c3eb8"/>
+      <stop offset="72%" stop-color="#3a2488"/>
+      <stop offset="100%" stop-color="#231457"/>
+    </linearGradient>
+    <!-- secondary shard, bluer cast -->
+    <linearGradient id="cFaceB" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#d8d2fb"/>
+      <stop offset="35%" stop-color="#8f80e8"/>
+      <stop offset="70%" stop-color="#5946bd"/>
+      <stop offset="100%" stop-color="#352686"/>
+    </linearGradient>
+    <linearGradient id="cFaceBD" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#7263d2"/>
+      <stop offset="50%" stop-color="#44309e"/>
+      <stop offset="100%" stop-color="#261865"/>
+    </linearGradient>
+    <!-- stone: cool desaturated grey, lit from upper left -->
+    <linearGradient id="stoneTop" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#716b80"/>
+      <stop offset="55%" stop-color="#514c60"/>
+      <stop offset="100%" stop-color="#3a3547"/>
+    </linearGradient>
+    <linearGradient id="stoneLow" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#443f52"/>
+      <stop offset="100%" stop-color="#282433"/>
+    </linearGradient>
+    <!-- faint refracted light pooling in the base around the shard roots -->
+    <radialGradient id="rootGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#a98ff0" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a98ff0" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <circle cx="48" cy="50" r="46" fill="url(#glow)"/>
-  <!-- rock base, irregular -->
-  <path d="M 22 62 L 14 52 L 20 40 L 32 36 L 46 30 L 62 34 L 74 42 L 80 54 L 74 66 L 60 72 L 40 74 L 28 70 Z"
-        fill="#3a3050" stroke="#241c36" stroke-width="2.5"/>
-  <path d="M 22 62 L 30 58 L 44 62 L 58 58 L 74 66 L 60 72 L 40 74 L 28 70 Z" fill="#2c2440"/>
-  <!-- shards -->
-  <path d="M 40 52 L 32 24 L 46 14 L 52 30 L 50 52 Z" fill="url(#shard)" stroke="#241c36" stroke-width="2"/>
-  <path d="M 42 50 L 44 22 L 47 18 L 46 48 Z" fill="#e8d4ff" opacity="0.8"/>
-  <path d="M 52 54 L 62 26 L 72 36 L 64 56 Z" fill="url(#shard)" stroke="#241c36" stroke-width="2"/>
-  <path d="M 56 52 L 64 30 L 67 34 L 60 54 Z" fill="#c9a2f5" opacity="0.7"/>
-  <path d="M 26 56 L 20 42 L 32 38 L 36 54 Z" fill="url(#shard)" stroke="#241c36" stroke-width="2"/>
-  <path d="M 28 54 L 24 43 L 28 41 L 32 53 Z" fill="#e8d4ff" opacity="0.6"/>
-  <!-- small front shard -->
-  <path d="M 58 62 L 66 50 L 72 58 L 66 66 Z" fill="url(#shard)" stroke="#241c36" stroke-width="1.8"/>
-  <!-- glints -->
-  <circle cx="44" cy="20" r="1.6" fill="#ffffff" opacity="0.9"/>
-  <circle cx="68" cy="34" r="1.3" fill="#ffffff" opacity="0.8"/>
+
+  <!-- contact shadow -->
+  <ellipse cx="128" cy="150" rx="94" ry="62" fill="#0c0a14" opacity="0.28"/>
+
+  <!-- stone base: irregular boulder, faceted, minimal outline -->
+  <path d="M 60 165 L 38 140 L 50 108 L 84 94 L 122 82 L 164 90 L 198 110 L 214 142 L 200 174 L 162 192 L 106 197 L 74 186 Z"
+        fill="url(#stoneTop)" stroke="#1d1926" stroke-width="1.5"/>
+  <!-- lower faces in shade -->
+  <path d="M 60 165 L 88 158 L 120 168 L 158 160 L 200 174 L 162 192 L 106 197 L 74 186 Z" fill="url(#stoneLow)"/>
+  <path d="M 198 110 L 214 142 L 200 174 L 158 160 L 178 132 Z" fill="#463f56" opacity="0.85"/>
+  <!-- top facet catching light -->
+  <path d="M 50 108 L 84 94 L 108 100 L 74 122 L 52 122 Z" fill="#7d7690" opacity="0.75"/>
+  <path d="M 122 82 L 164 90 L 158 104 L 126 96 Z" fill="#6c6580" opacity="0.6"/>
+  <!-- cracks -->
+  <path d="M 66 150 L 84 138 L 92 142" fill="none" stroke="#231e2e" stroke-width="1.6" opacity="0.8"/>
+  <path d="M 150 172 L 166 162 L 182 164" fill="none" stroke="#231e2e" stroke-width="1.5" opacity="0.7"/>
+  <path d="M 178 118 Q 188 130 184 144" fill="none" stroke="#2a2438" stroke-width="1.4" opacity="0.7"/>
+  <!-- rim light on the boulder's lit edge -->
+  <path d="M 38 140 L 50 108 L 84 94 L 122 82" fill="none" stroke="#948caa" stroke-width="1.6" opacity="0.8"/>
+  <!-- rubble -->
+  <path d="M 40 158 L 50 152 L 56 160 L 46 166 Z" fill="#4a4457"/>
+  <path d="M 204 158 L 214 152 L 220 160 L 210 166 Z" fill="#413b4e"/>
+  <path d="M 96 200 L 106 196 L 110 204 L 100 207 Z" fill="#383243"/>
+
+  <!-- refracted pool of light where the shards meet the rock -->
+  <ellipse cx="122" cy="140" rx="66" ry="34" fill="url(#rootGlow)"/>
+
+  <!-- ============ SHARDS ============ -->
+
+  <!-- rear small chip behind the main shard -->
+  <path d="M 118 96 L 130 62 L 140 100 L 128 118 Z" fill="url(#cFaceBD)"/>
+  <path d="M 130 62 L 140 100 L 136 104 L 129 72 Z" fill="#b7a4f4" opacity="0.55"/>
+
+  <!-- MAIN shard: tall, tip upper-left -->
+  <path d="M 88 40 L 68 116 L 78 150 L 104 142 Z" fill="url(#cFaceL)"/>
+  <path d="M 88 40 L 104 142 L 122 146 L 118 88 Z" fill="url(#cFaceR)"/>
+  <!-- internal light core near the ridge -->
+  <path d="M 89 58 L 98 122 L 93 136 L 85 92 Z" fill="#efe8ff" opacity="0.5"/>
+  <!-- fracture planes -->
+  <path d="M 84 66 L 77 112" fill="none" stroke="#e9e0ff" stroke-width="1.3" opacity="0.55"/>
+  <path d="M 96 84 L 108 122 L 104 136" fill="none" stroke="#cdbcf8" stroke-width="1.1" opacity="0.45"/>
+  <!-- crisp edges: lit silhouette + ridge -->
+  <path d="M 88 40 L 68 116" fill="none" stroke="#f4eeff" stroke-width="1.8" opacity="0.9"/>
+  <path d="M 88 40 L 104 142" fill="none" stroke="#ffffff" stroke-width="1.3" opacity="0.85"/>
+  <path d="M 88 40 L 118 88" fill="none" stroke="#8b74d8" stroke-width="1.2" opacity="0.7"/>
+
+  <!-- SECOND shard: leaning right -->
+  <path d="M 176 62 L 142 120 L 146 152 L 166 150 Z" fill="url(#cFaceB)"/>
+  <path d="M 176 62 L 166 150 L 188 146 L 196 102 Z" fill="url(#cFaceBD)"/>
+  <path d="M 172 78 L 164 138 L 160 144 L 166 92 Z" fill="#e6e0ff" opacity="0.45"/>
+  <path d="M 156 106 L 150 140" fill="none" stroke="#d9d2fb" stroke-width="1.2" opacity="0.5"/>
+  <path d="M 176 62 L 142 120" fill="none" stroke="#eeeaff" stroke-width="1.6" opacity="0.85"/>
+  <path d="M 176 62 L 166 150" fill="none" stroke="#ffffff" stroke-width="1.1" opacity="0.8"/>
+  <path d="M 176 62 L 196 102" fill="none" stroke="#7e6ccc" stroke-width="1.1" opacity="0.65"/>
+
+  <!-- THIRD shard: small, front-left -->
+  <path d="M 58 96 L 44 132 L 56 156 L 68 150 Z" fill="url(#cFaceL)"/>
+  <path d="M 58 96 L 68 150 L 82 146 L 74 116 Z" fill="url(#cFaceR)"/>
+  <path d="M 59 108 L 64 140 L 61 146 L 55 116 Z" fill="#ece4ff" opacity="0.45"/>
+  <path d="M 58 96 L 44 132" fill="none" stroke="#f2ecff" stroke-width="1.5" opacity="0.85"/>
+  <path d="M 58 96 L 68 150" fill="none" stroke="#ffffff" stroke-width="1.0" opacity="0.75"/>
+
+  <!-- FOURTH: low chunky crystal, front-right -->
+  <path d="M 168 152 L 190 134 L 208 148 L 196 172 L 174 172 Z" fill="url(#cFaceB)"/>
+  <path d="M 190 134 L 208 148 L 196 172 L 188 156 Z" fill="url(#cFaceBD)"/>
+  <path d="M 176 152 L 188 142 L 192 150 L 182 160 Z" fill="#ddd4fc" opacity="0.55"/>
+  <path d="M 168 152 L 190 134 L 208 148" fill="none" stroke="#e8e2ff" stroke-width="1.3" opacity="0.75"/>
+
+  <!-- tiny chips at the roots -->
+  <path d="M 100 148 L 108 132 L 116 150 L 108 156 Z" fill="url(#cFaceR)"/>
+  <path d="M 108 132 L 116 150 L 112 153 L 105 138 Z" fill="#c3b0f6" opacity="0.5"/>
+  <path d="M 128 150 L 136 138 L 142 152 L 134 158 Z" fill="url(#cFaceBD)"/>
+
+  <!-- specular glints -->
+  <path d="M 88 33 L 89.6 38.4 L 95 40 L 89.6 41.6 L 88 47 L 86.4 41.6 L 81 40 L 86.4 38.4 Z" fill="#ffffff" opacity="0.95"/>
+  <path d="M 176 57 L 177.2 60.8 L 181 62 L 177.2 63.2 L 176 67 L 174.8 63.2 L 171 62 L 174.8 60.8 Z" fill="#ffffff" opacity="0.85"/>
+  <circle cx="58" cy="98" r="1.8" fill="#ffffff" opacity="0.8"/>
+  <circle cx="196" cy="140" r="1.5" fill="#ffffff" opacity="0.7"/>
 </svg>
