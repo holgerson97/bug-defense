@@ -26,6 +26,8 @@ var mine_range: float = Balance.num("player/mining/range", 100.0)
 var mine_tick: float = Balance.num("player/mining/tick", 0.5)
 var _mine_accum: float = 0.0
 var _mine_beam: Line2D
+var _mine_glow: Line2D
+var _mine_light: PointLight2D
 var heal_beam_range: float = Balance.num("player/heal_beam/range", 140.0)
 var heal_tick: float = Balance.num("player/heal_beam/tick", 0.5)
 var heal_base: int = Balance.inum("player/heal_beam/heal", 3)
@@ -350,6 +352,8 @@ func _tick_mining(delta: float) -> void:
 		_mine_accum = mine_tick
 		if _mine_beam != null:
 			_mine_beam.visible = false
+			_mine_glow.visible = false
+			_mine_light.visible = false
 		return
 	_mine_accum += delta
 	if _mine_accum >= mine_tick:
@@ -358,18 +362,39 @@ func _tick_mining(delta: float) -> void:
 		Sfx.play("hit", target.global_position, -16.0)
 	_update_mine_beam(target)
 
+## Layered glowing beam: wide soft halo under a hot near-white core, plus a
+## flickering blue light at the cut point so mining reads in the dark.
 func _update_mine_beam(target) -> void:
 	if _mine_beam == null:
+		_mine_glow = Line2D.new()
+		_mine_glow.top_level = true
+		_mine_glow.z_index = 49
+		_mine_glow.default_color = Color(0.35, 0.65, 1.0, 0.28)
+		add_child(_mine_glow)
 		_mine_beam = Line2D.new()
 		_mine_beam.top_level = true
 		_mine_beam.z_index = 50
-		_mine_beam.width = 3.0
-		_mine_beam.default_color = Color(0.4, 0.75, 1.0, 0.85)
+		_mine_beam.default_color = Color(0.75, 0.92, 1.0, 0.95)
 		add_child(_mine_beam)
-	## Gentle width pulse sells the "cutting" feel.
-	_mine_beam.width = 3.0 + sin(Time.get_ticks_msec() / 90.0) * 1.2
-	_mine_beam.points = PackedVector2Array([$Muzzle.global_position, target.global_position])
+		_mine_light = PointLight2D.new()
+		_mine_light.top_level = true
+		_mine_light.texture = Effects.radial_light_texture(
+			Color(0.45, 0.75, 1.0, 1.0), Color(0.45, 0.75, 1.0, 0.0), 128)
+		_mine_light.color = Color(0.5, 0.8, 1.0)
+		_mine_light.texture_scale = 0.9
+		add_child(_mine_light)
+	var t := Time.get_ticks_msec() / 1000.0
+	## Gentle width pulse sells the "cutting" feel; the halo breathes wider.
+	_mine_beam.width = 2.5 + sin(t * 11.0) * 1.0
+	_mine_glow.width = 9.0 + sin(t * 7.3) * 3.0
+	var points := PackedVector2Array([$Muzzle.global_position, target.global_position])
+	_mine_beam.points = points
+	_mine_glow.points = points
 	_mine_beam.visible = true
+	_mine_glow.visible = true
+	_mine_light.global_position = target.global_position
+	_mine_light.energy = 1.0 + sin(t * 13.7) * 0.25 + sin(t * 31.0) * 0.1
+	_mine_light.visible = true
 
 ## Enemies are host-simulated puppets on clients (Phase 5), so client shots
 ## can't land locally: online clients send a fire intent to the host (which
