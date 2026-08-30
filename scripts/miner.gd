@@ -21,6 +21,7 @@ var _strike_tween: Tween
 @onready var _fog: CPUParticles2D = $Fog
 
 func _ready() -> void:
+	add_to_group("miners")
 	# Snap to the side of the block facing the nearest player (the one placing).
 	var dir := Vector2.DOWN
 	var player = Util.nearest_in_group(self, "player", global_position, INF)

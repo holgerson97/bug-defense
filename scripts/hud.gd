@@ -22,6 +22,7 @@ var _esc_menu: Control
 @onready var _final_score: Label = $GameOver/Center/Panel/Margin/VBox/FinalScore
 @onready var _research_panel: Control = $ResearchPanel
 @onready var _research_button: Button = $ResearchButton
+var _skip_button: Button
 
 ## Seconds left in the current between-wave intermission (counted down locally).
 var _intermission_left: float = 0.0
@@ -46,6 +47,8 @@ func _ready() -> void:
 		wm.remaining_changed.connect(_on_remaining_changed)
 		wm.intermission_started.connect(_on_intermission_started)
 		wm.wave_started.connect(_on_wave_started)
+		wm.skip_votes_changed.connect(_on_skip_votes_changed)
+		_build_skip_button(wm)
 	## Spectator banner clones the wave timer's styling, sitting just below it.
 	_spectate_label = _wave_timer.duplicate()
 	_spectate_label.name = "SpectateBanner"
@@ -63,9 +66,37 @@ func _on_intermission_started(seconds: float) -> void:
 	_intermission_left = seconds
 	_update_wave_timer()
 	_wave_timer.visible = true
+	if _skip_button != null:
+		_skip_button.text = "Skip Day"
+		_skip_button.visible = true
 
 func _on_wave_started(_wave: int) -> void:
 	_wave_timer.visible = false
+	if _skip_button != null:
+		_skip_button.visible = false
+
+## Skip Day: ends the intermission early, banking the miners' skipped yield.
+## Offline: instant. Co-op: unanimous vote — the label tracks the count.
+func _build_skip_button(wm) -> void:
+	_skip_button = Button.new()
+	_skip_button.text = "Skip Day"
+	_skip_button.focus_mode = Control.FOCUS_NONE
+	_skip_button.visible = false
+	_skip_button.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_skip_button.offset_top = _wave_timer.offset_bottom + 42.0
+	_skip_button.offset_bottom = _skip_button.offset_top + 34.0
+	_skip_button.offset_left = -70.0
+	_skip_button.offset_right = 70.0
+	_skip_button.pressed.connect(wm.request_skip_day)
+	add_child(_skip_button)
+
+func _on_skip_votes_changed(count: int, needed: int) -> void:
+	if _skip_button == null:
+		return
+	if needed > 1:
+		_skip_button.text = "Skip Day (%d/%d)" % [count, needed]
+	else:
+		_skip_button.text = "Skip Day"
 
 func _process(delta: float) -> void:
 	## HUD processes while paused (process_mode 3); freeze with the game timer.

@@ -2,6 +2,7 @@ extends Node2D
 
 signal wave_started(wave: int)
 signal intermission_started(seconds: float)
+signal skip_votes_changed(count: int, needed: int)
 signal enemy_killed(points: int)
 signal remaining_changed(counts: Dictionary)
 
@@ -39,6 +40,9 @@ var boss_every: int = Balance.inum("waves/boss_every", 10)
 var wave: int = 0
 var _alive: int = 0
 var _spawning: bool = false
+var _in_intermission: bool = false
+var _intermission_left: float = 0.0
+var _skip_votes: Dictionary = {}
 var _remaining: Dictionary = {}
 var _cluster_angles: PackedFloat32Array = PackedFloat32Array()
 ## Stable per-run enemy id: node name "E<id>" on every peer; the transform
@@ -66,28 +70,94 @@ func _ready() -> void:
 		## the client's scene load. Later ones arrive via _rpc_intermission.
 		call_deferred("emit_signal", "intermission_started", time_between_waves)
 
-## Host-online: flush batched HUD traffic once per physics frame.
-func _physics_process(_delta: float) -> void:
-	if not Net.is_online() or not Net.is_host():
+## Host: intermission countdown (polled so Skip Day can cut it short) and
+## the batched HUD traffic flush.
+func _physics_process(delta: float) -> void:
+	if not Net.is_host():
 		return
-	if _remaining_dirty or _points_pending > 0:
+	if _in_intermission:
+		_intermission_left -= delta
+		if _intermission_left <= 0.0:
+			_in_intermission = false
+			_start_wave()
+	if Net.is_online() and (_remaining_dirty or _points_pending > 0):
 		_rpc_wave_events.rpc(_remaining, _points_pending)
 		_remaining_dirty = false
 		_points_pending = 0
 
 func _start_next_wave_after_delay() -> void:
+	if _in_intermission:
+		return
+	_in_intermission = true
+	_intermission_left = time_between_waves
+	_skip_votes.clear()
+	_announce_skip_votes()
 	## HUD mirrors this delay locally; no per-frame signal traffic.
 	## Deferred: the first call runs inside _ready, before the HUD has
 	## connected — a synchronous emit would be missed. The one-frame delay
 	## is harmless for later intermissions.
 	call_deferred("_announce_intermission")
-	await get_tree().create_timer(time_between_waves, false).timeout
-	_start_wave()
 
 func _announce_intermission() -> void:
 	intermission_started.emit(time_between_waves)
 	if Net.is_online():
 		_rpc_intermission.rpc(time_between_waves)
+
+## -- Skip Day: end the intermission early, banking what the miners would
+## have mined in the skipped time. Offline: instant. Co-op: unanimous vote. --
+
+## Any peer's HUD calls this; offline it skips at once, online it votes.
+func request_skip_day() -> void:
+	if Net.is_online() and not Net.is_host():
+		_rpc_vote_skip.rpc_id(1)
+		return
+	_register_skip_vote(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_vote_skip() -> void:
+	if not multiplayer.is_server():
+		return
+	_register_skip_vote(multiplayer.get_remote_sender_id())
+
+func _register_skip_vote(peer_id: int) -> void:
+	if not _in_intermission:
+		return
+	_skip_votes[peer_id] = true
+	var needed := maxi(Net.players.size(), 1)
+	_announce_skip_votes()
+	if _skip_votes.size() >= needed:
+		_skip_day()
+
+func _announce_skip_votes() -> void:
+	var needed := maxi(Net.players.size(), 1)
+	skip_votes_changed.emit(_skip_votes.size(), needed)
+	if Net.is_online():
+		_rpc_skip_votes.rpc(_skip_votes.size(), needed)
+
+@rpc("authority", "call_remote", "reliable")
+func _rpc_skip_votes(count: int, needed: int) -> void:
+	skip_votes_changed.emit(count, needed)
+
+## Bank the skipped time's mining, then start the wave now. Simplification
+## (documented): miners yield in full for the skipped span — energy drain and
+## generation during the skip are both waived, roughly cancelling out.
+func _skip_day() -> void:
+	if not _in_intermission:
+		return
+	var remaining := maxf(_intermission_left, 0.0)
+	for m in get_tree().get_nodes_in_group("miners"):
+		if m.deposit == null or not is_instance_valid(m.deposit) or m.deposit.is_empty():
+			continue
+		var cycles := int(remaining / m.extract_interval)
+		if cycles <= 0:
+			continue
+		var per_cycle: int = m.extract_amount + int(GameState.building_stat("miner", "yield"))
+		var got: int = m.deposit.extract(cycles * per_cycle)
+		if got > 0:
+			GameState.add_resource(m.deposit.kind, got)
+	_in_intermission = false
+	_intermission_left = 0.0
+	_start_wave()
 
 func _start_wave() -> void:
 	wave += 1
