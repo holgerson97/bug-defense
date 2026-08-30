@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/hive/bile_spire.svg" id="1"]
+
+[node name="BileSpire" type="Node2D"]
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -56)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1")

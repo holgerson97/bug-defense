@@ -1,58 +1,123 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 256 256">
-  <!-- Bug hive: massive fleshy dome, top-down. Central birthing orifice,
-       membrane pustules, chitin ridge plates, root tendrils spreading out. -->
+  <!-- Bug hive, Zerg-style: asymmetric carapace lobes over striated flesh,
+       bone spike crown, central toothed birthing maw. Tentacles are SEPARATE
+       sprites (tentacle_a/b.svg) mounted by the hive scene and animated.
+       Top-down. -->
   <defs>
-    <radialGradient id="dome" cx="0.42" cy="0.4" r="0.75">
-      <stop offset="0%" stop-color="#8a3550"/>
-      <stop offset="55%" stop-color="#6b2440"/>
-      <stop offset="100%" stop-color="#471530"/>
+    <radialGradient id="flesh" cx="0.45" cy="0.42" r="0.8">
+      <stop offset="0%" stop-color="#93395c"/>
+      <stop offset="55%" stop-color="#6e2547"/>
+      <stop offset="100%" stop-color="#421430"/>
     </radialGradient>
-    <radialGradient id="orifice" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#1c0611"/>
-      <stop offset="55%" stop-color="#3d0e22"/>
-      <stop offset="100%" stop-color="#5e1c36"/>
+    <radialGradient id="maw" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#12040c"/>
+      <stop offset="45%" stop-color="#2e0a1d"/>
+      <stop offset="80%" stop-color="#571a38"/>
+      <stop offset="100%" stop-color="#7a2a4e"/>
     </radialGradient>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5c3a4e"/>
+      <stop offset="55%" stop-color="#43263a"/>
+      <stop offset="100%" stop-color="#2b1226"/>
+    </linearGradient>
   </defs>
-  <!-- root tendrils reaching into the creep -->
-  <g fill="#471530" stroke="#2b0a1c" stroke-width="3">
-    <path d="M 42 118 Q 14 108 6 92 Q 26 100 44 104 Z"/>
-    <path d="M 46 152 Q 16 162 8 180 Q 30 172 50 166 Z"/>
-    <path d="M 118 42 Q 106 16 90 8 Q 98 28 104 46 Z"/>
-    <path d="M 152 44 Q 164 18 182 10 Q 172 32 166 50 Z"/>
-    <path d="M 214 116 Q 242 104 250 88 Q 228 98 210 102 Z"/>
-    <path d="M 212 150 Q 240 160 248 178 Q 226 170 208 164 Z"/>
-    <path d="M 120 214 Q 110 240 94 248 Q 102 226 108 210 Z"/>
-    <path d="M 154 212 Q 166 238 184 246 Q 174 224 168 208 Z"/>
+
+  <!-- ==== base flesh mass: lumpy asymmetric silhouette ==== -->
+  <path d="M 128 34 Q 168 28 194 52 Q 224 72 226 106 Q 232 134 216 162
+           Q 206 194 172 210 Q 144 226 110 216 Q 74 210 52 184
+           Q 30 160 32 124 Q 30 92 54 66 Q 84 38 128 34 Z"
+        fill="url(#flesh)" stroke="#2b0a1c" stroke-width="5"/>
+
+  <!-- striated flesh bands showing between the plates -->
+  <g fill="none" stroke="#a8496e" stroke-width="3" opacity="0.5" stroke-linecap="round">
+    <path d="M 70 78 Q 92 66 118 64"/>
+    <path d="M 66 92 Q 94 80 124 78"/>
+    <path d="M 168 176 Q 148 190 122 194"/>
+    <path d="M 178 164 Q 158 180 130 186"/>
+    <path d="M 52 138 Q 60 152 74 164"/>
   </g>
-  <!-- main dome -->
-  <ellipse cx="128" cy="128" rx="92" ry="88" fill="url(#dome)" stroke="#2b0a1c" stroke-width="5"/>
-  <!-- chitin ridge plates arcing over the dome -->
-  <path d="M 52 96 Q 128 46 204 96" fill="none" stroke="#471530" stroke-width="9" stroke-linecap="round"/>
-  <path d="M 44 132 Q 128 90 212 132" fill="none" stroke="#471530" stroke-width="7" stroke-linecap="round" opacity="0.8"/>
-  <path d="M 56 170 Q 128 210 200 170" fill="none" stroke="#3a1026" stroke-width="9" stroke-linecap="round"/>
-  <!-- membrane pustules glowing sickly amber -->
+
+  <!-- ==== carapace lobes (armor plates), asymmetric ==== -->
+  <!-- upper-right lobe with ridge spines -->
+  <path d="M 138 44 Q 184 44 208 82 Q 220 104 214 128 L 178 118 Q 182 92 164 76 Q 152 62 138 60 Z"
+        fill="url(#plate)" stroke="#241021" stroke-width="4.5"/>
+  <!-- lower-left lobe -->
+  <path d="M 48 132 Q 44 168 74 192 Q 96 210 122 208 L 124 176 Q 100 176 86 160 Q 72 148 72 132 Z"
+        fill="url(#plate)" stroke="#241021" stroke-width="4.5"/>
+  <!-- small left plate -->
+  <path d="M 46 96 Q 56 74 80 60 L 94 82 Q 76 92 68 108 Z"
+        fill="url(#plate)" stroke="#241021" stroke-width="4"/>
+  <!-- plate growth rings -->
+  <g fill="none" stroke="#6e4a62" stroke-width="2.5" opacity="0.7">
+    <path d="M 148 56 Q 182 60 198 90"/>
+    <path d="M 144 68 Q 172 72 186 96"/>
+    <path d="M 60 140 Q 62 166 84 184"/>
+    <path d="M 82 138 Q 84 158 100 170"/>
+  </g>
+
+  <!-- ==== bone spike crown: pale chitin hooks ==== -->
+  <g fill="#c9b08e" stroke="#4a3524" stroke-width="3" stroke-linejoin="round">
+    <path d="M 196 74 Q 216 58 234 56 Q 222 74 212 92 Z"/>
+    <path d="M 214 128 Q 238 126 248 138 Q 230 146 218 148 Z"/>
+    <path d="M 96 52 Q 92 30 102 16 Q 112 32 116 50 Z"/>
+    <path d="M 60 186 Q 48 204 30 210 Q 38 190 48 176 Z"/>
+    <path d="M 160 208 Q 164 228 156 244 Q 146 226 144 212 Z"/>
+  </g>
+  <!-- spike shading -->
+  <g fill="#8a7358" opacity="0.7">
+    <path d="M 206 78 Q 220 66 230 62 Q 222 74 214 88 Z"/>
+    <path d="M 100 48 Q 98 34 103 22 Q 109 34 111 48 Z"/>
+  </g>
+
+  <!-- ==== membrane pustules: varied sizes, sickly amber glow ==== -->
   <g stroke="#2b0a1c" stroke-width="2.5">
-    <circle cx="76" cy="88" r="13" fill="#c46a3a"/>
-    <circle cx="184" cy="96" r="10" fill="#c46a3a"/>
-    <circle cx="66" cy="160" r="9" fill="#b85c34"/>
-    <circle cx="188" cy="158" r="12" fill="#b85c34"/>
-    <circle cx="150" cy="62" r="8" fill="#c46a3a"/>
+    <circle cx="86" cy="106" r="15" fill="#c46a3a"/>
+    <circle cx="180" cy="146" r="11" fill="#b85c34"/>
+    <circle cx="118" cy="190" r="9" fill="#b85c34"/>
+    <circle cx="158" cy="92" r="8" fill="#c46a3a"/>
+    <circle cx="66" cy="122" r="6" fill="#a85030"/>
+    <circle cx="196" cy="112" r="6" fill="#a85030"/>
   </g>
-  <g fill="#ffb36b" opacity="0.85">
-    <circle cx="73" cy="84" r="5.5"/>
-    <circle cx="182" cy="93" r="4"/>
-    <circle cx="64" cy="157" r="3.5"/>
-    <circle cx="186" cy="155" r="5"/>
-    <circle cx="148" cy="60" r="3"/>
+  <!-- pustule inner glows + glisten -->
+  <g fill="#ffb36b" opacity="0.9">
+    <circle cx="83" cy="102" r="7"/>
+    <circle cx="178" cy="143" r="4.5"/>
+    <circle cx="116" cy="188" r="3.5"/>
+    <circle cx="156" cy="90" r="3"/>
   </g>
-  <!-- central birthing orifice: dark maw with lip folds -->
-  <ellipse cx="128" cy="128" rx="40" ry="36" fill="#5e1c36" stroke="#2b0a1c" stroke-width="4"/>
-  <ellipse cx="128" cy="128" rx="28" ry="25" fill="url(#orifice)"/>
-  <!-- lip folds -->
-  <path d="M 96 118 Q 128 100 160 118" fill="none" stroke="#8a3550" stroke-width="5" stroke-linecap="round"/>
-  <path d="M 98 140 Q 128 156 158 140" fill="none" stroke="#8a3550" stroke-width="5" stroke-linecap="round"/>
-  <!-- glisten -->
-  <ellipse cx="118" cy="120" rx="7" ry="4" fill="#d97a9a" opacity="0.6"/>
+  <g fill="#fff0d8" opacity="0.8">
+    <circle cx="80" cy="99" r="2.5"/>
+    <circle cx="176" cy="141" r="1.8"/>
+  </g>
+  <!-- tiny spike clusters on the flesh -->
+  <g fill="#57203f" stroke="#2b0a1c" stroke-width="1.5">
+    <path d="M 138 128 l 5 -9 l 4 9 Z"/>
+    <path d="M 148 132 l 4 -7 l 4 7 Z"/>
+    <path d="M 100 148 l 4 -8 l 4 8 Z"/>
+    <path d="M 108 152 l 3 -6 l 4 6 Z"/>
+  </g>
+
+  <!-- ==== central birthing maw: toothed, layered lips ==== -->
+  <!-- outer lip folds -->
+  <path d="M 88 118 Q 84 96 106 88 Q 128 78 152 88 Q 172 96 170 120
+           Q 172 142 150 152 Q 128 162 106 152 Q 86 144 88 118 Z"
+        fill="#7a2a4e" stroke="#2b0a1c" stroke-width="4"/>
+  <path d="M 96 118 Q 94 102 112 95 Q 128 88 146 96 Q 162 102 160 120
+           Q 160 136 144 144 Q 128 150 110 143 Q 96 136 96 118 Z"
+        fill="#571a38" stroke="#38102a" stroke-width="3"/>
+  <!-- the maw itself -->
+  <ellipse cx="128" cy="119" rx="26" ry="22" fill="url(#maw)"/>
+  <!-- bone teeth ringing the maw -->
+  <g fill="#c9b08e" stroke="#4a3524" stroke-width="1.8" stroke-linejoin="round">
+    <path d="M 108 106 Q 112 112 110 118 L 104 112 Z"/>
+    <path d="M 122 99 Q 124 106 121 111 L 116 103 Z"/>
+    <path d="M 140 100 Q 139 107 142 112 L 147 104 Z"/>
+    <path d="M 152 114 Q 148 118 149 124 L 155 120 Z"/>
+    <path d="M 144 136 Q 140 132 136 134 L 141 140 Z"/>
+    <path d="M 114 136 Q 117 131 121 133 L 116 139 Z"/>
+  </g>
+  <!-- wet glisten on the lip -->
+  <path d="M 102 104 Q 112 96 126 94" fill="none" stroke="#d97a9a" stroke-width="3.5" opacity="0.65" stroke-linecap="round"/>
   <!-- dome highlight -->
-  <ellipse cx="96" cy="76" rx="26" ry="14" fill="#a84a66" opacity="0.5" transform="rotate(-24 96 76)"/>
+  <ellipse cx="98" cy="70" rx="24" ry="11" fill="#b45878" opacity="0.45" transform="rotate(-28 98 70)"/>
 </svg>

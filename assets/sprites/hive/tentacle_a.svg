@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="64" viewBox="0 0 96 32">
+  <!-- Hive tentacle A: segmented, tapering, slight S-curve. Root at LEFT
+       CENTER (0,16) so the hive scene pivots it there and sways rotation. -->
+  <defs>
+    <linearGradient id="tent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6e2547"/>
+      <stop offset="60%" stop-color="#57203f"/>
+      <stop offset="100%" stop-color="#93395c"/>
+    </linearGradient>
+  </defs>
+  <!-- body: thick at root, curling taper to the tip -->
+  <path d="M 0 8 Q 30 2 52 8 Q 76 13 90 10 Q 94 12 93 15 Q 88 20 74 22
+           Q 52 27 28 25 Q 8 24 0 24 Z"
+        fill="url(#tent)" stroke="#2b0a1c" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- segment ridges -->
+  <g fill="none" stroke="#3d1129" stroke-width="1.8" stroke-linecap="round">
+    <path d="M 14 7 Q 16 16 14 24"/>
+    <path d="M 28 5 Q 30 15 28 25"/>
+    <path d="M 42 6 Q 44 15 42 24"/>
+    <path d="M 56 8 Q 57 15 56 22"/>
+    <path d="M 68 9 Q 69 15 68 21"/>
+    <path d="M 79 10 Q 80 15 79 19"/>
+  </g>
+  <!-- dorsal glow line -->
+  <path d="M 6 11 Q 40 5 78 12" fill="none" stroke="#c46a3a" stroke-width="2" opacity="0.7" stroke-linecap="round"/>
+  <!-- underside suckers -->
+  <g fill="#a8496e" opacity="0.85">
+    <circle cx="22" cy="21" r="2.2"/>
+    <circle cx="36" cy="22" r="2"/>
+    <circle cx="50" cy="21.5" r="1.8"/>
+    <circle cx="63" cy="20" r="1.5"/>
+    <circle cx="74" cy="18.5" r="1.2"/>
+  </g>
+  <!-- bone tip hook -->
+  <path d="M 88 10 Q 96 12 95 16 Q 92 19 87 18 Q 90 14 88 10 Z"
+        fill="#c9b08e" stroke="#4a3524" stroke-width="1.5"/>
+</svg>

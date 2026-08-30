@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="56" viewBox="0 0 72 28">
+  <!-- Hive tentacle B: shorter, knobblier sibling of A. Root at LEFT CENTER
+       (0,14); pivots there in the hive scene. -->
+  <defs>
+    <linearGradient id="tentb" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#571a38"/>
+      <stop offset="100%" stop-color="#7a2a4e"/>
+    </linearGradient>
+  </defs>
+  <path d="M 0 7 Q 20 3 36 7 Q 54 10 66 13 Q 68 14 66 16 Q 52 20 36 21
+           Q 18 23 0 21 Z"
+        fill="url(#tentb)" stroke="#2b0a1c" stroke-width="2.2" stroke-linejoin="round"/>
+  <!-- knobbly segments -->
+  <g fill="none" stroke="#3d1129" stroke-width="1.6" stroke-linecap="round">
+    <path d="M 11 6 Q 13 14 11 21"/>
+    <path d="M 23 5 Q 25 13 23 21"/>
+    <path d="M 35 6 Q 36 13 35 20"/>
+    <path d="M 47 8 Q 48 14 47 19"/>
+    <path d="M 57 10 Q 58 14 57 17"/>
+  </g>
+  <!-- pustule nodes along the top -->
+  <g stroke="#2b0a1c" stroke-width="1.2">
+    <circle cx="17" cy="7" r="2.6" fill="#b85c34"/>
+    <circle cx="41" cy="7.5" r="2.2" fill="#b85c34"/>
+  </g>
+  <circle cx="16.3" cy="6.3" r="1.1" fill="#ffb36b" opacity="0.9"/>
+  <circle cx="40.4" cy="6.9" r="0.9" fill="#ffb36b" opacity="0.85"/>
+  <!-- blunt fleshy tip -->
+  <ellipse cx="65" cy="14.5" rx="4" ry="3" fill="#93395c" stroke="#2b0a1c" stroke-width="1.6"/>
+</svg>
