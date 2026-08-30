@@ -138,9 +138,9 @@
 			"runner_from_wave": 2, "runner_base": 10, "runner_per_wave": 6,
 			"brute_divisor": 4,
 			"mage_divisor": 6, "mage_cap": 3,
-			"wasp_divisor": 6, "wasp_per_step": 4, "wasp_cap": 24,
-			"wasp_flood_wave": 14, "wasp_flood_base": 12, "wasp_flood_per_wave": 4,
-			"drone_divisor": 8
+			"wasp_from_wave": 15, "wasp_divisor": 6, "wasp_per_step": 4, "wasp_cap": 24,
+			"wasp_flood_wave": 20, "wasp_flood_base": 12, "wasp_flood_per_wave": 4,
+			"drone_from_wave": 25, "drone_divisor": 8
 		}
 	},
 

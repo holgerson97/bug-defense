@@ -109,11 +109,16 @@ func _start_wave() -> void:
 	var mages: int = mini(wave / int(comp.get("mage_divisor", 6)), int(comp.get("mage_cap", 3)))
 	@warning_ignore("integer_division")
 	var wasps: int = mini((wave / int(comp.get("wasp_divisor", 6))) * int(comp.get("wasp_per_step", 4)), int(comp.get("wasp_cap", 24)))
-	## Armored air brutes trickle in from wave 8: flak sponges for the swarm.
+	## Armored air brutes: flak sponges for the swarm.
 	@warning_ignore("integer_division")
 	var drones: int = wave / int(comp.get("drone_divisor", 8))
-	## From wave 14 the sky joins the horde: wasps flood in like ground chaff.
-	var flood_wave: int = int(comp.get("wasp_flood_wave", 14))
+	## The sky stays clear until the air-entry waves; build AA before then.
+	if wave < int(comp.get("wasp_from_wave", 15)):
+		wasps = 0
+	if wave < int(comp.get("drone_from_wave", 25)):
+		drones = 0
+	## Late flood: wasps pour in like ground chaff.
+	var flood_wave: int = int(comp.get("wasp_flood_wave", 20))
 	if wave >= flood_wave:
 		wasps = int(comp.get("wasp_flood_base", 12)) + (wave - flood_wave) * int(comp.get("wasp_flood_per_wave", 4))
 	if boss_wave:
