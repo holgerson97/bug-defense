@@ -105,7 +105,7 @@
 		"grunt":  { "hp": 2,   "speed": 125.0, "damage": 3,  "attack_interval": 0.8, "attack_range": 36.0, "points": 5,   "scrap": 1,   "crystal": 0 },
 		"runner": { "hp": 1,   "speed": 200.0, "damage": 3,  "attack_interval": 0.5, "attack_range": 28.0, "points": 1,   "scrap": 1,   "crystal": 0 },
 		"brute":  { "hp": 15,  "speed": 65.0,  "damage": 20, "attack_interval": 0.8, "attack_range": 44.0, "points": 30,  "scrap": 18,  "crystal": 0 },
-		"mage":   { "hp": 6,   "speed": 85.0,  "damage": 0,  "attack_interval": 0.8, "attack_range": 36.0, "points": 35,  "scrap": 24,  "crystal": 5, "cast_interval": 8.0, "summon_count": 20, "max_alive_summons": 40, "kite_distance": 440.0, "approach_distance": 540.0 },
+		"mage":   { "hp": 6,   "speed": 85.0,  "damage": 0,  "attack_interval": 0.8, "attack_range": 36.0, "points": 35,  "scrap": 24,  "crystal": 5, "cast_interval": 8.0, "summon_count": 50, "max_alive_summons": 150, "kite_distance": 440.0, "approach_distance": 540.0 },
 		"wasp":   { "hp": 3,   "speed": 160.0, "damage": 4,  "attack_interval": 0.7, "attack_range": 34.0, "points": 8,   "scrap": 6,   "crystal": 0, "weave_frequency": 6.0, "weave_amplitude": 90.0 },
 		"drone":  { "hp": 25,  "speed": 70.0,  "damage": 10, "attack_interval": 1.0, "attack_range": 44.0, "points": 40,  "scrap": 20,  "crystal": 0, "drift_frequency": 1.4, "drift_amplitude": 16.0 },
 		"boss":   { "hp": 250, "speed": 70.0,  "damage": 25, "attack_interval": 1.2, "attack_range": 72.0, "points": 250, "scrap": 150, "crystal": 50, "birth_interval": 4.5, "hit_spawn_count": 2, "hit_spawn_cooldown": 1.5, "damage_growth": 1.25, "max_alive_brood": 16, "max_per_brood": 8 }
@@ -134,10 +134,10 @@
 		"max_alive": 350,
 		"chaff_burst": 5,
 		"composition": {
-			"grunt_base": 20, "grunt_per_wave": 8,
-			"runner_from_wave": 2, "runner_base": 10, "runner_per_wave": 6,
+			"grunt_base": 20, "grunt_per_wave": 8, "grunt_last_wave": 1,
+			"runner_from_wave": 999999, "runner_base": 10, "runner_per_wave": 6,
 			"brute_divisor": 4,
-			"mage_divisor": 6, "mage_cap": 3,
+			"mage_from_wave": 5, "mage_divisor": 6, "mage_cap": 3,
 			"wasp_from_wave": 15, "wasp_divisor": 6, "wasp_per_step": 4, "wasp_cap": 24,
 			"wasp_flood_wave": 20, "wasp_flood_base": 12, "wasp_flood_per_wave": 4,
 			"drone_from_wave": 25, "drone_divisor": 8

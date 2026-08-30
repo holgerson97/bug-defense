@@ -99,14 +99,21 @@ func _start_wave() -> void:
 		_rpc_wave_started.rpc(wave)
 	var boss_wave := wave % boss_every == 0
 	var comp := Balance.section("waves/composition")
-	## Chaff flood: every wave visibly bigger than the last.
+	## Chaff flood: every wave visibly bigger than the last. Grunts retire
+	## after grunt_last_wave — from then on, mages summon the ground swarm.
 	var grunts: int = int(comp.get("grunt_base", 20)) + wave * int(comp.get("grunt_per_wave", 8))
+	if wave > int(comp.get("grunt_last_wave", 999999)):
+		grunts = 0
 	var runners: int = int(comp.get("runner_base", 10)) + wave * int(comp.get("runner_per_wave", 6)) \
 			if wave >= int(comp.get("runner_from_wave", 2)) else 0
 	@warning_ignore("integer_division")
 	var brutes: int = wave / int(comp.get("brute_divisor", 4))
 	@warning_ignore("integer_division")
 	var mages: int = mini(wave / int(comp.get("mage_divisor", 6)), int(comp.get("mage_cap", 3)))
+	if wave >= int(comp.get("mage_from_wave", 999999)):
+		mages = maxi(mages, 1)
+	else:
+		mages = 0
 	@warning_ignore("integer_division")
 	var wasps: int = mini((wave / int(comp.get("wasp_divisor", 6))) * int(comp.get("wasp_per_step", 4)), int(comp.get("wasp_cap", 24)))
 	## Armored air brutes: flak sponges for the swarm.
