@@ -131,7 +131,6 @@
 		"time_between_waves": 20.0,
 		"spawn_interval": 0.18,
 		"spawn_radius": 800.0,
-		"max_alive": 350,
 		"chaff_burst": 5,
 		"composition": {
 			"grunt_base": 20, "grunt_per_wave": 8,

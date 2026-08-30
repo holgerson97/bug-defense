@@ -26,8 +26,6 @@ const CHAFF := {"grunt": true, "runner": true, "wasp": true}
 var chaff_burst: int = Balance.inum("waves/chaff_burst", 5)
 
 ## Hard ceiling on alive enemies: the spawner defers (never drops) at the cap.
-var max_alive: int = Balance.inum("waves/max_alive", 350)
-
 ## Balance knobs: per-wave HP growth curves, boss cadence and composition
 ## formula constants (fallbacks = the shipped values).
 var hp_scale_factor: float = Balance.num("waves/hp_scale", 1.12)
@@ -160,12 +158,11 @@ func _start_wave() -> void:
 	_spawning = true
 	var idx := 0
 	while idx < queue.size():
-		## At the alive cap: hold the queue until towers thin the horde.
-		while _alive >= max_alive:
-			await get_tree().create_timer(spawn_interval, false).timeout
+		## No alive cap — pacing alone (chaff_burst per spawn_interval tick)
+		## keeps the wave from arriving all at once.
 		var burst: int = chaff_burst if CHAFF.has(queue[idx]) else 1
 		for b in burst:
-			if idx >= queue.size() or (b > 0 and not CHAFF.has(queue[idx])) or _alive >= max_alive:
+			if idx >= queue.size() or (b > 0 and not CHAFF.has(queue[idx])):
 				break
 			_spawn_kind(queue[idx])
 			idx += 1
