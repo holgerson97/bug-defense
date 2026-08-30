@@ -135,6 +135,24 @@ func _kind_at(c: Vector2i) -> int:
 	var entry = _cells.get(c)
 	return 0 if entry == null else entry[0]
 
+## Nearest rock-free position to `pos`: spirals outward over the lattice and
+## returns the first free cell's corner-safe center. Spawners use this so
+## enemies can never be placed inside a rock mass (a body born deep inside a
+## polygon is beyond physics depenetration and stays embedded forever).
+func nearest_free(pos: Vector2, max_ring: int = 16) -> Vector2:
+	var origin := cell_of(pos)
+	if _kind_at(origin) != KIND_ROCK:
+		return pos
+	for ring in range(1, max_ring + 1):
+		for y in range(-ring, ring + 1):
+			for x in range(-ring, ring + 1):
+				if maxi(absi(x), absi(y)) != ring:
+					continue
+				var c := origin + Vector2i(x, y)
+				if _kind_at(c) != KIND_ROCK:
+					return _safe_center(c)
+	return pos
+
 ## Cells whose center lies inside a world-space rect (building footprints).
 func cells_in_rect(rect: Rect2) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []

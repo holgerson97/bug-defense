@@ -201,7 +201,8 @@ func _spawn_kind(kind) -> void:
 ## Lets summoners (mage, boss) birth runners through the replicated spawn
 ## path; their spawns count toward wave clearing like before.
 func spawn_summon(pos: Vector2, max_health: int, speed_delta: float) -> Node:
-	return _spawn("runner", pos, {"max_health": max_health, "speed_delta": speed_delta})
+	## Mage/boss birth rings can clip rock edges — slide embeds to free ground.
+	return _spawn("runner", NavGrid.nearest_free(pos), {"max_health": max_health, "speed_delta": speed_delta})
 
 ## Spawner round-trip: offline and host alike go through the MultiplayerSpawner
 ## (its spawn() also works with the offline peer); clients replay
@@ -254,7 +255,8 @@ func _spawn_position() -> Vector2:
 	var angle := randf() * TAU
 	if not _cluster_angles.is_empty():
 		angle = _cluster_angles[randi() % _cluster_angles.size()] + randf_range(-0.4, 0.4)
-	return center + Vector2.from_angle(angle) * spawn_radius
+	## Ring points that land inside a rock mass slide to the nearest free cell.
+	return NavGrid.nearest_free(center + Vector2.from_angle(angle) * spawn_radius)
 
 ## Tracks alive + per-type remaining counts; type name rides along on `died`.
 func _register(enemy, type_name: String) -> void:

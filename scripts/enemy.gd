@@ -212,11 +212,15 @@ func _target_reach() -> float:
 ## in range. Variants override.
 func _behave(delta) -> void:
 	var to_target: Vector2 = _target.global_position - global_position
-	rotation = to_target.angle()
 
 	if to_target.length() > _target_reach():
 		_steered_move(to_target.normalized(), speed, delta)
+		## Face where we're actually walking (path/glide direction) — staring
+		## at a target through a rock looks like x-ray vision.
+		if velocity.length_squared() > 100.0:
+			rotation = velocity.angle()
 	else:
+		rotation = to_target.angle()
 		velocity = Vector2.ZERO
 		_steering_reset()
 		_attack_cooldown -= delta

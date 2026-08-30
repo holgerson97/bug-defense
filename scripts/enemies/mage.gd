@@ -29,10 +29,14 @@ func _behave(delta) -> void:
 		spd *= RETREAT_SPEED_MULT
 	elif dist > approach_distance:
 		move = to_player.normalized()
-	rotation = to_player.angle()
 	if move != Vector2.ZERO:
 		_steered_move(move, spd, delta)
+		## Face the walk direction while moving; only stare at the player
+		## when standing to cast (no x-ray glares through rocks).
+		if velocity.length_squared() > 100.0:
+			rotation = velocity.angle()
 	else:
+		rotation = to_player.angle()
 		velocity = Vector2.ZERO
 		move_and_slide()
 		_steering_reset()
