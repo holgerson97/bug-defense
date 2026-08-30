@@ -162,6 +162,7 @@
 			"speed":              { "cost": { "scrap": 35 },   "effects": { "speed_mult": 0.1 } },
 			"health":             { "cost": { "scrap": 52 },   "effects": { "player_hp_bonus": 25.0 } },
 			"regen":              { "cost": { "scrap": 140 },  "effects": { "player_regen": 1.0 } },
+			"pierce":             { "cost": { "scrap": 90 },   "effects": { "pierce": 1.0 } },
 			"player_light":       { "cost": { "scrap": 42 },   "effects": { "light_radius": 0.15 } },
 			"build_range":        { "cost": { "scrap": 52 },   "effects": { "build_range": 0.1 } },
 			"heal_range":         { "cost": { "scrap": 42 },   "effects": { "heal_range": 0.15 } },

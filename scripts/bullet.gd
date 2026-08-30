@@ -14,6 +14,8 @@ var flame: bool = false
 ## Sniper rounds (Scout): long, fast, bright tracer; also piercing.
 var sniper: bool = false
 var pierce: bool = false
+## Max victims for piercing rounds; -1 = unlimited (flame globs).
+var pierce_limit: int = -1
 
 var _max_life: float = 1.5
 var _burned: Dictionary = {}
@@ -64,6 +66,10 @@ func _on_body_entered(body) -> void:
 			if flame and body.has_method("ignite"):
 				body.ignite()
 			Sfx.play("hit", global_position, -14.0)
+			## Capped rounds (sniper) stop after their victim budget.
+			if pierce_limit >= 0 and _burned.size() >= pierce_limit:
+				Effects.impact(self, global_position, rotation + PI)
+				queue_free()
 			return
 		body.take_damage(damage)
 		if flame and body.has_method("ignite"):

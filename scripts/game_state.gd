@@ -28,6 +28,7 @@ const UPGRADE_DEFAULTS := {
 	"speed": {"icon": "res://assets/icons/xp.svg", "name": "Move Speed", "branch": "Pilot", "desc": "+10% move speed", "cost": {"scrap": 35}, "requires": [], "effects": {"speed_mult": 0.1}},
 	"health": {"icon": "res://assets/icons/health.svg", "name": "Max Health", "branch": "Pilot", "desc": "+25 max health", "cost": {"scrap": 52}, "requires": [], "effects": {"player_hp_bonus": 25.0}},
 	"regen": {"icon": "res://assets/icons/health.svg", "name": "Regeneration", "branch": "Pilot", "desc": "+1 HP/s regen", "cost": {"scrap": 140}, "requires": [], "effects": {"player_regen": 1.0}},
+	"pierce": {"icon": "res://assets/icons/crit.svg", "name": "Pierce", "branch": "Offense", "desc": "+1 sniper pierce", "cost": {"scrap": 90}, "requires": [], "effects": {"pierce": 1.0}},
 	"player_light": {"icon": "res://assets/icons/light_pole.svg", "name": "Headlamp", "branch": "Pilot", "desc": "+15% light radius", "cost": {"scrap": 42}, "requires": [], "effects": {"light_radius": 0.15}},
 	"build_range": {"icon": "res://assets/icons/wall.svg", "name": "Build Range", "branch": "Pilot", "desc": "+10% build range", "cost": {"scrap": 52}, "requires": [], "effects": {"build_range": 0.1}},
 	"heal_range": {"icon": "res://assets/icons/repair_tower.svg", "name": "Beam Range", "branch": "Pilot", "desc": "+15% heal beam range", "cost": {"scrap": 42}, "requires": [], "effects": {"heal_range": 0.15}},
@@ -514,6 +515,10 @@ func player_max_health() -> int:
 
 func player_regen() -> float:
 	return stat("player_regen")
+
+## Sniper rounds hit the target plus 1 extra enemy, plus Pierce levels.
+func player_pierce_total() -> int:
+	return 2 + int(stat("pierce"))
 
 func player_light_mult() -> float:
 	return 1.0 + stat("light_radius")

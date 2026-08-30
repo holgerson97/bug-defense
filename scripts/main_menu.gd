@@ -18,7 +18,10 @@ extends Control
 
 ## Class picker widgets (built in code; classes are data-driven from balance).
 var _class_buttons: Dictionary = {}
-var _class_desc: Label
+var _class_card: PanelContainer
+var _card_sprite: TextureRect
+var _card_weapon: Label
+var _card_stats: Label
 var _lobby_class: OptionButton
 var _lobby_class_desc: Label
 ## World picker widgets (same pattern; worlds are data-driven from balance).
@@ -92,15 +95,71 @@ func _build_class_picker() -> void:
 		button.pressed.connect(_on_class_picked.bind(id))
 		row.add_child(button)
 		_class_buttons[id] = button
-	_class_desc = Label.new()
-	_class_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_class_desc.add_theme_font_size_override("font_size", 14)
-	_class_desc.add_theme_color_override("font_color", UITheme.TEXT_DIM)
 	var menu := $Center/Menu
 	menu.add_child(row)
 	menu.move_child(row, $Center/Menu/Play.get_index())
-	menu.add_child(_class_desc)
-	menu.move_child(_class_desc, $Center/Menu/Play.get_index())
+	_build_class_card()
+	menu.add_child(_class_card)
+	menu.move_child(_class_card, $Center/Menu/Play.get_index())
+
+## Info card under the picker: class sprite on top, then the weapon, then
+## the stat deviations from baseline.
+func _build_class_card() -> void:
+	_class_card = PanelContainer.new()
+	_class_card.custom_minimum_size = Vector2(280, 0)
+	_class_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 12)
+	_class_card.add_child(margin)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+	_card_sprite = TextureRect.new()
+	_card_sprite.custom_minimum_size = Vector2(96, 96)
+	_card_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_card_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_card_sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(_card_sprite)
+	_card_weapon = Label.new()
+	_card_weapon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_card_weapon.add_theme_font_size_override("font_size", 15)
+	_card_weapon.add_theme_color_override("font_color", UITheme.ACCENT)
+	vbox.add_child(_card_weapon)
+	_card_stats = Label.new()
+	_card_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_card_stats.add_theme_font_size_override("font_size", 13)
+	_card_stats.add_theme_color_override("font_color", UITheme.TEXT_DIM)
+	vbox.add_child(_card_stats)
+
+const STAT_NAMES := {
+	"max_health": "Health", "damage": "Damage", "speed": "Move Speed",
+	"auto_attack_range": "Auto-Attack Range", "light_radius": "Light Radius",
+	"build_range": "Build Range", "reactor_amount": "Reactor Output",
+	"reactor_cover": "Reactor Aura", "heal_beam_range": "Heal Beam Range",
+}
+
+## "x0.75 speed" reads poorly; show signed percentages, invert cooldown into
+## attack speed, list flat adds and perks in plain words.
+func _class_stat_lines(id: String) -> String:
+	var info: Dictionary = GameState.class_info(id)
+	var stats: Dictionary = info.get("stats", {})
+	var lines: Array = []
+	for key in stats:
+		var v: float = float(stats[key])
+		if key == "fire_cooldown":
+			if not is_equal_approx(v, 1.0):
+				lines.append("Attack Speed %+d%%" % roundi((1.0 / v - 1.0) * 100.0))
+		elif key.ends_with("_add"):
+			lines.append("%s %+d" % [key.trim_suffix("_add").capitalize(), int(v)])
+		elif not is_equal_approx(v, 1.0):
+			var label: String = STAT_NAMES.get(key, key.capitalize())
+			lines.append("%s %+d%%" % [label, roundi((v - 1.0) * 100.0)])
+	if bool(info.get("building_walk", false)):
+		lines.append("Walks over buildings")
+	if lines.is_empty():
+		lines.append("Baseline stats")
+	return "\n".join(lines)
 
 ## Lobby: dropdown above the player list — each peer picks its own class and
 ## the choice replicates through the Net registry. Late joiners parked here
@@ -142,9 +201,14 @@ func _sync_class_ui() -> void:
 	var cls: String = Net.local_class
 	for id in _class_buttons:
 		_class_buttons[id].set_pressed_no_signal(id == cls)
-	_class_desc.text = GameState.class_desc(cls)
+	var sprite_path := GameState.class_sprite(cls)
+	_card_sprite.texture = load(sprite_path) if sprite_path != "" else null
+	_card_sprite.modulate = Color.WHITE if sprite_path != "" else GameState.class_tint(cls)
+	var weapon := str(GameState.class_info(cls).get("weapon", "blaster"))
+	_card_weapon.text = weapon.capitalize()
+	_card_stats.text = _class_stat_lines(cls)
 	_lobby_class.select(maxi(GameState.CLASSES.keys().find(cls), 0))
-	_lobby_class_desc.text = GameState.class_desc(cls)
+	_lobby_class_desc.text = "%s — %s" % [str(GameState.class_info(cls).get("weapon", "blaster")).capitalize(), GameState.class_desc(cls)]
 
 ## -- world selection --
 

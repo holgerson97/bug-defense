@@ -376,6 +376,7 @@ func _spawn_bullet(pos: Vector2, rot: float, dmg: int, crit: bool, cosmetic: boo
 	elif _is_sniper():
 		bullet.sniper = true
 		bullet.pierce = true
+		bullet.pierce_limit = GameState.player_pierce_total()
 		bullet.speed = Balance.num("weapons/sniper/speed", 1600.0)
 		bullet.lifetime = Balance.num("weapons/sniper/lifetime", 0.8)
 	if cosmetic:
