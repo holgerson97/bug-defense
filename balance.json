@@ -292,7 +292,9 @@
 
 	"resources": {
 		"_readme": "Finite ore. chunk_*_amount is the ore per chunk-seeded deposit block (crystal mineral lines, scattered gold). The starter area guarantees three crystal patches and one gold patch near the spawn - a patch is a tight arc of patch_blocks_min..patch_blocks_max blocks splitting starter_*_patch ore between them. Empty blocks dim to husks and stop yielding; miners on them idle without burning energy and harvesters hunt elsewhere.",
-		"chunk_crystal_amount": 800,
+		"array_chunk_chance": 0.2, "array_patches_min": 5, "array_patches_max": 20,
+        "array_amount_min": 2000, "array_amount_max": 3000,
+        "chunk_crystal_amount": 800,
 		"chunk_gold_amount": 500,
 		"starter_crystal_patch": 3000,
 		"starter_gold_patch": 1000,

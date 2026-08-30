@@ -198,6 +198,8 @@ func _spawn_building_node(data: Array) -> Node:
 ## seed normally later but respect `_starter_rects`, so nothing stacks.
 func _seed_starter_area() -> void:
 	_seed_starter_rocks()
+	## Terminology: one crystal BLOCK is a "patch"; the starter ring gets
+	## three single patches at full value plus one gold patch.
 	var crystal_total := Balance.inum("resources/starter_crystal_patch", 3000)
 	var gold_total := Balance.inum("resources/starter_gold_patch", 1000)
 	for i in 3:
@@ -234,52 +236,25 @@ func _seed_starter_rocks() -> void:
 			_starter_rects.append(rect)
 			break
 
-## One starter mineral patch: a tight 4-6 block arc (same geometry as chunk
-## mineral lines) whose blocks split `total` ore between them.
+## One starter patch: a SINGLE block carrying the full `total`, placed at a
+## random point on the starter ring.
 func _seed_starter_patch(scene: PackedScene, total: int) -> void:
-	var blocks := randi_range(Balance.inum("resources/patch_blocks_min", 4),
-		Balance.inum("resources/patch_blocks_max", 6))
-	blocks = maxi(blocks, 1)
-	var base := int(float(total) / float(blocks))
-	var extra := total - base * blocks
 	for attempt in 96:
 		## Graceful degradation when the ring is crowded by the huge rocks:
 		## later attempts widen the ring, then relax the patch separation —
 		## a guaranteed starter patch beats pretty spacing.
 		var dist_max := STARTER_PATCH_DIST_MAX if attempt < 32 else 1100.0
 		var clearance := STARTER_PATCH_CLEARANCE if attempt < 64 else ROCK_DEPOSIT_CLEARANCE
-		var center := PLAYER_SPAWN + Vector2.from_angle(randf() * TAU) \
+		var pos := PLAYER_SPAWN + Vector2.from_angle(randf() * TAU) \
 			* randf_range(STARTER_PATCH_DIST_MIN, dist_max)
-		var positions := _patch_positions(center, blocks, clearance)
-		if positions.is_empty():
-			continue
-		var rect := Rect2(positions[0], Vector2.ZERO)
-		for j in positions.size():
-			rect = rect.expand(positions[j])
-			var deposit = scene.instantiate()
-			## First `extra` blocks carry the division remainder, so the patch
-			## sums to `total` exactly.
-			deposit.amount = base + (1 if j < extra else 0)
-			deposit.global_position = positions[j]
-			add_child(deposit)
-		_starter_rects.append(rect.grow(16.0))
-		return
-
-## Arc positions for a starter patch (mirrors _try_crystal_line's geometry);
-## empty when any block would land in the clearing or a starter rect.
-func _patch_positions(center: Vector2, count: int, clearance: float) -> Array[Vector2]:
-	var step := CLUSTER_SPACING / CLUSTER_ARC_RADIUS
-	var facing := randf() * TAU
-	var arc_center := center + Vector2.from_angle(facing) * CLUSTER_ARC_RADIUS
-	var out: Array[Vector2] = []
-	for i in count:
-		var a := facing + PI + (float(i) - float(count - 1) / 2.0) * step
-		var pos := arc_center + Vector2.from_angle(a) * CLUSTER_ARC_RADIUS \
-			+ Vector2(randf_range(-CLUSTER_JITTER, CLUSTER_JITTER), randf_range(-CLUSTER_JITTER, CLUSTER_JITTER))
 		if not _starter_pos_clear(pos, clearance):
-			return []
-		out.append(pos)
-	return out
+			continue
+		var deposit = scene.instantiate()
+		deposit.amount = total
+		deposit.global_position = pos
+		add_child(deposit)
+		_starter_rects.append(Rect2(pos, Vector2.ZERO).grow(40.0))
+		return
 
 func _starter_pos_clear(pos: Vector2, clearance: float) -> bool:
 	for p in _spawn_fan_points():
@@ -347,10 +322,10 @@ func _seed_chunk(chunk: Vector2i) -> void:
 			var rect := _place_rock_formation(chunk, rock_rects, budget)
 			if rect.has_area():
 				rock_rects.append(rect)
-	if randf() < CLUSTER_CHUNK_CHANCE:
+	if randf() < Balance.num("resources/array_chunk_chance", 0.2):
 		_place_crystal_cluster(chunk, rock_rects,
-			FAR_CLUSTER_MIN if far else CLUSTER_MIN,
-			FAR_CLUSTER_MAX if far else CLUSTER_MAX)
+			Balance.inum("resources/array_patches_min", 5),
+			Balance.inum("resources/array_patches_max", 20))
 	# Gold is rarer and stays scattered: a single or a pair (richer far out).
 	if randf() < (FAR_GOLD_CHANCE if far else GOLD_CHUNK_CHANCE):
 		var gold_count := (2 if randf() < FAR_GOLD_PAIR_CHANCE else 1) if far \
@@ -479,29 +454,68 @@ func _place_crystal_cluster(chunk: Vector2i, rock_rects: Array[Rect2],
 		if _try_crystal_line(center, rock_rects, cmin, cmax).has_area():
 			return
 
-## One mineral-line attempt arcing around `center`; places the deposits and
-## returns their padded bbox, or a zero Rect2 when a position was blocked.
+## One crystal ARRAY attempt: 5-20 patches, each rolling its own 2000-3000
+## amount, arranged in a randomly chosen formation (line at any angle, arc,
+## double row, or zigzag — not only curves). Places the deposits and returns
+## their padded bbox, or a zero Rect2 when a position was blocked.
 func _try_crystal_line(center: Vector2, rock_rects: Array[Rect2],
 		cmin := CLUSTER_MIN, cmax := CLUSTER_MAX) -> Rect2:
 	var count := randi_range(cmin, cmax)
-	var step := CLUSTER_SPACING / CLUSTER_ARC_RADIUS
-	var facing := randf() * TAU
-	var arc_center := center + Vector2.from_angle(facing) * CLUSTER_ARC_RADIUS
-	var positions: Array[Vector2] = []
-	for i in count:
-		var a := facing + PI + (float(i) - float(count - 1) / 2.0) * step
-		var pos := arc_center + Vector2.from_angle(a) * CLUSTER_ARC_RADIUS \
-			+ Vector2(randf_range(-CLUSTER_JITTER, CLUSTER_JITTER), randf_range(-CLUSTER_JITTER, CLUSTER_JITTER))
+	var positions := _array_positions(center, count)
+	if positions.is_empty():
+		return Rect2()
+	for pos in positions:
 		if not _deposit_pos_clear(pos, rock_rects):
 			return Rect2()
-		positions.append(pos)
+	var amount_min := Balance.inum("resources/array_amount_min", 2000)
+	var amount_max := Balance.inum("resources/array_amount_max", 3000)
 	var rect := Rect2(positions[0], Vector2.ZERO)
 	for pos in positions:
 		rect = rect.expand(pos)
 		var deposit = deposit_scene.instantiate()
+		deposit.amount = randi_range(amount_min, amount_max)
 		deposit.global_position = pos
 		add_child(deposit)
 	return rect.grow(16.0)
+
+## Formation geometry for a crystal array. Every shape jitters slightly so
+## repeats never look stamped.
+func _array_positions(center: Vector2, count: int) -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	var dir := Vector2.from_angle(randf() * TAU)
+	var perp := dir.orthogonal()
+	var jitter := func() -> Vector2:
+		return Vector2(randf_range(-CLUSTER_JITTER, CLUSTER_JITTER), randf_range(-CLUSTER_JITTER, CLUSTER_JITTER))
+	match randi() % 4:
+		0:
+			## Straight line at a random angle.
+			for i in count:
+				positions.append(center + dir * (float(i) - float(count - 1) / 2.0) * CLUSTER_SPACING + jitter.call())
+		1:
+			## Arc (the classic mineral-line curve).
+			var step := CLUSTER_SPACING / CLUSTER_ARC_RADIUS
+			var facing := dir.angle()
+			var arc_center := center + dir * CLUSTER_ARC_RADIUS
+			for i in count:
+				var a := facing + PI + (float(i) - float(count - 1) / 2.0) * step
+				positions.append(arc_center + Vector2.from_angle(a) * CLUSTER_ARC_RADIUS + jitter.call())
+		2:
+			## Double row: two parallel lines.
+			@warning_ignore("integer_division")
+			var half := (count + 1) / 2
+			for i in count:
+				@warning_ignore("integer_division")
+				var row := i / half
+				var along := float(i % half) - float(half - 1) / 2.0
+				positions.append(center + dir * along * CLUSTER_SPACING \
+					+ perp * (float(row) - 0.5) * CLUSTER_SPACING * 1.2 + jitter.call())
+		_:
+			## Zigzag along the direction.
+			for i in count:
+				var side := 1.0 if i % 2 == 0 else -1.0
+				positions.append(center + dir * (float(i) - float(count - 1) / 2.0) * CLUSTER_SPACING * 0.85 \
+					+ perp * side * CLUSTER_SPACING * 0.6 + jitter.call())
+	return positions
 
 func _place_gold(chunk: Vector2i, rock_rects: Array[Rect2]) -> void:
 	for attempt in 4:
