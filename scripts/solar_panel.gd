@@ -18,5 +18,6 @@ func _physics_process(delta: float) -> void:
 	if _produce_accum >= produce_interval:
 		_produce_accum -= produce_interval
 		## Host-only: replicated copies must not double-produce (Phase 4).
+		## The Output building upgrade adds flat energy per cycle.
 		if Net.is_host():
-			GameState.add_resource("energy", produce_amount)
+			GameState.add_resource("energy", produce_amount + int(GameState.building_stat("solar_panel", "output")))

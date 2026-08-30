@@ -29,7 +29,7 @@ func _detonate() -> void:
 	if cosmetic:
 		queue_free()
 		return
-	var damage := GameState.tower_damage_roll(burst_damage)
+	var damage := GameState.tower_damage_roll("aa_tower", burst_damage)
 	for enemy in get_tree().get_nodes_in_group("air_enemies"):
 		if enemy.global_position.distance_to(global_position) <= burst_radius and enemy.has_method("take_damage"):
 			enemy.take_damage(damage)

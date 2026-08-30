@@ -47,7 +47,7 @@ func _process(delta: float) -> void:
 			_set_powered(false)
 			continue
 		_set_powered(true)
-		var taken = deposit.extract(extract_amount + GameState.miner_yield_bonus())
+		var taken = deposit.extract(extract_amount + int(GameState.building_stat("miner", "yield")))
 		if taken > 0:
 			## Host banks the crystal; replicated miners keep the visuals only
 			## (client try_spend_energy above is a mirror check, no spend).

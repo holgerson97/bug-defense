@@ -7,11 +7,15 @@ const UNPOWERED_TINT := Color(0.6, 0.7, 1.0, 0.85)
 ## Nearest member of `group` to `from` within `max_dist`, skipping `exclude`.
 ## With `require_lit`, members standing in darkness are invisible to the caller.
 ## With `half_arc` < PI, only members inside the wedge around `facing` count.
-static func nearest_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false, facing := 0.0, half_arc := PI):
+## `exclude_group` skips members of another group entirely (ground towers
+## pass "air_enemies": only the AA flak cannon may engage air units).
+static func nearest_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false, facing := 0.0, half_arc := PI, exclude_group := ""):
 	var nearest = null
 	var best := max_dist
 	for member in node.get_tree().get_nodes_in_group(group):
 		if member in exclude:
+			continue
+		if exclude_group != "" and member.is_in_group(exclude_group):
 			continue
 		var dist: float = member.global_position.distance_to(from)
 		if dist <= best:
@@ -31,10 +35,10 @@ static func has_los(node, from: Vector2, to: Vector2) -> bool:
 
 ## nearest_in_group filtered by terrain line of sight from `from`: tries up to
 ## 4 nearest candidates before giving up (used on target acquisition only).
-static func nearest_visible_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false, facing := 0.0, half_arc := PI):
+static func nearest_visible_in_group(node, group: String, from: Vector2, max_dist: float, exclude: Array = [], require_lit := false, facing := 0.0, half_arc := PI, exclude_group := ""):
 	var tried: Array = exclude.duplicate()
 	for i in 4:
-		var target = nearest_in_group(node, group, from, max_dist, tried, require_lit, facing, half_arc)
+		var target = nearest_in_group(node, group, from, max_dist, tried, require_lit, facing, half_arc, exclude_group)
 		if target == null or has_los(node, from, target.global_position):
 			return target
 		tried.append(target)

@@ -38,8 +38,8 @@ func _physics_process(delta: float) -> void:
 	## the glob/nozzle cosmetically via FxEvents).
 	if Net.is_online() and not Net.is_host():
 		return
-	## Extended Barrels research scales range live.
-	fire_range = base_range * GameState.tower_range_mult()
+	## The Range building upgrade scales range live.
+	fire_range = base_range * GameState.tower_range_mult("flame_tower")
 	# The lit-target scan walks every enemy x every light source — with horde
 	# waves that is too hot for every frame, so re-scan strictly on the
 	# interval; a null/freed target must not defeat the throttle.
@@ -48,7 +48,7 @@ func _physics_process(delta: float) -> void:
 	_retarget_accum += delta
 	if _retarget_accum >= RETARGET_INTERVAL:
 		_retarget_accum = 0.0
-		_target = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, [], true, facing, half_arc)
+		_target = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, [], true, facing, half_arc, "air_enemies")
 	var target = _target
 	if target == null:
 		_nozzle.rotation = lerp_angle(_nozzle.rotation, facing, minf(TURN_SPEED * delta, 1.0))
@@ -56,7 +56,7 @@ func _physics_process(delta: float) -> void:
 	var aim: float = (target.global_position - global_position).angle()
 	_nozzle.rotation = lerp_angle(_nozzle.rotation, aim, minf(TURN_SPEED * delta, 1.0))
 	_throw_accum += delta
-	if _throw_accum < GameState.tower_interval(throw_interval):
+	if _throw_accum < GameState.tower_interval("flame_tower", throw_interval):
 		return
 	## Starved nozzle: keep the accumulator full and retry every frame.
 	if not grid_powered() or not GameState.try_spend_energy(energy_per_throw):
@@ -146,10 +146,10 @@ class FireGlob extends Node2D:
 	func _land() -> void:
 		if not cosmetic:
 			@warning_ignore("integer_division")
-			var damage := maxi(damage_base + GameState.tower_damage_bonus() / 4, 1) * splash_mult
-			if randf() < GameState.tower_crit_chance():
-				damage = int(ceil(damage * GameState.tower_crit_mult()))
+			var damage := maxi(damage_base + GameState.tower_damage_bonus("flame_tower") / 4, 1) * splash_mult
 			for enemy in get_tree().get_nodes_in_group("enemies"):
+				if enemy.is_in_group("air_enemies"):
+					continue
 				if enemy.global_position.distance_to(global_position) <= splash_radius and enemy.has_method("take_damage"):
 					enemy.take_damage(damage)
 					if enemy.has_method("ignite"):

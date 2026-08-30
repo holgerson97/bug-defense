@@ -28,15 +28,15 @@ func _physics_process(delta: float) -> void:
 	## Phase 5: combat is host-only; client copies idle (fire events = Phase 6).
 	if Net.is_online() and not Net.is_host():
 		return
-	## Extended Barrels research scales range live.
-	fire_range = base_range * GameState.tower_range_mult()
+	## The Range building upgrade scales range live.
+	fire_range = base_range * GameState.tower_range_mult("aa_tower")
 	if _target != null and is_instance_valid(_target):
 		_head.rotation = (_target.global_position - global_position).angle()
 	else:
 		_target = null
 		_head.rotation = lerp_angle(_head.rotation, facing, minf(IDLE_TURN_SPEED * delta, 1.0))
 	_fire_accum += delta
-	if _fire_accum >= GameState.tower_interval(fire_interval):
+	if _fire_accum >= GameState.tower_interval("aa_tower", fire_interval):
 		_fire_accum = 0.0
 		_target = Util.nearest_in_group(self, "air_enemies", global_position, fire_range, [], true, facing, half_arc)
 		if _target != null:

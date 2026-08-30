@@ -28,9 +28,15 @@ func _physics_process(delta: float) -> void:
 
 func _explode() -> void:
 	if not cosmetic:
-		var dmg := GameState.tower_damage_roll(blast_damage)
+		## Grenade-tower Explosion Radius/Damage upgrades apply live (these
+		## projectiles only ever come from grenade towers). Air is AA-only.
+		var radius := blast_radius * (1.0 + GameState.building_stat("grenade_tower", "blast_radius"))
+		var dmg := GameState.tower_damage_roll("grenade_tower",
+			blast_damage + int(GameState.building_stat("grenade_tower", "blast_damage")))
 		for enemy in get_tree().get_nodes_in_group("enemies"):
-			if enemy.global_position.distance_to(global_position) <= blast_radius and enemy.has_method("take_damage"):
+			if enemy.is_in_group("air_enemies"):
+				continue
+			if enemy.global_position.distance_to(global_position) <= radius and enemy.has_method("take_damage"):
 				enemy.take_damage(dmg)
 	Effects.explosion(self, global_position)
 	Sfx.play("explosion", global_position, -4.0)

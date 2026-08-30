@@ -177,13 +177,6 @@
 			"flame_tower_1":      { "cost": { "scrap": 320 },  "effects": {} },
 			"aa_tower_1":         { "cost": { "scrap": 450 },  "effects": {} },
 			"building_walk":      { "cost": { "scrap": 6000 }, "effects": {} },
-			"building_hp":        { "cost": { "scrap": 70 },   "effects": { "building_hp_mult": 0.25 } },
-			"tower_damage":       { "cost": { "scrap": 175 },  "effects": { "tower_damage": 1.0 } },
-			"miner_yield":        { "cost": { "scrap": 115 },  "effects": { "miner_yield": 1.0 } },
-			"tower_speed":        { "cost": { "scrap": 160 },  "effects": { "tower_speed": 0.15 } },
-			"tower_range":        { "cost": { "scrap": 200 },  "effects": { "tower_range": 0.1 } },
-			"tower_crit_chance":  { "cost": { "scrap": 225 },  "effects": { "tower_crit_chance": 0.05 } },
-			"tower_crit_damage":  { "cost": { "scrap": 285 },  "effects": { "tower_crit_mult": 0.5 } },
 			"solar_1":            { "cost": { "scrap": 35 },   "effects": {} },
 			"command_center_1":   { "cost": { "scrap": 500 },  "effects": {} },
 			"light_pole_1":       { "cost": { "scrap": 28 },   "effects": {} },
@@ -192,6 +185,61 @@
 			"power_pole_1":       { "cost": { "scrap": 50 },   "effects": {} },
 			"intake_station_1":   { "cost": { "scrap": 410 },  "effects": {} },
 			"cooling_tower_1":    { "cost": { "scrap": 100 },  "effects": {} }
+		}
+	},
+
+	"building_upgrades": {
+		"_readme": "Per-building repeatable upgrades (the research panel's Building Stats tab; ids become 'b/<building>/<key>'). Effect keys are LOCAL to their building: hp_mult (+fraction max HP), regen (HP/s self-heal, walls), damage (+flat), speed (+fraction attack speed), range_mult (+fraction range/reach), crit_chance/crit_mult (MG only), blast_radius/blast_damage/bombs (grenade tower: +fraction radius / +flat damage / +grenades per volley), chain (+tesla jumps), heal/targets (repair tower: +flat heal / +targets per pulse), yield/output/crew (+flat). Costs scale x1.6 per owned level like all research; 'wall/lanterns/radius' is the wall lantern light radius in px. Names, icons and one-time flags stay in code.",
+		"wall": {
+			"hp":          { "cost": { "scrap": 45 },  "effects": { "hp_mult": 0.25 } },
+			"regen":       { "cost": { "scrap": 90 },  "effects": { "regen": 1.0 } },
+			"lanterns":    { "cost": { "scrap": 260 }, "effects": {}, "radius": 170.0 }
+		},
+		"mg_tower": {
+			"hp":          { "cost": { "scrap": 50 },  "effects": { "hp_mult": 0.25 } },
+			"damage":      { "cost": { "scrap": 70 },  "effects": { "damage": 1.0 } },
+			"range":       { "cost": { "scrap": 80 },  "effects": { "range_mult": 0.1 } },
+			"crit_chance": { "cost": { "scrap": 110 }, "effects": { "crit_chance": 0.05 } },
+			"crit_damage": { "cost": { "scrap": 130 }, "effects": { "crit_mult": 0.25 } }
+		},
+		"tesla_tower": {
+			"hp":          { "cost": { "scrap": 55 },  "effects": { "hp_mult": 0.25 } },
+			"damage":      { "cost": { "scrap": 90 },  "effects": { "damage": 1.0 } },
+			"chain":       { "cost": { "scrap": 300 }, "effects": { "chain": 1.0 } }
+		},
+		"grenade_tower": {
+			"hp":           { "cost": { "scrap": 55 },  "effects": { "hp_mult": 0.25 } },
+			"blast_radius": { "cost": { "scrap": 85 },  "effects": { "blast_radius": 0.1 } },
+			"blast_damage": { "cost": { "scrap": 80 },  "effects": { "blast_damage": 1.0 } },
+			"range":        { "cost": { "scrap": 80 },  "effects": { "range_mult": 0.1 } },
+			"bombs":        { "cost": { "scrap": 400 }, "effects": { "bombs": 1.0 } }
+		},
+		"flame_tower": {
+			"damage":      { "cost": { "scrap": 75 },  "effects": { "damage": 1.0 } },
+			"speed":       { "cost": { "scrap": 70 },  "effects": { "speed": 0.15 } },
+			"range":       { "cost": { "scrap": 70 },  "effects": { "range_mult": 0.1 } }
+		},
+		"aa_tower": {
+			"damage":      { "cost": { "scrap": 90 },  "effects": { "damage": 1.0 } },
+			"speed":       { "cost": { "scrap": 80 },  "effects": { "speed": 0.15 } },
+			"range":       { "cost": { "scrap": 95 },  "effects": { "range_mult": 0.1 } }
+		},
+		"repair_tower": {
+			"heal":        { "cost": { "scrap": 60 },  "effects": { "heal": 1.0 } },
+			"range":       { "cost": { "scrap": 65 },  "effects": { "range_mult": 0.1 } },
+			"targets":     { "cost": { "scrap": 350 }, "effects": { "targets": 1.0 } }
+		},
+		"miner": {
+			"yield":       { "cost": { "scrap": 60 },  "effects": { "yield": 1.0 } }
+		},
+		"solar_panel": {
+			"output":      { "cost": { "scrap": 55 },  "effects": { "output": 1.0 } }
+		},
+		"searchlight": {
+			"range":       { "cost": { "scrap": 70 },  "effects": { "range_mult": 0.1 } }
+		},
+		"command_center": {
+			"crew":        { "cost": { "scrap": 200 }, "effects": { "crew": 1.0 } }
 		}
 	}
 }
