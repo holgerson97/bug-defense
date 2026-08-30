@@ -5,8 +5,6 @@ extends "res://scripts/building.gd"
 
 const CABLE_COLOR := Color(0.16, 0.14, 0.12, 0.95)
 const CABLE_CORE_COLOR := Color(0.85, 0.62, 0.3, 0.9)
-## Cables run from near the pole top, not the base.
-const CABLE_ANCHOR := Vector2(0.0, -14.0)
 
 ## Spark pulse: travel time along the cable and glow color.
 const SPARK_TIME := 1.1
@@ -63,6 +61,8 @@ func _refresh_link() -> void:
 		set_powered(false)
 		return
 	set_powered(true)
-	var points := PackedVector2Array([CABLE_ANCHOR, to_local(link.global_position) + CABLE_ANCHOR])
+	## Top-down poles: the cable hub is the sprite CENTER — run the wire
+	## straight from this pole's hub to the parent's hub.
+	var points := PackedVector2Array([Vector2.ZERO, to_local(link.global_position)])
 	_cable.points = points
 	_cable_core.points = points

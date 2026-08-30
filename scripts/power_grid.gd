@@ -82,15 +82,38 @@ func _rebuild() -> void:
 	for source in queue:
 		_source_positions.append(source.global_position)
 	var pending: Array = tree.get_nodes_in_group("power_poles")
+	var depth := {}
+	var sources: Array = queue.duplicate()
 	while not queue.is_empty():
 		var node = queue.pop_front()
 		var rest: Array = []
 		for pole in pending:
 			if pole.global_position.distance_squared_to(node.global_position) <= LINK_RANGE * LINK_RANGE:
 				_links[pole] = node
+				depth[pole] = depth.get(node, 0) + 1
 				_pole_positions.append(pole.global_position)
 				queue.append(pole)
 			else:
 				rest.append(pole)
 		pending = rest
+	## Cable-parent re-pick: BFS above settles WHO is connected; the visible
+	## cable (and link_parent) should run to the NEAREST upstream neighbor —
+	## closest shallower pole first, else the closest source in range — so
+	## chains route pole-to-pole instead of everyone cabling to the source.
+	for pole in _links.keys():
+		var best = _links[pole]
+		var best_sq: float = pole.global_position.distance_squared_to(best.global_position)
+		for other in _links.keys():
+			if other == pole or depth.get(other, 999) >= depth.get(pole, 999):
+				continue
+			var sq: float = pole.global_position.distance_squared_to(other.global_position)
+			if sq < best_sq and sq <= LINK_RANGE * LINK_RANGE:
+				best_sq = sq
+				best = other
+		for source in sources:
+			var sq: float = pole.global_position.distance_squared_to(source.global_position)
+			if sq < best_sq and sq <= LINK_RANGE * LINK_RANGE:
+				best_sq = sq
+				best = source
+		_links[pole] = best
 	grid_changed.emit()
