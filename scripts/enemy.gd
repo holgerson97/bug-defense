@@ -12,11 +12,6 @@ signal died(points: int)
 @export var scrap_value: int = 6
 @export var crystal_value: int = 0
 
-## Enemies stuck off-screen this long teleport back to the view edge,
-## so stragglers can never stall a wave.
-const OFFSCREEN_RELOCATE_TIME := 5.0
-const OFFSCREEN_MARGIN := 100.0
-
 ## Obstacle steering: glide along walls/rocks instead of grinding into them,
 ## commit to one tangent side to kill corner jitter, and stand-and-gnaw when
 ## a building truly blocks the way (rocks are indestructible: never stop).
@@ -84,7 +79,6 @@ var _attack_cooldown: float = 0.0
 var _target
 var _retarget_timer: float = 0.0   ## randomized phase staggers group scans
 var _dead: bool = false
-var _offscreen_time: float = 0.0
 
 var _glide_sign: float = 0.0       ## +1/-1 committed tangent side, 0 = free
 var _glide_timer: float = 0.0
@@ -156,7 +150,6 @@ func _physics_process(delta: float) -> void:
 		_target = _pick_target()
 	if _target == null or not is_instance_valid(_target):
 		return
-	_track_offscreen(delta)
 	_behave(delta)
 
 ## Nearest building within AGGRO_RANGE wins; no building near -> the nearest
@@ -179,58 +172,6 @@ func _target_reach() -> float:
 	if _target.is_in_group("buildings"):
 		return attack_range + BUILDING_REACH
 	return attack_range
-
-## Online the host's viewport means nothing for remote players, so distance
-## to the nearest player stands in for "off-screen" (~viewport half-diagonal).
-const ONLINE_RELOCATE_DIST := 900.0
-
-func _track_offscreen(delta: float) -> void:
-	if Net.is_online():
-		_track_far_from_players(delta)
-		return
-	var view_rect: Rect2 = get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()
-	if view_rect.grow(OFFSCREEN_MARGIN).has_point(global_position):
-		_offscreen_time = 0.0
-		return
-	_offscreen_time += delta
-	if _offscreen_time >= OFFSCREEN_RELOCATE_TIME:
-		_offscreen_time = 0.0
-		## Drop back in just outside a random edge of the current view;
-		## re-roll ring points that land inside a rock/building (embed).
-		var radius := view_rect.size.length() / 2.0 + 60.0
-		var query := PhysicsPointQueryParameters2D.new()
-		query.collision_mask = OBSTACLE_MASK
-		var pos := global_position
-		for i in 6:
-			pos = view_rect.get_center() + Vector2.from_angle(randf() * TAU) * radius
-			query.position = pos
-			if get_world_2d().direct_space_state.intersect_point(query, 1).is_empty():
-				break
-		global_position = pos
-		_steering_reset()
-
-## Host-side stand-in for the viewport check: stragglers far from EVERY
-## player teleport onto a ring around the nearest one (embed re-roll as
-## above); clients snap via enemy_sync's SNAP_DIST.
-func _track_far_from_players(delta: float) -> void:
-	var anchor = Util.nearest_in_group(self, "player", global_position, INF)
-	if anchor == null or global_position.distance_to(anchor.global_position) < ONLINE_RELOCATE_DIST:
-		_offscreen_time = 0.0
-		return
-	_offscreen_time += delta
-	if _offscreen_time < OFFSCREEN_RELOCATE_TIME:
-		return
-	_offscreen_time = 0.0
-	var query := PhysicsPointQueryParameters2D.new()
-	query.collision_mask = OBSTACLE_MASK
-	var pos := global_position
-	for i in 6:
-		pos = anchor.global_position + Vector2.from_angle(randf() * TAU) * ONLINE_RELOCATE_DIST
-		query.position = pos
-		if get_world_2d().direct_space_state.intersect_point(query, 1).is_empty():
-			break
-	global_position = pos
-	_steering_reset()
 
 ## Default behavior: chase the target (nearby building or player), melee-attack
 ## in range. Variants override.
@@ -594,7 +535,7 @@ func take_damage(amount, hit_fx := true) -> void:
 	if health <= 0:
 		_dead = true
 		Effects.blood_death(self, hit_pos, hit_dir)
-		Sfx.play("enemy_die", global_position, -4.0)
+		Sfx.play("enemy_die", global_position, -12.0)
 		## Death feedback for clients: the spawner despawn is silent, so the
 		## host broadcasts a tiny position event (enemy_sync plays blood+sfx).
 		if Net.is_online():

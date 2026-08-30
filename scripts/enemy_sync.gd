@@ -133,4 +133,4 @@ func broadcast_death(pos: Vector2, dir: Vector2) -> void:
 @rpc("authority", "call_remote", "reliable")
 func _rpc_death(pos: Vector2, dir: Vector2) -> void:
 	Effects.blood_death(self, pos, dir)
-	Sfx.play("enemy_die", pos, -4.0)
+	Sfx.play("enemy_die", pos, -12.0)
