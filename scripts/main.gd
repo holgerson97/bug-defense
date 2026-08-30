@@ -50,6 +50,7 @@ var gold_deposit_scene: PackedScene = preload("res://scenes/gold_deposit.tscn")
 var rock_scene: PackedScene = preload("res://scenes/rock.tscn")
 const Rock := preload("res://scripts/rock.gd")
 const BuildController := preload("res://scripts/build_controller.gd")
+const HiveSite := preload("res://scripts/hive_site.gd")
 
 ## Run-wide world-gen seed: online the host's roll (identical terrain on
 ## every peer), offline a fresh randi(). All chunk seeds derive from it.
@@ -94,6 +95,13 @@ func _ready() -> void:
 	## Starter gen draws from the global RNG seeded with the run seed directly.
 	_run_seed = Net.run_seed if Net.is_online() else randi()
 	seed(_run_seed)
+	## Hive nests live in a fixed-path container right after Background so
+	## their creep draws under buildings/players/enemies; the deterministic
+	## node path also lets the sites' combat-mirror RPCs resolve on every peer.
+	var hives := Node2D.new()
+	hives.name = "Hives"
+	add_child(hives)
+	move_child(hives, $Background.get_index() + 1)
 	## Guaranteed starter terrain, before any lazy chunk seeding runs.
 	_seed_starter_area()
 	_spawn_or_report()
@@ -272,6 +280,49 @@ func _seed_chunk(chunk: Vector2i) -> void:
 			else randi_range(1, 2)
 		for i in gold_count:
 			_place_gold(chunk, rock_rects)
+	## Hive nests last (they validate against everything placed above); still
+	## inside this chunk's seeded stream, so all peers agree on every site.
+	_maybe_place_hive(chunk, rock_rects)
+
+## Roughly 1 hive per `hive/chunks_per_hive` chunks, never near the spawn.
+## The site (hive + satellites, ~600px envelope) stays >= 360px inside its own
+## chunk, so validation only needs THIS chunk's rocks/deposits + the fixed
+## starter rects — cross-chunk state never leaks in, which keeps placement
+## independent of the (peer-dependent) chunk seeding ORDER. Relocates a few
+## times on collision, then skips the chunk.
+func _maybe_place_hive(chunk: Vector2i, rock_rects: Array[Rect2]) -> void:
+	if randf() >= 1.0 / maxf(Balance.num("hive/chunks_per_hive", 10.0), 1.0):
+		return
+	var min_dist := Balance.num("hive/min_spawn_dist", 2200.0)
+	var origin := Vector2(chunk) * CHUNK_SIZE
+	const HIVE_EDGE_MARGIN := 360.0
+	for attempt in 6:
+		var center := origin + Vector2(randf_range(HIVE_EDGE_MARGIN, CHUNK_SIZE - HIVE_EDGE_MARGIN),
+			randf_range(HIVE_EDGE_MARGIN, CHUNK_SIZE - HIVE_EDGE_MARGIN))
+		if center.distance_to(PLAYER_SPAWN) < min_dist:
+			continue
+		if not _hive_site_clear(center, rock_rects):
+			continue
+		var site = HiveSite.new()
+		site.name = "Hive_%d_%d" % [chunk.x, chunk.y]
+		site.position = center
+		$Hives.add_child(site)
+		return
+
+## Free ground for hive body + satellites: off this chunk's rocks and starter
+## rects, and no deposit inside the structure envelope. Deposits from other
+## chunks can never fall inside it (they keep >= 80px off their chunk edge and
+## the envelope stays >= 360px inside ours), so the group scan stays
+## deterministic no matter which chunks seeded first.
+func _hive_site_clear(center: Vector2, rock_rects: Array[Rect2]) -> bool:
+	var clearance := Balance.num("hive/site_clearance", 300.0)
+	var site_rect := Rect2(center, Vector2.ZERO).grow(clearance)
+	if _overlaps_rects(site_rect, rock_rects) or _overlaps_starter(site_rect):
+		return false
+	for deposit in get_tree().get_nodes_in_group("deposits"):
+		if deposit.global_position.distance_to(center) < clearance:
+			return false
+	return true
 
 ## One large organic mass. The rock generates its own outline; we pick an
 ## anchor snapped to the 32px build lattice (so walls butt up cleanly) that
