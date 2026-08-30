@@ -140,15 +140,29 @@ func _is_puppet() -> bool:
 ## Grunt variety: three red shades, picked by sync_id so peers agree.
 const GRUNT_TINTS := [Color(1, 1, 1), Color(1.0, 0.68, 0.55), Color(0.66, 0.5, 0.52)]
 
+## Walking animation: one shared gait-wobble shader, per-bug phase/frequency.
+## GPU-only — no per-frame script cost, safe at any horde size.
+const WALK_SHADER := preload("res://assets/shaders/bug_walk.gdshader")
+
 func _ready() -> void:
 	## Top-down: no floor snapping, walls never resolve as "slopes" to climb.
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	_apply_balance()
 	health = max_health
-	if balance_id() == "grunt":
-		var body := get_node_or_null("Body")
-		if body != null:
+	var body := get_node_or_null("Body")
+	if body != null:
+		if balance_id() == "grunt":
 			body.modulate = GRUNT_TINTS[absi(sync_id) % GRUNT_TINTS.size()]
+		var cshape := get_node_or_null("CollisionShape2D")
+		var radius: float = cshape.shape.radius if cshape != null and cshape.shape is CircleShape2D else 16.0
+		var mat := ShaderMaterial.new()
+		mat.shader = WALK_SHADER
+		## Deterministic phase (peers agree), gait pace tied to move speed,
+		## gentler wobble for the big bodies.
+		mat.set_shader_parameter("phase", float(absi(sync_id) % 97) / 97.0 * TAU)
+		mat.set_shader_parameter("freq", clampf(speed / 16.0, 4.0, 12.0))
+		mat.set_shader_parameter("strength", 0.5 if radius >= 32.0 else 1.0)
+		body.material = mat
 	if _is_puppet():
 		## Puppet: no AI/physics; the host resolves collisions, so the local
 		## shape only risks races with replicated movement — drop it.
