@@ -46,19 +46,8 @@
 			"rock_tint": [0.9, 0.95, 0.82],
 			"always_night": false,
 			"night_transition": 4.0
-		},
-		"midnight": {
-			"name": "Midnight",
-			"desc": "Permanent darkness - the classic battlefield",
-			"ground_color": [0.08, 0.09, 0.13],
-			"ground_detail": [0.08, 0.09, 0.13],
-			"grid_color": [1.0, 1.0, 1.0, 0.05],
-			"day_modulate": [0.06, 0.06, 0.1],
-			"night_modulate": [0.06, 0.06, 0.1],
-			"rock_tint": [1.0, 1.0, 1.0],
-			"always_night": true,
-			"night_transition": 4.0
 		}
+    
 	},
 
 	"fire": {
