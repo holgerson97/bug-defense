@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 256 256">
+  <!-- Bug hive: massive fleshy dome, top-down. Central birthing orifice,
+       membrane pustules, chitin ridge plates, root tendrils spreading out. -->
+  <defs>
+    <radialGradient id="dome" cx="0.42" cy="0.4" r="0.75">
+      <stop offset="0%" stop-color="#8a3550"/>
+      <stop offset="55%" stop-color="#6b2440"/>
+      <stop offset="100%" stop-color="#471530"/>
+    </radialGradient>
+    <radialGradient id="orifice" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#1c0611"/>
+      <stop offset="55%" stop-color="#3d0e22"/>
+      <stop offset="100%" stop-color="#5e1c36"/>
+    </radialGradient>
+  </defs>
+  <!-- root tendrils reaching into the creep -->
+  <g fill="#471530" stroke="#2b0a1c" stroke-width="3">
+    <path d="M 42 118 Q 14 108 6 92 Q 26 100 44 104 Z"/>
+    <path d="M 46 152 Q 16 162 8 180 Q 30 172 50 166 Z"/>
+    <path d="M 118 42 Q 106 16 90 8 Q 98 28 104 46 Z"/>
+    <path d="M 152 44 Q 164 18 182 10 Q 172 32 166 50 Z"/>
+    <path d="M 214 116 Q 242 104 250 88 Q 228 98 210 102 Z"/>
+    <path d="M 212 150 Q 240 160 248 178 Q 226 170 208 164 Z"/>
+    <path d="M 120 214 Q 110 240 94 248 Q 102 226 108 210 Z"/>
+    <path d="M 154 212 Q 166 238 184 246 Q 174 224 168 208 Z"/>
+  </g>
+  <!-- main dome -->
+  <ellipse cx="128" cy="128" rx="92" ry="88" fill="url(#dome)" stroke="#2b0a1c" stroke-width="5"/>
+  <!-- chitin ridge plates arcing over the dome -->
+  <path d="M 52 96 Q 128 46 204 96" fill="none" stroke="#471530" stroke-width="9" stroke-linecap="round"/>
+  <path d="M 44 132 Q 128 90 212 132" fill="none" stroke="#471530" stroke-width="7" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 56 170 Q 128 210 200 170" fill="none" stroke="#3a1026" stroke-width="9" stroke-linecap="round"/>
+  <!-- membrane pustules glowing sickly amber -->
+  <g stroke="#2b0a1c" stroke-width="2.5">
+    <circle cx="76" cy="88" r="13" fill="#c46a3a"/>
+    <circle cx="184" cy="96" r="10" fill="#c46a3a"/>
+    <circle cx="66" cy="160" r="9" fill="#b85c34"/>
+    <circle cx="188" cy="158" r="12" fill="#b85c34"/>
+    <circle cx="150" cy="62" r="8" fill="#c46a3a"/>
+  </g>
+  <g fill="#ffb36b" opacity="0.85">
+    <circle cx="73" cy="84" r="5.5"/>
+    <circle cx="182" cy="93" r="4"/>
+    <circle cx="64" cy="157" r="3.5"/>
+    <circle cx="186" cy="155" r="5"/>
+    <circle cx="148" cy="60" r="3"/>
+  </g>
+  <!-- central birthing orifice: dark maw with lip folds -->
+  <ellipse cx="128" cy="128" rx="40" ry="36" fill="#5e1c36" stroke="#2b0a1c" stroke-width="4"/>
+  <ellipse cx="128" cy="128" rx="28" ry="25" fill="url(#orifice)"/>
+  <!-- lip folds -->
+  <path d="M 96 118 Q 128 100 160 118" fill="none" stroke="#8a3550" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 98 140 Q 128 156 158 140" fill="none" stroke="#8a3550" stroke-width="5" stroke-linecap="round"/>
+  <!-- glisten -->
+  <ellipse cx="118" cy="120" rx="7" ry="4" fill="#d97a9a" opacity="0.6"/>
+  <!-- dome highlight -->
+  <ellipse cx="96" cy="76" rx="26" ry="14" fill="#a84a66" opacity="0.5" transform="rotate(-24 96 76)"/>
+</svg>
