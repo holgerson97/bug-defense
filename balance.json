@@ -140,7 +140,21 @@
 		"hive_bounty_scrap": 400,
 		"hive_bounty_gold": 150,
 		"hive_bounty_crystal": 100,
-		"hive_points": 500
+		"hive_points": 500,
+		"waves_per_expansion": 5,
+		"expansion_range_min": 500.0,
+		"expansion_range_max": 900.0,
+		"hive_spacing": 700.0,
+		"drone_hp": 120,
+		"drone_speed": 55.0,
+		"drone_bounty": 30,
+		"morph_time": 4.0,
+		"young_hp_mult": 0.5,
+		"young_bounty_mult": 0.5,
+		"max_grown_hives": 6,
+		"growth_stage_waves": 5,
+		"growth_stage_cap": 4,
+		"creep_growth_per_stage": 0.15
 	},
 
 	"navigation": {

@@ -11,6 +11,7 @@ const BOSS_SCENE = preload("res://scenes/enemies/boss_broodmother.tscn")
 const WASP_SCENE = preload("res://scenes/enemies/wasp.tscn")
 const RUNNER_SCENE = preload("res://scenes/enemies/runner.tscn")
 const DRONE_SCENE = preload("res://scenes/enemies/drone_tank.tscn")
+const EXPANSION_DRONE_SCENE = preload("res://scenes/enemies/expansion_drone.tscn")
 
 @export var enemy_scene: PackedScene
 @export var time_between_waves: float = 20.0
@@ -239,6 +240,7 @@ func _kind_scene(kind: String) -> PackedScene:
 		"drone": return DRONE_SCENE
 		"runner": return RUNNER_SCENE
 		"boss": return BOSS_SCENE
+		"expansion_drone": return EXPANSION_DRONE_SCENE
 		_: return enemy_scene
 
 ## Runs on every peer (host via spawn(), clients via the replicated call).
