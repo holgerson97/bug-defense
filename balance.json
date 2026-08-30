@@ -111,6 +111,38 @@
 		"boss":   { "hp": 250, "speed": 70.0,  "damage": 25, "attack_interval": 1.2, "attack_range": 72.0, "points": 250, "scrap": 150, "crystal": 50, "birth_interval": 4.5, "hit_spawn_count": 2, "hit_spawn_cooldown": 1.5, "damage_growth": 1.25, "max_alive_brood": 16, "max_per_brood": 8 }
 	},
 
+	"hive": {
+		"_readme": "Permanent hive nests, seeded with the world (deterministic per run seed; ~1 site per chunks_per_hive chunks, never within min_spawn_dist px of the player start). Dormant until DAMAGED (never proximity): any hit on the hive or a satellite provokes the site for provoke_time seconds (refreshed on further damage). While provoked the hive spawns a defender squad from the maw every squad_interval s - squad_grunts grunts + (wave / squad_brute_wave_divisor) brutes, the whole squad multiplied by (1 + spore_squad_bonus per LIVING spore mound), capped at max_defenders live defenders per site; defenders never count toward wave clearing. Bile spires lob globs (glob_damage to players AND buildings within glob_radius) at the nearest target inside spire_range every spire_interval s. Killing the hive pays hive_bounty_* into the shared pool, scores hive_points, collapses the satellites and fades the creep over creep_fade s; satellites pay satellite_bounty hearts each.",
+		"chunks_per_hive": 10,
+		"min_spawn_dist": 2200.0,
+		"site_clearance": 300.0,
+		"hive_hp": 2000,
+		"hive_radius": 90.0,
+		"spore_mound_hp": 200,
+		"spore_mound_radius": 30.0,
+		"bile_spire_hp": 150,
+		"bile_spire_radius": 24.0,
+		"satellites_min": 2,
+		"satellites_max": 4,
+		"creep_radius": 350.0,
+		"creep_fade": 3.0,
+		"provoke_time": 25.0,
+		"squad_interval": 3.0,
+		"squad_grunts": 6,
+		"squad_brute_wave_divisor": 5,
+		"spore_squad_bonus": 0.5,
+		"max_defenders": 40,
+		"spire_range": 380.0,
+		"spire_interval": 2.5,
+		"glob_damage": 8,
+		"glob_radius": 50.0,
+		"satellite_bounty": 20,
+		"hive_bounty_scrap": 400,
+		"hive_bounty_gold": 150,
+		"hive_bounty_crystal": 100,
+		"hive_points": 500
+	},
+
 	"navigation": {
 		"_readme": "Swarm steering (host-simulated ground enemies only; wasps/drones fly and ignore this). separation_radius (px) / separation_strength: neighbor repulsion that fans crowded enemies sideways - radius grows with body size, strength shrinks, and the push ramps up the more an enemy is stalled, so queues dissolve outward into open ground. path_jitter: per-enemy A* step-cost noise in cell units (0 = every enemy expands the identical canonical search). lane_spread (px): each enemy aims a fixed personal offset sideways of shared path waypoints, so a horde rounds a rock in a band instead of one line (steering-only; ignored by bodies wider than a nav cell). crowd_sidestep_after / crowd_sidestep_time: seconds stalled behind OTHER ENEMIES (not terrain) before committing to a lateral step toward the freer flank, and how long that step is held.",
 		"separation_radius": 44.0,

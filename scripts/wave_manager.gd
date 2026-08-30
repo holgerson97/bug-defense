@@ -217,12 +217,19 @@ func spawn_summon(pos: Vector2, max_health: int, speed_delta: float) -> Node:
 	## Mage/boss birth rings can clip rock edges — slide embeds to free ground.
 	return _spawn("runner", NavGrid.nearest_free(pos), {"max_health": max_health, "speed_delta": speed_delta})
 
+## Hive defenders (hive_site.gd): spawned through the same replicated path so
+## clients see them, but NOT registered — they never touch _alive/_remaining,
+## so they don't count toward wave clearing and can't hold up intermissions.
+func spawn_hive_defender(kind: String, pos: Vector2, ov: Dictionary) -> Node:
+	return _spawn(kind, NavGrid.nearest_free(pos), ov, false)
+
 ## Spawner round-trip: offline and host alike go through the MultiplayerSpawner
 ## (its spawn() also works with the offline peer); clients replay
 ## _spawn_enemy_node with identical data, so names/stats/positions match.
-func _spawn(kind: String, pos: Vector2, ov: Dictionary) -> Node:
+## `counted` = false spawns a full replicated enemy outside the wave ledger.
+func _spawn(kind: String, pos: Vector2, ov: Dictionary, counted := true) -> Node:
 	_next_id += 1
-	return _spawner.spawn([_next_id, kind, pos, ov])
+	return _spawner.spawn([_next_id, kind, pos, ov, counted])
 
 func _kind_scene(kind: String) -> PackedScene:
 	match kind:
@@ -235,9 +242,9 @@ func _kind_scene(kind: String) -> PackedScene:
 		_: return enemy_scene
 
 ## Runs on every peer (host via spawn(), clients via the replicated call).
-## Data: [id, kind, pos, stat overrides]. Only the host registers — clients
-## get counts via _rpc_wave_events and never simulate the enemy (enemy.gd
-## puppet gate).
+## Data: [id, kind, pos, stat overrides, counted]. Only the host registers —
+## clients get counts via _rpc_wave_events and never simulate the enemy
+## (enemy.gd puppet gate). Uncounted spawns (hive defenders) skip _register.
 func _spawn_enemy_node(data: Array) -> Node:
 	var enemy = _kind_scene(data[1]).instantiate()
 	enemy.name = "E%d" % data[0]
@@ -247,7 +254,7 @@ func _spawn_enemy_node(data: Array) -> Node:
 	enemy.spawn_overrides = data[3]
 	## Enemies container sits at the origin: position == global position.
 	enemy.position = data[2]
-	if Net.is_host():
+	if Net.is_host() and (data.size() < 5 or data[4]):
 		_register(enemy, KIND_NAMES.get(data[1], "Grunt"))
 	return enemy
 
