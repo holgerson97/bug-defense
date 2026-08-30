@@ -29,6 +29,7 @@ const UPGRADE_DEFAULTS := {
 	"health": {"icon": "res://assets/icons/health.svg", "name": "Max Health", "branch": "Pilot", "desc": "+25 max health", "cost": {"scrap": 52}, "requires": [], "effects": {"player_hp_bonus": 25.0}},
 	"regen": {"icon": "res://assets/icons/health.svg", "name": "Regeneration", "branch": "Pilot", "desc": "+1 HP/s regen", "cost": {"scrap": 140}, "requires": [], "effects": {"player_regen": 1.0}},
 	"pierce": {"icon": "res://assets/icons/crit.svg", "name": "Pierce", "branch": "Offense", "desc": "+1 sniper pierce", "cost": {"scrap": 90}, "requires": [], "effects": {"pierce": 1.0}},
+	"mining": {"icon": "res://assets/icons/crystal.svg", "name": "Mining", "branch": "Pilot", "desc": "+1 mining beam yield", "cost": {"scrap": 60}, "requires": [], "effects": {"mining": 1.0}},
 	"player_light": {"icon": "res://assets/icons/light_pole.svg", "name": "Headlamp", "branch": "Pilot", "desc": "+15% light radius", "cost": {"scrap": 42}, "requires": [], "effects": {"light_radius": 0.15}},
 	"build_range": {"icon": "res://assets/icons/wall.svg", "name": "Build Range", "branch": "Pilot", "desc": "+10% build range", "cost": {"scrap": 52}, "requires": [], "effects": {"build_range": 0.1}},
 	"heal_range": {"icon": "res://assets/icons/repair_tower.svg", "name": "Beam Range", "branch": "Pilot", "desc": "+15% heal beam range", "cost": {"scrap": 42}, "requires": [], "effects": {"heal_range": 0.15}},
@@ -518,6 +519,10 @@ func player_regen() -> float:
 	return stat("player_regen")
 
 ## Sniper rounds hit the target plus 1 extra enemy, plus Pierce levels.
+## Mining-beam yield per tick: base amount plus Mining research levels.
+func player_mine_amount() -> int:
+	return Balance.inum("player/mining/amount", 2) + int(stat("mining"))
+
 func player_pierce_total() -> int:
 	return 2 + int(stat("pierce"))
 

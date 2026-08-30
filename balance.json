@@ -2,7 +2,7 @@
 	"_readme": "Base Defense gameplay balance. Every value here overrides the built-in default; delete a key (or this whole file) to fall back to the shipped behavior. Edits apply on the NEXT launch. In LAN co-op only the HOST's file governs the simulation - clients mirror the host. Note: 'scrap' is the internal key for Bug Hearts, the research-only currency; buildings cost crystal (plus gold for premium tiers). Tower/searchlight arcs, cones and sweeps are full angles in degrees; intervals and cooldowns are seconds; ranges and radii are pixels.",
 
 	"player": {
-		"speed": 320.0,
+		"speed": 250.0,
 		"fire_cooldown": 0.15,
 		"min_fire_cooldown": 0.04,
 		"damage": 1,
@@ -11,6 +11,7 @@
 		"light_radius": 540.0,
 		"build_range": 300.0,
 		"heal_beam": { "range": 140.0, "tick": 0.5, "heal": 3, "energy": 1 },
+        "mining": { "range": 100.0, "tick": 0.5, "amount": 2 },
 		"reactor": { "interval": 2.0, "amount": 12.0, "cover_range": 150.0 }
 	},
 
@@ -27,9 +28,9 @@
 		"heavy":    { "name": "Heavy",    "desc": "Slow tank spraying a piercing flame stream", "tint": [1.0, 0.45, 0.3], "sprite": "res://assets/sprites/player_heavy.svg", "weapon": "flamethrower",
 			"stats": { "max_health": 2.0, "damage": 1.0, "speed": 0.75 } },
 		"scout":    { "name": "Scout",    "desc": "Fragile speedster with a piercing sniper rifle", "tint": [0.75, 1.0, 0.35], "sprite": "res://assets/sprites/player_scout.svg", "weapon": "sniper",
-			"stats": { "speed": 1.4, "fire_cooldown": 0.8, "auto_attack_range": 1.3, "light_radius": 1.25, "max_health": 0.65, "damage": 0.75 } },
+			"stats": { "speed": 0.6, "fire_cooldown": 0.7, "auto_attack_range": 1.3, "light_radius": 1.25, "max_health": 0.65, "damage": 0.75 } },
 		"engineer": { "name": "Engineer", "desc": "Builds far, powers and heals the base; strides over buildings", "tint": [0.35, 0.95, 1.0], "sprite": "res://assets/sprites/player_engineer.svg", "building_walk": true,
-			"stats": { "build_range": 1.5, "reactor_amount": 1.5, "reactor_cover": 1.4, "heal_beam_heal_add": 2, "heal_beam_range": 1.3, "max_health": 0.85, "damage": 0.7, "speed": 0.95 } }
+			"stats": { "build_range": 1.5, "reactor_amount": 1.5, "reactor_cover": 1.4, "heal_beam_heal_add": 2, "heal_beam_range": 1.3, "max_health": 0.85, "damage": 0.7, "speed": 1.25} }
 	},
 
 	"worlds": {
@@ -208,6 +209,7 @@
 			"health":             { "cost": { "scrap": 52 },   "effects": { "player_hp_bonus": 25.0 } },
 			"regen":              { "cost": { "scrap": 140 },  "effects": { "player_regen": 1.0 } },
 			"pierce":             { "cost": { "scrap": 150 },   "effects": { "pierce": 1.0 } },
+            "mining":             { "cost": { "scrap": 60 },   "effects": { "mining": 1.0 } },
 			"player_light":       { "cost": { "scrap": 42 },   "effects": { "light_radius": 0.15 } },
 			"build_range":        { "cost": { "scrap": 52 },   "effects": { "build_range": 0.1 } },
 			"heal_range":         { "cost": { "scrap": 42 },   "effects": { "heal_range": 0.15 } },

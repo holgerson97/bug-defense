@@ -22,6 +22,10 @@ var _class_id: String = "assault"
 ## Physics layer 6 ("buildings") as a bit value; Phase Stride masks it out.
 const BUILDING_LAYER_BIT := 32
 ## Heal beam (hold F): mends the most damaged building in range every tick.
+var mine_range: float = Balance.num("player/mining/range", 100.0)
+var mine_tick: float = Balance.num("player/mining/tick", 0.5)
+var _mine_accum: float = 0.0
+var _mine_beam: Line2D
 var heal_beam_range: float = Balance.num("player/heal_beam/range", 140.0)
 var heal_tick: float = Balance.num("player/heal_beam/tick", 0.5)
 var heal_base: int = Balance.inum("player/heal_beam/heal", 3)
@@ -304,6 +308,7 @@ func _physics_process(delta: float) -> void:
 		_heal_accum = heal_tick
 		_heal_target = null
 	_update_heal_beam()
+	_tick_mining(delta)
 	_build.tick(selected)
 
 ## Most-damaged building in beam range (repair tower pick, minus player heal).
@@ -329,6 +334,42 @@ func _update_heal_beam() -> void:
 		return
 	_heal_beam.points = PackedVector2Array([global_position, _heal_target.global_position])
 	_heal_beam.visible = true
+
+## Mining beam: hold right-click on a nearby crystal block — the player must
+## stand close (facing follows the mouse, so aiming at it = facing it). A
+## blue beam ticks ore out of the deposit; yield grows with Mining research.
+func _tick_mining(delta: float) -> void:
+	var target = null
+	if Input.is_action_pressed("sell"):
+		var mouse := get_global_mouse_position()
+		var near = Util.nearest_in_group(self, "deposits", mouse, 48.0)
+		if near != null and not near.is_empty() and near.hand_minable \
+				and global_position.distance_to(near.global_position) <= mine_range:
+			target = near
+	if target == null:
+		_mine_accum = mine_tick
+		if _mine_beam != null:
+			_mine_beam.visible = false
+		return
+	_mine_accum += delta
+	if _mine_accum >= mine_tick:
+		_mine_accum = 0.0
+		target.mine_tick()
+		Sfx.play("hit", target.global_position, -16.0)
+	_update_mine_beam(target)
+
+func _update_mine_beam(target) -> void:
+	if _mine_beam == null:
+		_mine_beam = Line2D.new()
+		_mine_beam.top_level = true
+		_mine_beam.z_index = 50
+		_mine_beam.width = 3.0
+		_mine_beam.default_color = Color(0.4, 0.75, 1.0, 0.85)
+		add_child(_mine_beam)
+	## Gentle width pulse sells the "cutting" feel.
+	_mine_beam.width = 3.0 + sin(Time.get_ticks_msec() / 90.0) * 1.2
+	_mine_beam.points = PackedVector2Array([$Muzzle.global_position, target.global_position])
+	_mine_beam.visible = true
 
 ## Enemies are host-simulated puppets on clients (Phase 5), so client shots
 ## can't land locally: online clients send a fire intent to the host (which

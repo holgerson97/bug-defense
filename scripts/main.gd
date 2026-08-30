@@ -714,17 +714,17 @@ func _deposit_at(pos: Vector2):
 		deposit = Util.nearest_in_group(self, "gold_deposits", pos, 16.0)
 	return deposit
 
-## Client bullet chipped a crystal block: position-keyed intent up to the
-## host, which extracts + banks; the depletion mirror carries the remainder
-## back. (A client extracting locally would double-bank and drift.)
+## Client mining-beam tick: position-keyed intent up to the host, which
+## extracts + banks (mining research is shared, so the host computes the
+## amount); the depletion mirror carries the remainder back.
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_chip_deposit(pos: Vector2) -> void:
 	if not multiplayer.is_server():
 		return
 	var deposit = Util.nearest_in_group(self, "deposits", pos, 16.0)
-	if deposit == null or deposit.is_empty() or not deposit.chips_on_bullet:
+	if deposit == null or deposit.is_empty() or not deposit.hand_minable:
 		return
-	GameState.add_resource(deposit.kind, deposit.extract(deposit.CHIP_AMOUNT))
+	GameState.add_resource(deposit.kind, deposit.extract(GameState.player_mine_amount()))
 
 ## Late join: the joiner regenerated every deposit at its spawn amount, so
 ## only drained ones need catching up. Same chunk-gen grace as the miners.

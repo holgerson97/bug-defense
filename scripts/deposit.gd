@@ -15,10 +15,9 @@ extends StaticBody2D
 ## reasoning as build_controller's miner placement RPC.
 
 @export var kind: String = "crystal"
-@export var chips_on_bullet: bool = true
+## Hand-minable with the player's mining beam (gold stays harvester-only).
+@export var hand_minable: bool = true
 
-## Crystal chipped loose per bullet hit.
-const CHIP_AMOUNT := 2
 const EMPTY_TINT := Color(0.42, 0.42, 0.48, 0.9)
 
 var has_miner: bool = false
@@ -50,17 +49,22 @@ func _register_nav() -> void:
 	NavGrid.occupy_cells(cells, NavGrid.KIND_ROCK)
 	tree_exited.connect(func(): NavGrid.release_cells(cells))
 
-## Bullet chipping. Host/offline extracts directly; a client only sends the
-## intent (a local decrement would double-bank and drift off the mirror).
+## Bullets no longer chip ore — mining is the player's beam (right-click).
+## The method stays so stray projectiles are absorbed without errors.
 func take_damage(_damage: int) -> void:
-	if not chips_on_bullet or is_empty():
+	pass
+
+## Mining-beam tick. Host/offline extracts directly; a client only sends the
+## intent (a local decrement would double-bank and drift off the mirror).
+func mine_tick() -> void:
+	if not hand_minable or is_empty():
 		return
 	if Net.is_online() and not Net.is_host():
 		var main = get_tree().current_scene
 		if main != null and main.has_method("_rpc_chip_deposit"):
 			main._rpc_chip_deposit.rpc_id(1, global_position)
 		return
-	GameState.add_resource(kind, extract(CHIP_AMOUNT))
+	GameState.add_resource(kind, extract(GameState.player_mine_amount()))
 
 ## Yields min(requested, remaining). Only the host (or offline) decrements;
 ## clients read their mirrored remainder so visuals stay sane between syncs.
