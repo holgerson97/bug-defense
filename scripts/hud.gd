@@ -49,6 +49,17 @@ func _ready() -> void:
 		wm.wave_started.connect(_on_wave_started)
 		wm.skip_votes_changed.connect(_on_skip_votes_changed)
 		_build_skip_button(wm)
+	_build_minimap()
+
+## Minimap panel, bottom-right corner above nothing else important.
+func _build_minimap() -> void:
+	var map = load("res://scripts/minimap.gd").new()
+	map.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	map.offset_left = -166.0
+	map.offset_top = -166.0
+	map.offset_right = -16.0
+	map.offset_bottom = -16.0
+	add_child(map)
 	## Spectator banner clones the wave timer's styling, sitting just below it.
 	_spectate_label = _wave_timer.duplicate()
 	_spectate_label.name = "SpectateBanner"
