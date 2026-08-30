@@ -39,6 +39,12 @@ func _process(delta: float) -> void:
 	if deposit == null or not is_instance_valid(deposit):
 		_fog.emitting = false
 		return
+	## Mined dry: idle for good — no cycles, no energy spend, drill parked.
+	if deposit.is_empty():
+		_fog.emitting = false
+		_sprite.position.y = 0.0
+		_sprite.rotation = 0.0
+		return
 	_accum += delta
 	while _accum >= extract_interval:
 		_accum -= extract_interval
