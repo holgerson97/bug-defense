@@ -47,12 +47,29 @@ static func in_arc(from: Vector2, facing: float, half_arc: float, pos: Vector2) 
 		return true
 	return absf(Vector2.from_angle(facing).angle_to(pos - from)) <= half_arc
 
-## True when any light source (light pools, searchlight beams) reveals `pos`.
+## True when any light source (light pools, searchlight beams) reveals `pos` —
+## or when the world is currently in (mostly) daylight, where towers see
+## everything. The day/night controller (scripts/day_night.gd, group
+## "day_night") owns the darkness factor; no controller = classic permanent
+## night, gated by lights only.
 static func is_lit(node, pos: Vector2) -> bool:
+	var day_night = node.get_tree().get_first_node_in_group("day_night")
+	if day_night != null and day_night.darkness_factor() < 0.5:
+		return true
 	for source in node.get_tree().get_nodes_in_group("light_sources"):
 		if source.covers(pos):
 			return true
 	return false
+
+## Color from a balance-style [r, g, b] / [r, g, b, a] array; anything else
+## returns `fallback` (world params degrade to the classic midnight look).
+static func color_arr(v, fallback: Color) -> Color:
+	if v is Array and v.size() >= 3:
+		var c := Color(float(v[0]), float(v[1]), float(v[2]))
+		if v.size() >= 4:
+			c.a = float(v[3])
+		return c
+	return fallback
 
 ## Display suffix per resource kind; "scrap" renders as bug hearts.
 const DISPLAY_SUFFIX := {"scrap": "h", "crystal": "c", "gold": "g"}

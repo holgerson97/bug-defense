@@ -19,6 +19,8 @@ var sfx_volume: float = 1.0
 var muted: bool = false
 ## Last picked player class id (validated against GameState.CLASSES by Net).
 var player_class: String = "assault"
+## Last picked world id (validated against GameState.WORLDS by Net).
+var world: String = "grasslands"
 
 func _ready() -> void:
 	_ensure_sfx_bus()
@@ -43,6 +45,7 @@ func load_settings() -> void:
 	sfx_volume = cfg.get_value("audio", "sfx_volume", sfx_volume)
 	muted = cfg.get_value("audio", "muted", muted)
 	player_class = cfg.get_value("game", "player_class", player_class)
+	world = cfg.get_value("game", "world", world)
 
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
@@ -53,6 +56,7 @@ func save_settings() -> void:
 	cfg.set_value("audio", "sfx_volume", sfx_volume)
 	cfg.set_value("audio", "muted", muted)
 	cfg.set_value("game", "player_class", player_class)
+	cfg.set_value("game", "world", world)
 	cfg.save(PATH)
 
 func apply() -> void:

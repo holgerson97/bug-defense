@@ -107,6 +107,10 @@ var BUILDINGS: Dictionary = {}
 ## adds/tunes classes there). Missing/empty section degrades to a lone neutral
 ## Assault, so everyone keeps today's baseline stats.
 var CLASSES: Dictionary = {}
+## Selectable worlds, purely from balance.json "worlds" (data-driven like
+## CLASSES). Missing/empty section leaves this empty: no world picker, and
+## every run plays the classic midnight look (all world params fall back).
+var WORLDS: Dictionary = {}
 
 ## Balance-fed bases for the stat helpers below (fallback = shipped value).
 var _cost_scale: float = Balance.num("upgrades/cost_scale", 1.6)
@@ -149,6 +153,11 @@ func _init() -> void:
 			CLASSES[id] = class_section[id]
 	if CLASSES.is_empty():
 		CLASSES = {"assault": {"name": "Assault", "desc": "Balanced frontline fighter", "tint": [1.0, 1.0, 1.0], "stats": {}}}
+	## Worlds mirror the classes pattern; underscore keys are documentation.
+	var world_section: Dictionary = Balance.section("worlds")
+	for id in world_section:
+		if not str(id).begins_with("_") and world_section[id] is Dictionary:
+			WORLDS[id] = world_section[id]
 
 var power_production: float = 0.0
 var power_consumption: float = 0.0
@@ -473,6 +482,18 @@ func class_tint(id: String) -> Color:
 	if t is Array and t.size() >= 3:
 		return Color(float(t[0]), float(t[1]), float(t[2]))
 	return Color.WHITE
+
+## World theme params for main/background/day_night; unknown id = {} and every
+## consumer's fallback reproduces the classic midnight world.
+func world_def(id: String) -> Dictionary:
+	var w = WORLDS.get(id)
+	return w if w is Dictionary else {}
+
+func world_title(id: String) -> String:
+	return str(world_def(id).get("name", id.capitalize()))
+
+func world_desc(id: String) -> String:
+	return str(world_def(id).get("desc", ""))
 
 func _class_stat(id: String, key: String):
 	var stats = class_info(id).get("stats")
