@@ -10,6 +10,9 @@ const DOME_BREATH := 0.015      ## +-1.5% dome scale
 const DOME_RATE := 0.55
 const GLOW_BASE := 1.1
 
+const TENT_A := preload("res://assets/sprites/hive/tentacle_a.svg")
+const TENT_B := preload("res://assets/sprites/hive/tentacle_b.svg")
+
 var _t: float = 0.0
 var _tentacle_base: Array = []
 var _glow: PointLight2D
@@ -40,3 +43,20 @@ func _process(delta: float) -> void:
 	_body.scale = Vector2.ONE * 0.5 * breath
 	## Maw glow: slow pulse with nervous jitter layered on top.
 	_glow.energy = GLOW_BASE + sin(_t * 1.3) * 0.25 + sin(_t * 7.1) * 0.08
+
+## Growth (hive_site stage-ups): sprout a tentacle at `angle`, registered in
+## _tentacle_base so the sway loop above animates it like the authored seven.
+## Draws only from the caller's rng — deterministic across peers per stage.
+func add_tentacle(angle: float, rng: RandomNumberGenerator) -> void:
+	var use_a: bool = rng.randf() < 0.5
+	var tent := Sprite2D.new()
+	tent.texture = TENT_A if use_a else TENT_B
+	tent.centered = false
+	## Root at left-center of the texture, like the scene-authored tentacles.
+	tent.offset = Vector2(0, -32) if use_a else Vector2(0, -28)
+	tent.position = Vector2.from_angle(angle) * rng.randf_range(56.0, 64.0)
+	tent.rotation = angle
+	var s := rng.randf_range(0.42, 0.5)
+	tent.scale = Vector2(s, s)
+	_tentacles.add_child(tent)
+	_tentacle_base.append({"node": tent, "rot": tent.rotation, "scale": tent.scale, "phase": rng.randf() * TAU})

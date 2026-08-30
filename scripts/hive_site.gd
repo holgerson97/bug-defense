@@ -10,6 +10,16 @@ extends Node2D
 ## squads and spire globs; clients mirror HP/provoked/death through small
 ## reliable RPCs (building-HP / boss-bar pattern). Dormant hives are inert —
 ## only damage provokes them, never proximity.
+##
+## Growth: sites age in WAVES survived (host counts wave_started; clients get
+## the stage via _rpc_stage). Each stage adds rim creep + tentacles, drawn
+## from an RNG seeded off the site NAME + stage so peers agree given the same
+## stage number. Every waves_per_expansion waves an unprovoked site sends an
+## expansion drone (scripts/enemies/expansion_drone.gd) that founds a YOUNG
+## site nearby: runtime host decision, mirrored by the drone's RPCs. Young
+## sites reseed the global RNG from their name in _ready, so their layout is
+## deterministic on every CURRENT peer; late joiners miss grown sites (the
+## seeded-chunk replay doesn't know them) — accepted caveat.
 
 const STRUCTURE := preload("res://scripts/hive_structure.gd")
 const BILE_GLOB := preload("res://scripts/bile_glob.gd")
@@ -36,6 +46,25 @@ var bounty_crystal: int = Balance.inum("hive/hive_bounty_crystal", 100)
 var hive_points: int = Balance.inum("hive/hive_points", 500)
 var creep_radius: float = Balance.num("hive/creep_radius", 350.0)
 var creep_fade: float = Balance.num("hive/creep_fade", 3.0)
+var waves_per_expansion: int = maxi(Balance.inum("hive/waves_per_expansion", 5), 1)
+var expansion_min: float = Balance.num("hive/expansion_range_min", 500.0)
+var expansion_max: float = Balance.num("hive/expansion_range_max", 900.0)
+var hive_spacing: float = Balance.num("hive/hive_spacing", 700.0)
+var max_grown_hives: int = Balance.inum("hive/max_grown_hives", 6)
+var growth_stage_waves: int = maxi(Balance.inum("hive/growth_stage_waves", 5), 1)
+var growth_stage_cap: int = Balance.inum("hive/growth_stage_cap", 4)
+var creep_growth: float = Balance.num("hive/creep_growth_per_stage", 0.15)
+var young_hp_mult: float = Balance.num("hive/young_hp_mult", 0.5)
+
+## Clearance a drone target keeps from player buildings / the spawn fan.
+const EXPANSION_BUILD_CLEAR := 400.0
+
+## Set BEFORE add_child by the founder (expansion drone): reduced-HP profile,
+## small creep, 0-1 satellites, halved bounty; counts against max_grown_hives.
+var young: bool = false
+
+var _age_waves: int = 0           ## host: wave_started events survived
+var _stage: int = 0               ## growth stage (host decides, RPC-mirrored)
 
 var _hive = null                  ## the central hive_structure
 var _hive_visual: Node2D = null
@@ -49,7 +78,28 @@ var _dead: bool = false
 
 func _ready() -> void:
 	add_to_group("hive_sites")
+	if young:
+		## Runtime-founded site: reseed the global stream from the (replicated)
+		## node name so _generate below draws identically on every peer — the
+		## same trick main._seed_chunk plays with chunk hashes. Halved rewards.
+		seed(hash(String(name)))
+		add_to_group("grown_hives")
+		var bm := Balance.num("hive/young_bounty_mult", 0.5)
+		bounty_scrap = int(ceil(bounty_scrap * bm))
+		bounty_gold = int(ceil(bounty_gold * bm))
+		bounty_crystal = int(ceil(bounty_crystal * bm))
+		hive_points = int(ceil(hive_points * bm))
+		satellite_bounty = int(ceil(satellite_bounty * bm))
+		creep_radius *= 0.6
 	_generate()
+	## Age/growth/expansion ride the wave counter; deferred so a site born
+	## mid-frame never races the wave manager's group registration.
+	call_deferred("_hook_waves")
+
+func _hook_waves() -> void:
+	var wm = get_tree().get_first_node_in_group("wave_manager")
+	if wm != null and not wm.wave_started.is_connected(_on_wave_started):
+		wm.wave_started.connect(_on_wave_started)
 
 ## All randf draws below run synchronously inside main._seed_chunk's seeded
 ## stream — identical layout on every peer, like rock.generate.
@@ -58,7 +108,7 @@ func _generate() -> void:
 	## (the whole Hives container sits right after Background in tree order).
 	_creep = Node2D.new()
 	add_child(_creep)
-	for i in randi_range(5, 8):
+	for i in (randi_range(3, 4) if young else randi_range(5, 8)):
 		var mat := Sprite2D.new()
 		mat.texture = CREEP_TEX
 		mat.rotation = randf() * TAU
@@ -67,12 +117,17 @@ func _generate() -> void:
 		var reach := maxf(creep_radius - s * 256.0, 0.0)
 		mat.position = Vector2.from_angle(randf() * TAU) * randf_range(0.0, reach)
 		_creep.add_child(mat)
-	## Hive body at the center.
+	## Hive body at the center (young sites rise at reduced HP).
+	var hive_hp := Balance.inum("hive/hive_hp", 2000)
+	if young:
+		hive_hp = maxi(int(ceil(hive_hp * young_hp_mult)), 1)
 	_hive = _make_structure("hive", Vector2.ZERO,
-		Balance.num("hive/hive_radius", 90.0), Balance.inum("hive/hive_hp", 2000),
+		Balance.num("hive/hive_radius", 90.0), hive_hp,
 		HIVE_VISUAL, -1)
-	## 2-4 satellites on the creep; keep them apart and off the hive body.
-	var count := randi_range(Balance.inum("hive/satellites_min", 2), Balance.inum("hive/satellites_max", 4))
+	## 2-4 satellites on the creep (young: 0-1); keep them apart and off the
+	## hive body.
+	var count := randi_range(0, 1) if young \
+			else randi_range(Balance.inum("hive/satellites_min", 2), Balance.inum("hive/satellites_max", 4))
 	var placed: Array = []
 	for i in count:
 		var pos := Vector2.ZERO
@@ -180,7 +235,8 @@ func _spawn_squad() -> void:
 	var wave: int = maxi(wm.wave, 1)
 	var mult := 1.0 + spore_bonus * float(_living_count("spore_mound"))
 	var queue: Array = []
-	for i in int(ceil(squad_grunts * mult)):
+	## Older nests bite harder: +1 grunt per growth stage.
+	for i in int(ceil((squad_grunts + _stage) * mult)):
 		queue.append("grunt")
 	@warning_ignore("integer_division")
 	var brutes: int = wave / brute_divisor
@@ -240,6 +296,114 @@ func _launch_glob(from: Vector2, to: Vector2, cosmetic: bool) -> void:
 	glob.target_point = to
 	glob.cosmetic = cosmetic
 	scene.add_child(glob)
+
+## -- growth + expansion (host decides; stage mirrors like struct health) ----
+
+## Host handler (clients re-emit wave_started too, so gate hard): age one
+## wave, stage up every growth_stage_waves, and on expansion waves send a
+## drone — unless provoked (an erupting nest has no larvae to spare).
+func _on_wave_started(w: int) -> void:
+	if _dead or (Net.is_online() and not Net.is_host()):
+		return
+	_age_waves += 1
+	if _stage < growth_stage_cap and _age_waves % growth_stage_waves == 0:
+		_apply_stage(_stage + 1)
+		if Net.is_online():
+			_rpc_stage.rpc(_stage)
+	if w % waves_per_expansion == 0 and _provoke_left <= 0.0:
+		_try_expand()
+
+## Apply every stage up to `stage` (idempotent; clients may catch up several
+## at once). Each stage draws from an RNG seeded off site name + stage — all
+## peers grow the identical rim given the same stage number.
+func _apply_stage(stage: int) -> void:
+	while _stage < stage and _stage < growth_stage_cap:
+		_stage += 1
+		_grow_stage(_stage)
+
+## One stage of visible growth: 2-3 creep mats pushing the rim out ~15%, and
+## 1-2 fresh tentacles on the hive body (the visual animates late additions).
+func _grow_stage(stage: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(String(name)) + stage * 977
+	if _creep != null and is_instance_valid(_creep):
+		var prev_r := creep_radius * (1.0 + creep_growth * float(stage - 1))
+		var new_r := creep_radius * (1.0 + creep_growth * float(stage))
+		for i in rng.randi_range(2, 3):
+			var mat := Sprite2D.new()
+			mat.texture = CREEP_TEX
+			mat.rotation = rng.randf() * TAU
+			var s := rng.randf_range(0.55, 0.85)
+			mat.scale = Vector2(s, s)
+			var lo := prev_r * 0.55
+			var hi := maxf(new_r - s * 190.0, lo + 10.0)
+			mat.position = Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(lo, hi)
+			_creep.add_child(mat)
+	if _hive_visual != null and is_instance_valid(_hive_visual) and _hive_visual.has_method("add_tentacle"):
+		for i in rng.randi_range(1, 2):
+			_hive_visual.add_tentacle(rng.randf() * TAU, rng)
+
+## Host: roll an expansion target and send the larva-carrier out through the
+## wave manager's uncounted replicated spawn path. No valid spot or the grown
+## cap is met -> the colony sits this cycle out.
+func _try_expand() -> void:
+	var wm = get_tree().get_first_node_in_group("wave_manager")
+	if wm == null:
+		return
+	var extra := get_tree().get_nodes_in_group("grown_hives").size() \
+			+ get_tree().get_nodes_in_group("expansion_drones").size()
+	if extra >= max_grown_hives:
+		return
+	var target := _pick_expansion_target()
+	if target == Vector2.INF:
+		return
+	var wave: int = maxi(wm.wave, 1)
+	## Mild wave scaling: the chaff curve, not the brute curve.
+	var hp := int(ceil(Balance.num("hive/drone_hp", 120.0) * pow(wm.chaff_hp_scale_factor, wave - 1)))
+	var pos: Vector2 = global_position + Vector2.from_angle(randf() * TAU) * randf_range(110.0, 150.0)
+	wm.spawn_hive_defender("expansion_drone", pos, {"max_health": hp, "dest": target})
+
+## Candidate spot near the parent (drones do NOT travel far): clear of rocks,
+## other hive sites, in-flight expansions, player buildings and the spawn fan.
+## Host-only randomness — the result replicates via the drone's spawn payload.
+func _pick_expansion_target() -> Vector2:
+	for attempt in 8:
+		var p := global_position + Vector2.from_angle(randf() * TAU) * randf_range(expansion_min, expansion_max)
+		if _expansion_spot_clear(p):
+			return p
+	return Vector2.INF
+
+func _expansion_spot_clear(p: Vector2) -> bool:
+	## Spawn-area clearance (deterministic fan origin, like world gen uses).
+	var spawn := Vector2(1280, 720)
+	var scene = get_tree().current_scene
+	if scene != null and scene.get_script() != null:
+		spawn = scene.get_script().get_script_constant_map().get("PLAYER_SPAWN", spawn)
+	if p.distance_to(spawn) < EXPANSION_BUILD_CLEAR + hive_spacing * 0.5:
+		return false
+	## Keep off every OTHER nest (the parent may be closer than the spacing).
+	for site in get_tree().get_nodes_in_group("hive_sites"):
+		if site != self and site.global_position.distance_to(p) < hive_spacing:
+			return false
+	## ... and off spots other drones are already crawling toward.
+	for d in get_tree().get_nodes_in_group("expansion_drones"):
+		if is_instance_valid(d) and d.dest.distance_to(p) < hive_spacing:
+			return false
+	for b in get_tree().get_nodes_in_group("buildings"):
+		if b.global_position.distance_to(p) < EXPANSION_BUILD_CLEAR:
+			return false
+	## Rock check: nearest_free returns the point unchanged only on free
+	## ground. Sample the center plus two rings covering the site footprint.
+	if NavGrid.nearest_free(p) != p:
+		return false
+	for i in 5:
+		var a := TAU * float(i) / 5.0
+		if NavGrid.nearest_free(p + Vector2.from_angle(a) * 120.0) != p + Vector2.from_angle(a) * 120.0:
+			return false
+		var q: Vector2 = p + Vector2.from_angle(a + 0.63) * 240.0
+		if NavGrid.nearest_free(q) != q:
+			return false
+	return true
 
 ## Host only: one-time reward into the shared pool + score (points ride the
 ## wave manager's batched mirror so client scores follow, boss-kill style).
@@ -318,6 +482,10 @@ func _rpc_site_died() -> void:
 @rpc("authority", "call_remote", "reliable")
 func _rpc_provoked(on: bool) -> void:
 	_set_provoked(on)
+
+@rpc("authority", "call_remote", "reliable")
+func _rpc_stage(stage: int) -> void:
+	_apply_stage(stage)
 
 @rpc("authority", "call_remote", "reliable")
 func _rpc_spire_glob(from: Vector2, to: Vector2) -> void:
