@@ -139,9 +139,9 @@ func _kind_at(c: Vector2i) -> int:
 ## returns the first free cell's corner-safe center. Spawners use this so
 ## enemies can never be placed inside a rock mass (a body born deep inside a
 ## polygon is beyond physics depenetration and stays embedded forever).
-func nearest_free(pos: Vector2, max_ring: int = 16) -> Vector2:
+func nearest_free(pos: Vector2, max_ring: int = 16, fat: int = 0) -> Vector2:
 	var origin := cell_of(pos)
-	if _kind_at(origin) != KIND_ROCK:
+	if _kind_at(origin) != KIND_ROCK and (fat <= 0 or not fat_blocked(origin, fat)):
 		return pos
 	for ring in range(1, max_ring + 1):
 		for y in range(-ring, ring + 1):
@@ -149,7 +149,7 @@ func nearest_free(pos: Vector2, max_ring: int = 16) -> Vector2:
 				if maxi(absi(x), absi(y)) != ring:
 					continue
 				var c := origin + Vector2i(x, y)
-				if _kind_at(c) != KIND_ROCK:
+				if _kind_at(c) != KIND_ROCK and (fat <= 0 or not fat_blocked(c, fat)):
 					return _safe_center(c)
 	return pos
 
@@ -186,17 +186,27 @@ func cells_in_polygon(poly: PackedVector2Array, offset: Vector2) -> Array[Vector
 ## `noise_seed` != 0 salts per-cell cost noise so identical from/to pairs
 ## produce per-enemy DISTINCT near-optimal lanes instead of one canonical
 ## line hugging every rock edge.
-func request_path(from: Vector2, to: Vector2, noise_seed: int = 0) -> Variant:
+func request_path(from: Vector2, to: Vector2, noise_seed: int = 0, fat: int = 0) -> Variant:
 	if _budget <= 0:
 		return null
 	_budget -= 1
-	return _find_path(cell_of(from), cell_of(to), noise_seed)
+	return _find_path(cell_of(from), cell_of(to), noise_seed, fat)
+
+## Fat-body clearance: a cell is blocked when any cell within `fat` Chebyshev
+## rings is rock — wide bodies (brute/boss/mage) must not be routed through
+## gaps they physically cannot fit, or they wedge (the stuck-in-wall bug).
+func fat_blocked(c: Vector2i, fat: int) -> bool:
+	for dy in range(-fat, fat + 1):
+		for dx in range(-fat, fat + 1):
+			if _kind_at(Vector2i(c.x + dx, c.y + dy)) == KIND_ROCK:
+				return true
+	return false
 
 ## Windowed 8-directional A* over the occupancy map. Rock cells are hard
 ## walls; building cells cost BUILDING_COST x (path around when reasonable,
 ## through when sealed in). Diagonals never cut past an occupied side cell,
 ## so every waypoint pair stays physically walkable.
-func _find_path(from: Vector2i, to: Vector2i, noise_seed: int = 0) -> PackedVector2Array:
+func _find_path(from: Vector2i, to: Vector2i, noise_seed: int = 0, fat: int = 0) -> PackedVector2Array:
 	if _kind_at(to) == KIND_ROCK:
 		return PackedVector2Array()
 	## Far goals: the window anchors at a clamped point toward the goal and the
@@ -261,6 +271,8 @@ func _find_path(from: Vector2i, to: Vector2i, noise_seed: int = 0) -> PackedVect
 				continue
 			var kind: int = _kind_at(nxt)
 			if kind == KIND_ROCK or closed.has(nxt):
+				continue
+			if fat > 0 and fat_blocked(nxt, fat):
 				continue
 			if k >= 4 and (_kind_at(Vector2i(cur.x + step.x, cur.y)) != 0 \
 					or _kind_at(Vector2i(cur.x, cur.y + step.y)) != 0):

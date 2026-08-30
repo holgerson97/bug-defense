@@ -333,11 +333,15 @@ func _spawn_enemy_node(data: Array) -> Node:
 		_register(enemy, KIND_NAMES.get(data[1], "Grunt"))
 	return enemy
 
-## 2-3 attack directions per wave: columns marching in, not a thin ring.
+## 3-4 attack directions per wave, EVENLY spread around the compass (random
+## global rotation + per-column jitter): the base gets surrounded, never
+## pressed from a single side.
 func _pick_cluster_angles() -> void:
 	_cluster_angles = PackedFloat32Array()
-	for i in 2 + randi() % 2:
-		_cluster_angles.append(randf() * TAU)
+	var count := 3 + randi() % 2
+	var base := randf() * TAU
+	for i in count:
+		_cluster_angles.append(base + TAU * float(i) / float(count) + randf_range(-0.35, 0.35))
 
 ## Spawn ring centers on the centroid of all (alive) players.
 func _spawn_position() -> Vector2:

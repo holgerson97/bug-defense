@@ -121,6 +121,8 @@ var _want_path: bool = false       ## retry latch when NavGrid budget was spent
 var _since_stuck: float = 999.0    ## seconds since last stuck event
 
 var _nav_seed: int = 0             ## stable per-enemy salt (A* noise, side picks)
+var _nav_fat: int = 0              ## clearance rings for wide bodies (A* + unstick)
+var _wedge_count: int = 0          ## consecutive zero-displacement stuck events
 var _lane_offset: float = 0.0      ## px aimed sideways of shared waypoints
 var _sep := Vector2.ZERO           ## cached crowd separation push (unit-capped)
 var _sep_radius: float = 44.0
@@ -178,6 +180,9 @@ func _ready() -> void:
 	var cs := get_node_or_null("CollisionShape2D")
 	if cs != null and cs.shape is CircleShape2D:
 		_body_radius = cs.shape.radius
+	## Wide bodies path with clearance so A* never routes them into gaps
+	## narrower than their diameter (r16 -> 0 rings, r40/48 -> 1 ring = 96px).
+	_nav_fat = maxi(int(ceil((_body_radius * 2.0 - 32.0) / 64.0)), 0)
 	## Swarm tunables. The reach grows and the strength shrinks with body
 	## size: big bodies (boss) shove the crowd, not the other way around.
 	_nav_seed = sync_id if sync_id != 0 else (get_instance_id() & 0x3FFFFFFF)
@@ -433,6 +438,18 @@ func _check_stuck(desired: Vector2, delta: float) -> void:
 			if moved.length() < STUCK_DISPLACE and _glide_sign != 0.0:
 				_glide_sign = -_glide_sign
 				_glide_timer = GLIDE_COMMIT
+			## Physically wedged (a wide body jammed in a too-narrow rock
+			## gap can't move at all): after two consecutive zero-displacement
+			## windows, slide out locally to the nearest cell with clearance.
+			if moved.length() < STUCK_DISPLACE and _rock_contact <= CONTACT_GRACE:
+				_wedge_count += 1
+				if _wedge_count >= 2:
+					_wedge_count = 0
+					global_position = NavGrid.nearest_free(global_position, 8, _nav_fat)
+					_drop_path()
+					_steering_reset()
+			else:
+				_wedge_count = 0
 		_since_stuck = 0.0
 	_stuck_timer = 0.0
 	_stuck_ref = global_position
@@ -479,7 +496,7 @@ func _try_request_path() -> void:
 	if _path_cd > 0.0:
 		_want_path = false
 		return
-	var res = NavGrid.request_path(global_position, _target.global_position, _nav_seed)
+	var res = NavGrid.request_path(global_position, _target.global_position, _nav_seed, _nav_fat)
 	if res == null:
 		return
 	_want_path = false
