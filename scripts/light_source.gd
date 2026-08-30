@@ -28,12 +28,23 @@ static func _get_shared_texture() -> GradientTexture2D:
 		_shared_texture.fill_to = Vector2(0.5, 0.0)
 	return _shared_texture
 
+const BASE_ENERGY := 1.1
+
 func _ready() -> void:
 	texture = _get_shared_texture()
 	texture_scale = radius * 2.0 / TEXTURE_SIZE
 	color = Color(1.0, 0.93, 0.8)
-	energy = 1.1
+	energy = BASE_ENERGY
 	add_to_group("light_sources")
+	## Lights born mid-day start faded (worlds with day/night broadcast the
+	## factor on change; a fresh spawn must not pop in at full glow at noon).
+	var dn = get_tree().get_first_node_in_group("day_night")
+	set_darkness(dn.darkness_factor() if dn != null else 1.0)
+
+## Day/night: fade with the darkness — off in daylight, full at night.
+func set_darkness(f: float) -> void:
+	energy = BASE_ENERGY * f
+	visible = f > 0.02
 
 ## Vision check used by Util.is_lit: anything inside the pool is visible.
 ## Hidden lights (e.g. an unpowered searchlight spot) reveal nothing.

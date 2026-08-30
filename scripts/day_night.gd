@@ -70,3 +70,6 @@ func _process(delta: float) -> void:
 	if _factor != _target:
 		_factor = move_toward(_factor, _target, delta / transition)
 		_darkness.color = day_color.lerp(night_color, smoothstep(0.0, 1.0, _factor))
+		## Lamps have no business glowing in daylight: every light source
+		## fades with the darkness (they query the current factor at spawn).
+		get_tree().call_group("light_sources", "set_darkness", _factor)

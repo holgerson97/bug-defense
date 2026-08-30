@@ -17,6 +17,7 @@ var beam_half_angle: float = deg_to_rad(Balance.num("buildings/searchlight/cone"
 var _energy_accum: float = 0.0
 var _sweep_dir := 1.0
 var _cone: PointLight2D
+var _darkness := 1.0
 
 @onready var _head: Node2D = $Head
 
@@ -26,6 +27,19 @@ func _ready() -> void:
 	_head.rotation = facing
 	_build_cone_light()
 	add_to_group("light_sources")
+	var dn = get_tree().get_first_node_in_group("day_night")
+	set_darkness(dn.darkness_factor() if dn != null else 1.0)
+
+## Day/night: the beam fades with the darkness and the light parks in
+## daylight — no sweep, no energy drain (nothing to reveal by day).
+func set_darkness(f: float) -> void:
+	_darkness = f
+	if _cone:
+		_cone.energy = f
+		_cone.visible = _powered and f > 0.02
+
+func _is_daytime() -> bool:
+	return _darkness < 0.5
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
@@ -35,6 +49,8 @@ func _physics_process(delta: float) -> void:
 	## host's on pause/late-join — covers() never runs on clients, so nothing
 	## gameplay-visible depends on it. See documentation/reference/
 	## multiplayer_net_seam.md.
+	if _is_daytime():
+		return
 	if Net.is_online() and not Net.is_host():
 		_sweep(delta)
 		return
@@ -65,7 +81,7 @@ func set_powered(p: bool) -> void:
 	super.set_powered(p)
 	# Unpowered: beam goes dark; covers() gates on _powered.
 	if _cone:
-		_cone.visible = p
+		_cone.visible = p and _darkness > 0.02
 
 ## Vision check used by Util.is_lit: inside the beam cone while powered.
 func covers(pos: Vector2) -> bool:
