@@ -72,6 +72,8 @@ var _satellites: Array = []       ## hive_structure nodes (freed entries linger)
 var _creep: Node2D
 var _provoke_left: float = 0.0
 var _squad_accum: float = 0.0
+var _last_hit_spawn: float = -999.0
+var _boss_spawned: bool = false
 var _spire_accum: float = 0.0
 var _defenders: Array = []        ## live defender enemies (cap enforcement)
 var _dead: bool = false
@@ -180,10 +182,7 @@ func _physics_process(delta: float) -> void:
 		if Net.is_online():
 			_rpc_provoked.rpc(false)
 		return
-	_squad_accum += delta
-	if _squad_accum >= squad_interval:
-		_squad_accum = 0.0
-		_spawn_squad()
+	## Defenders spawn per SHOT (on_structure_damaged), not on a timer.
 	_spire_accum += delta
 	if _spire_accum >= spire_interval:
 		_spire_accum = 0.0
@@ -197,6 +196,11 @@ func on_structure_damaged(s) -> void:
 	if Net.is_online():
 		_rpc_struct_health.rpc(s.site_index, s.health)
 	_provoke()
+	## Every shot on the HIVE body answers with defenders, escalating as its
+	## health falls: grunts always, +tanks below 75%, +mages below 50%, and a
+	## boss rises once at 10%.
+	if s.site_index < 0 and s.health > 0:
+		_on_hive_hit(s)
 	if s.health > 0:
 		return
 	if s.site_index < 0:
@@ -218,42 +222,60 @@ func _provoke() -> void:
 	var fresh := _provoke_left <= 0.0
 	_provoke_left = provoke_time
 	if fresh:
-		_squad_accum = squad_interval
 		_spire_accum = spire_interval * 0.5
 		_set_provoked(true)
 		if Net.is_online():
 			_rpc_provoked.rpc(true)
 
-## Defender squad from the maw: base grunts + wave-scaled brutes, the whole
-## count multiplied per living spore mound. Spawned through the wave manager's
-## replicated NO-COUNT path — clients see them, wave clearing ignores them.
-func _spawn_squad() -> void:
+## Per-shot defense (throttled so flame ticks / MG bursts count as one
+## answer): grunts always; below 75% HP +tanks; below 50% +mages; at 10% a
+## single boss rises from the maw. Counts multiply per living spore mound
+## and growth stage. All spawns ride the replicated NO-COUNT path — clients
+## see them, wave clearing ignores them (including mage/boss summons, which
+## inherit the uncounted flag).
+func _on_hive_hit(hive_struct) -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _last_hit_spawn < Balance.num("hive/hit_cooldown", 0.4):
+		return
+	_last_hit_spawn = now
 	_defenders = _defenders.filter(func(d): return is_instance_valid(d))
 	var wm = get_tree().get_first_node_in_group("wave_manager")
 	if wm == null:
 		return
 	var wave: int = maxi(wm.wave, 1)
+	var frac := float(hive_struct.health) / float(maxi(hive_struct.max_health, 1))
 	var mult := 1.0 + spore_bonus * float(_living_count("spore_mound"))
 	var queue: Array = []
-	## Older nests bite harder: +1 grunt per growth stage.
-	for i in int(ceil((squad_grunts + _stage) * mult)):
+	for i in int(ceil((Balance.inum("hive/hit_grunts", 3) + _stage) * mult)):
 		queue.append("grunt")
-	@warning_ignore("integer_division")
-	var brutes: int = wave / brute_divisor
-	for i in int(ceil(brutes * mult)):
-		queue.append("brute")
+	if frac < Balance.num("hive/brute_frac", 0.75):
+		for i in Balance.inum("hive/hit_brutes", 3):
+			queue.append("brute")
+	if frac < Balance.num("hive/mage_frac", 0.5):
+		for i in Balance.inum("hive/hit_mages", 3):
+			queue.append("mage")
 	for kind in queue:
 		if _defenders.size() >= max_defenders:
-			return
+			break
 		var pos: Vector2 = global_position + Vector2.from_angle(randf() * TAU) * randf_range(110.0, 150.0)
 		var ov := {}
-		if kind == "brute":
-			ov = {"max_health": int(ceil(Balance.num("enemies/brute/hp", 15.0) * pow(wm.hp_scale_factor, wave - 1))), "speed_delta": wave * 2.0}
-		else:
-			ov = {"max_health": int(ceil(Balance.num("enemies/grunt/hp", 2.0) * pow(wm.chaff_hp_scale_factor, wave - 1))), "speed_delta": wave * 2.0}
+		match kind:
+			"brute":
+				ov = {"max_health": int(ceil(Balance.num("enemies/brute/hp", 15.0) * pow(wm.hp_scale_factor, wave - 1))), "speed_delta": wave * 2.0}
+			"mage":
+				ov = {"max_health": int(ceil(Balance.num("enemies/mage/hp", 6.0) * pow(wm.mage_hp_scale_factor, wave - 1)))}
+			_:
+				ov = {"max_health": int(ceil(Balance.num("enemies/grunt/hp", 2.0) * pow(wm.chaff_hp_scale_factor, wave - 1))), "speed_delta": wave * 2.0}
 		var d = wm.spawn_hive_defender(kind, pos, ov)
 		if d != null:
 			_defenders.append(d)
+	## The wounded queen: one boss per site, birthed at 10% health.
+	if frac <= Balance.num("hive/boss_frac", 0.10) and not _boss_spawned:
+		_boss_spawned = true
+		@warning_ignore("integer_division")
+		var boss_number: int = maxi(wave / maxi(wm.boss_every, 1), 1)
+		var boss_hp := int(Balance.num("enemies/boss/hp", 250.0) * boss_number * pow(wm.boss_hp_growth, boss_number - 1))
+		wm.spawn_hive_defender("boss", global_position + Vector2(0, 140), {"max_health": boss_hp})
 
 func _living_count(kind: String) -> int:
 	var n := 0

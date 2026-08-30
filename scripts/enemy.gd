@@ -60,6 +60,8 @@ const BALANCE_ALIASES := {"enemy": "grunt", "drone_tank": "drone", "boss_broodmo
 ## scaling always beats the JSON base values (the host computes them from
 ## Balance anyway; on clients they make puppet max_health match the host).
 var spawn_overrides: Dictionary = {}
+## False for hive defenders and their summons: outside the wave ledger.
+var counted: bool = true
 
 func balance_id() -> String:
 	var base := scene_file_path.get_file().get_basename()
@@ -135,11 +137,18 @@ var _sidestep_timer: float = 0.0
 func _is_puppet() -> bool:
 	return Net.is_online() and not Net.is_host()
 
+## Grunt variety: three red shades, picked by sync_id so peers agree.
+const GRUNT_TINTS := [Color(1, 1, 1), Color(1.0, 0.68, 0.55), Color(0.66, 0.5, 0.52)]
+
 func _ready() -> void:
 	## Top-down: no floor snapping, walls never resolve as "slopes" to climb.
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	_apply_balance()
 	health = max_health
+	if balance_id() == "grunt":
+		var body := get_node_or_null("Body")
+		if body != null:
+			body.modulate = GRUNT_TINTS[absi(sync_id) % GRUNT_TINTS.size()]
 	if _is_puppet():
 		## Puppet: no AI/physics; the host resolves collisions, so the local
 		## shape only risks races with replicated movement — drop it.

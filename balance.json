@@ -117,6 +117,8 @@
 		"creep_radius": 350.0,
 		"creep_fade": 3.0,
 		"provoke_time": 25.0,
+  "hit_cooldown": 0.4, "hit_grunts": 3, "hit_brutes": 3, "hit_mages": 3,
+  "brute_frac": 0.75, "mage_frac": 0.5, "boss_frac": 0.10,
 		"squad_interval": 3.0,
 		"squad_grunts": 6,
 		"squad_brute_wave_divisor": 5,

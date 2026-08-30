@@ -64,6 +64,6 @@ func _summon_swarm() -> void:
 		var a: float = toward + lerpf(-FAN_HALF_ARC, FAN_HALF_ARC, float(i) / float(summon_count - 1))
 		var ring: float = 60.0 + float(i % 3) * 45.0
 		var pos: Vector2 = global_position + Vector2.from_angle(a) * (ring + randf_range(-10.0, 10.0))
-		var runner = wm.spawn_summon(pos, Balance.inum("enemies/runner/hp", 1) + wave / 10, wave * 2.0)
+		var runner = wm.spawn_summon(pos, Balance.inum("enemies/runner/hp", 1) + wave / 10, wave * 2.0, counted)
 		if runner != null:
 			_summons.append(runner)

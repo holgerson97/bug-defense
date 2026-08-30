@@ -284,9 +284,9 @@ func _spawn_kind(kind) -> void:
 
 ## Lets summoners (mage, boss) birth runners through the replicated spawn
 ## path; their spawns count toward wave clearing like before.
-func spawn_summon(pos: Vector2, max_health: int, speed_delta: float) -> Node:
+func spawn_summon(pos: Vector2, max_health: int, speed_delta: float, counted := true) -> Node:
 	## Mage/boss birth rings can clip rock edges — slide embeds to free ground.
-	return _spawn("runner", NavGrid.nearest_free(pos), {"max_health": max_health, "speed_delta": speed_delta})
+	return _spawn("runner", NavGrid.nearest_free(pos), {"max_health": max_health, "speed_delta": speed_delta}, counted)
 
 ## Hive defenders (hive_site.gd): spawned through the same replicated path so
 ## clients see them, but NOT registered — they never touch _alive/_remaining,
@@ -326,7 +326,10 @@ func _spawn_enemy_node(data: Array) -> Node:
 	enemy.spawn_overrides = data[3]
 	## Enemies container sits at the origin: position == global position.
 	enemy.position = data[2]
-	if Net.is_host() and (data.size() < 5 or data[4]):
+	## The flag rides on the node so summoners (mage/boss) pass it down —
+	## a hive mage's runners must stay outside the wave ledger too.
+	enemy.counted = data.size() < 5 or data[4]
+	if Net.is_host() and enemy.counted:
 		_register(enemy, KIND_NAMES.get(data[1], "Grunt"))
 	return enemy
 

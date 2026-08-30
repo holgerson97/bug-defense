@@ -105,6 +105,6 @@ func _birth(count: int) -> void:
 			return
 		var a := TAU * float(i) / float(count) + randf_range(-0.2, 0.2)
 		var pos: Vector2 = global_position + Vector2.from_angle(a) * randf_range(50.0, 70.0)
-		var runner = wm.spawn_summon(pos, Balance.inum("enemies/runner/hp", 1) + wave / 10, wave * 2.0)
+		var runner = wm.spawn_summon(pos, Balance.inum("enemies/runner/hp", 1) + wave / 10, wave * 2.0, counted)
 		if runner != null:
 			_brood.append(runner)
