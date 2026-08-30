@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/cooling_tower.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/cooling_tower.svg" id="2"]
@@ -9,6 +9,10 @@ size = Vector2(92, 92)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cooler_sense"]
 size = Vector2(108, 108)
 
+[sub_resource type="Curve" id="Curve_steam_grow"]
+_data = [Vector2(0, 0.45), 0.0, 1.2, 0, 0, Vector2(1, 1), 0.3, 0.0, 0, 0]
+point_count = 2
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0, 0, 0, 0.6)
 
@@ -16,8 +20,8 @@ bg_color = Color(0, 0, 0, 0.6)
 bg_color = Color(0.3, 0.9, 0.4, 1)
 
 [sub_resource type="Gradient" id="Gradient_steam"]
-offsets = PackedFloat32Array(0, 0.25, 1)
-colors = PackedColorArray(0.92, 0.94, 0.96, 0, 0.92, 0.94, 0.96, 0.28, 0.96, 0.97, 1, 0)
+offsets = PackedFloat32Array(0, 0.2, 0.65, 1)
+colors = PackedColorArray(0.92, 0.94, 0.96, 0, 0.95, 0.96, 0.98, 0.5, 0.9, 0.92, 0.95, 0.22, 0.96, 0.97, 1, 0)
 
 [node name="CoolingTower" type="StaticBody2D" groups=["buildings"]]
 collision_layer = 32
@@ -32,20 +36,23 @@ texture = ExtResource("2")
 
 [node name="Steam" type="CPUParticles2D" parent="."]
 emitting = false
-amount = 5
-lifetime = 1.8
-randomness = 0.4
+amount = 18
+lifetime = 2.4
+randomness = 0.5
 emission_shape = 1
-emission_sphere_radius = 12.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 30.0
-gravity = Vector2(0, -8)
-initial_velocity_min = 4.0
-initial_velocity_max = 9.0
+spread = 24.0
+gravity = Vector2(7, -22)
+initial_velocity_min = 10.0
+initial_velocity_max = 22.0
 angle_min = -180.0
 angle_max = 180.0
-scale_amount_min = 2.0
-scale_amount_max = 3.5
+angular_velocity_min = -30.0
+angular_velocity_max = 30.0
+scale_amount_min = 3.5
+scale_amount_max = 7.0
+scale_amount_curve = SubResource("Curve_steam_grow")
 color_ramp = SubResource("Gradient_steam")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
