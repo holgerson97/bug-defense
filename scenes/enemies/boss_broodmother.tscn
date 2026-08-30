@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/boss_broodmother.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/sprites/enemies/enemy_boss_broodmother.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/enemy_boss_roach.svg" id="2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
 radius = 52.0
@@ -26,7 +26,7 @@ scrap_value = 150
 crystal_value = 50
 
 [node name="Body" type="Sprite2D" parent="."]
-scale = Vector2(0.225, 0.225)
+scale = Vector2(0.24, 0.24)
 texture = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

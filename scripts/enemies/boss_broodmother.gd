@@ -1,12 +1,19 @@
 extends "res://scripts/enemy.gd"
-## Boss (every 10th wave): slow bruiser that births runner broods while alive.
-## Crossing 75/50/25% HP triggers a rage brood: a full ring at once.
+## Boss (every 10th wave): giant cockroach that births runner broods while
+## alive — and spits out bugs when wounded. Crossing 75/50/25% HP triggers a
+## rage brood: a full ring at once. Each appearance hits harder (wave manager
+## scales HP; damage scales here per boss number).
 
 const RAGE_THRESHOLDS := [0.75, 0.5, 0.25]
 
 var birth_interval: float = Balance.num("enemies/boss/birth_interval", 4.5)
 var max_alive_brood: int = Balance.inum("enemies/boss/max_alive_brood", 16)
 var max_per_brood: int = Balance.inum("enemies/boss/max_per_brood", 8)
+## On-hit brood: taking damage spawns bugs, throttled so rapid-fire weapons
+## (MG bursts, flame ticks) can't turn the boss into a runner faucet.
+var hit_spawn_count: int = Balance.inum("enemies/boss/hit_spawn_count", 2)
+var hit_spawn_cooldown: float = Balance.num("enemies/boss/hit_spawn_cooldown", 1.5)
+var damage_growth: float = Balance.num("enemies/boss/damage_growth", 1.25)
 ## Phase 6: enemy HP isn't replicated, but the boss bar must move on clients
 ## — a tiny periodic host RPC keeps puppet bars honest.
 const HP_SYNC_INTERVAL := 1.0
@@ -15,11 +22,19 @@ var _birth_timer: float = 0.0
 var _brood: Array = []
 var _rage_index: int = 0
 var _hp_sync_accum: float = 0.0
+var _hit_spawn_timer: float = 0.0
 
 @onready var _health_bar: ProgressBar = $HealthBar
 
 func _ready() -> void:
 	super()
+	## Stronger every appearance: melee damage compounds per boss number
+	## (HP already compounds in the wave manager's spawn override).
+	var wm = get_tree().get_first_node_in_group("wave_manager")
+	if wm != null and wm.boss_every > 0:
+		@warning_ignore("integer_division")
+		var boss_number: int = maxi(wm.wave / wm.boss_every, 1)
+		damage = int(ceil(damage * pow(damage_growth, boss_number - 1)))
 	_health_bar.max_value = max_health
 	_health_bar.value = health
 
@@ -43,13 +58,19 @@ func _physics_process(delta: float) -> void:
 		_birth(_brood_count())
 
 func take_damage(amount, hit_fx := true) -> void:
-	# The broodmother bleeds hard on death: extra bursts around the body.
+	# The roach bleeds hard on death: extra bursts around the body.
 	if not _dead and health - int(amount) <= 0:
 		for i in 4:
 			var off := Vector2.from_angle(randf() * TAU) * randf_range(8.0, 32.0)
 			Effects.blood_death(self, global_position + off, Vector2.from_angle(randf() * TAU))
 	super(amount, hit_fx)
 	_health_bar.value = health
+	## Wounded roach spits bugs: every hit (throttled) births a small brood.
+	if not _dead and not _is_puppet():
+		var now := Time.get_ticks_msec() / 1000.0
+		if now - _hit_spawn_timer >= hit_spawn_cooldown:
+			_hit_spawn_timer = now
+			_birth(hit_spawn_count)
 	## Rage broods at HP thresholds; while-loop catches big hits crossing several.
 	while not _dead and _rage_index < RAGE_THRESHOLDS.size() and health <= int(max_health * RAGE_THRESHOLDS[_rage_index]):
 		_rage_index += 1
