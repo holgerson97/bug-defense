@@ -1,20 +1,21 @@
 extends Control
 
-@onready var _menu: VBoxContainer = $Center/Menu
-@onready var _settings: VBoxContainer = $Center/SettingsMenu
-@onready var _lobby: VBoxContainer = $Center/LobbyMenu
-@onready var _lobby_status: Label = $Center/LobbyMenu/Status
-@onready var _host_button: Button = $Center/LobbyMenu/HostButton
-@onready var _ip: LineEdit = $Center/LobbyMenu/JoinRow/Ip
-@onready var _join_button: Button = $Center/LobbyMenu/JoinRow/JoinButton
-@onready var _player_list: VBoxContainer = $Center/LobbyMenu/PlayerList
-@onready var _start_button: Button = $Center/LobbyMenu/StartButton
-@onready var _fullscreen: CheckButton = $Center/SettingsMenu/Fullscreen
-@onready var _vsync: CheckButton = $Center/SettingsMenu/Vsync
-@onready var _resolution: OptionButton = $Center/SettingsMenu/ResolutionRow/Resolution
-@onready var _volume: HSlider = $Center/SettingsMenu/VolumeRow/Volume
-@onready var _sfx_volume: HSlider = $Center/SettingsMenu/SfxRow/SfxVolume
-@onready var _mute: CheckButton = $Center/SettingsMenu/Mute
+@onready var _menu: VBoxContainer = $UI/Root/Center/Menu
+@onready var _new_game: VBoxContainer = $UI/Root/Center/NewGameMenu
+@onready var _settings: VBoxContainer = $UI/Root/Center/SettingsMenu
+@onready var _lobby: VBoxContainer = $UI/Root/Center/LobbyMenu
+@onready var _lobby_status: Label = $UI/Root/Center/LobbyMenu/Status
+@onready var _host_button: Button = $UI/Root/Center/LobbyMenu/HostButton
+@onready var _ip: LineEdit = $UI/Root/Center/LobbyMenu/JoinRow/Ip
+@onready var _join_button: Button = $UI/Root/Center/LobbyMenu/JoinRow/JoinButton
+@onready var _player_list: VBoxContainer = $UI/Root/Center/LobbyMenu/PlayerList
+@onready var _start_button: Button = $UI/Root/Center/LobbyMenu/StartButton
+@onready var _fullscreen: CheckButton = $UI/Root/Center/SettingsMenu/Fullscreen
+@onready var _vsync: CheckButton = $UI/Root/Center/SettingsMenu/Vsync
+@onready var _resolution: OptionButton = $UI/Root/Center/SettingsMenu/ResolutionRow/Resolution
+@onready var _volume: HSlider = $UI/Root/Center/SettingsMenu/VolumeRow/Volume
+@onready var _sfx_volume: HSlider = $UI/Root/Center/SettingsMenu/SfxRow/SfxVolume
+@onready var _mute: CheckButton = $UI/Root/Center/SettingsMenu/Mute
 
 ## Class picker widgets (built in code; classes are data-driven from balance).
 var _class_buttons: Dictionary = {}
@@ -29,24 +30,34 @@ var _lobby_class_desc: Label
 var _world_buttons: Dictionary = {}
 var _world_desc: Label
 var _lobby_world: OptionButton
+## True once a Play/Start transition began (blocks double presses).
+var _leaving := false
 
 func _ready() -> void:
 	theme = UITheme.build()
+	## The menus live in a CanvasLayer (above the diorama, immune to its
+	## CanvasModulate); themes don't cross CanvasLayer, so re-root it there.
+	$UI/Root.theme = UITheme.build()
+	_build_vignette()
 	_build_class_picker()
 	_build_lobby_class_row()
 	_build_world_picker()
 	_build_lobby_world_row()
 	_sync_class_ui()
 	_sync_world_ui()
-	$Center/Menu/Play.pressed.connect(_on_play)
-	$Center/Menu/Coop.pressed.connect(_show_lobby.bind(true))
-	$Center/Menu/SettingsButton.pressed.connect(_show_settings.bind(true))
-	$Center/Menu/Quit.pressed.connect(func(): get_tree().quit())
-	$Center/SettingsMenu/Back.pressed.connect(_show_settings.bind(false))
+	## Play opens the NEW GAME setup view (class/world pickers + Start);
+	## the run itself launches from that view's Start button.
+	$UI/Root/Center/Menu/Play.pressed.connect(_show_new_game.bind(true))
+	$UI/Root/Center/NewGameMenu/Start.pressed.connect(_on_start_run)
+	$UI/Root/Center/NewGameMenu/NewGameBack.pressed.connect(_show_new_game.bind(false))
+	$UI/Root/Center/Menu/Coop.pressed.connect(_show_lobby.bind(true))
+	$UI/Root/Center/Menu/SettingsButton.pressed.connect(_show_settings.bind(true))
+	$UI/Root/Center/Menu/Quit.pressed.connect(func(): get_tree().quit())
+	$UI/Root/Center/SettingsMenu/Back.pressed.connect(_show_settings.bind(false))
 	_host_button.pressed.connect(_on_host)
 	_join_button.pressed.connect(_on_join)
-	_start_button.pressed.connect(func(): Net.start_game())
-	$Center/LobbyMenu/LobbyBack.pressed.connect(_on_lobby_back)
+	_start_button.pressed.connect(_on_start_game)
+	$UI/Root/Center/LobbyMenu/LobbyBack.pressed.connect(_on_lobby_back)
 	Net.player_list_changed.connect(_refresh_lobby)
 	Net.session_ended.connect(_on_session_ended)
 	## Late join (Phase 7): joining a running game parks us here until the
@@ -72,13 +83,76 @@ func _sync_controls() -> void:
 	_sfx_volume.set_value_no_signal(Settings.sfx_volume * 100.0)
 	_mute.set_pressed_no_signal(Settings.muted)
 
-func _on_play() -> void:
+## Soft dark left-edge gradient behind the menu column so text/pickers stay
+## readable over the daylight diorama (never a hard opaque box): near-opaque
+## under the column, fully transparent before mid-screen — the battle owns
+## the right two-thirds of the frame.
+func _build_vignette() -> void:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.38, 0.58])
+	gradient.colors = PackedColorArray([
+		Color(0.02, 0.03, 0.05, 0.8),
+		Color(0.02, 0.03, 0.05, 0.55),
+		Color(0.02, 0.03, 0.05, 0.0),
+	])
+	var tex := GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.width = 512
+	tex.height = 8
+	tex.fill_from = Vector2(0.0, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	var rect := TextureRect.new()
+	rect.name = "Vignette"
+	rect.texture = tex
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_SCALE
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var root := $UI/Root
+	root.add_child(rect)
+	root.move_child(rect, 0)
+
+## 0.4s fade to black over everything, then restore the SFX bus and free the
+## diorama (its _exit_tree resets godmode + bus) before the scene change.
+func _fade_out_and_release() -> void:
+	var fade := ColorRect.new()
+	fade.color = Color(0, 0, 0, 0)
+	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fade.mouse_filter = Control.MOUSE_FILTER_STOP
+	$UI.add_child(fade)
+	var tween := create_tween()
+	tween.tween_property(fade, "color:a", 1.0, 0.4)
+	await tween.finished
+	var backdrop := get_node_or_null("Backdrop")
+	if backdrop != null:
+		backdrop.free()
+
+## Launch from the NEW GAME view's Start button.
+func _on_start_run() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	await _fade_out_and_release()
+	## main.gd's GameState.reset() clears godmode again; the backdrop's exit
+	## already restored it, this is the existing change path unchanged.
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+## Host-start mirrors Play: fade + cleanup first, then Net.start_game()
+## (its call_local RPC changes our scene). Clients change via the Net RPC
+## without a local fade — their backdrop still cleans up on scene teardown.
+func _on_start_game() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	await _fade_out_and_release()
+	Net.start_game()
 
 ## -- class selection --
 
-## Main menu (single player): one toggle button per class above Play, with a
-## dim one-line description underneath. Persists via Settings/Net.local_class.
+## NEW GAME view: one FIXED-SIZE toggle button per class (uniform footprint
+## regardless of name length — picking a class must never shift the layout),
+## with the fixed-footprint info card underneath. Persists via
+## Settings/Net.local_class.
 func _build_class_picker() -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -89,25 +163,30 @@ func _build_class_picker() -> void:
 		button.toggle_mode = true
 		button.button_group = group
 		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(0, 40)
+		button.custom_minimum_size = Vector2(104, 40)
+		button.clip_text = true
 		button.text = GameState.class_title(id)
 		button.add_theme_color_override("font_color", UITheme.TEXT_COLOR.lerp(GameState.class_tint(id), 0.5))
 		button.pressed.connect(_on_class_picked.bind(id))
 		row.add_child(button)
 		_class_buttons[id] = button
-	var menu := $Center/Menu
+	var menu := _new_game
+	var anchor := $UI/Root/Center/NewGameMenu/Start.get_index()
 	menu.add_child(row)
-	menu.move_child(row, $Center/Menu/Play.get_index())
+	menu.move_child(row, anchor)
 	_build_class_card()
 	menu.add_child(_class_card)
-	menu.move_child(_class_card, $Center/Menu/Play.get_index())
+	menu.move_child(_class_card, anchor + 1)
 
 ## Info card under the picker: class sprite on top, then the weapon, then
-## the stat deviations from baseline.
+## the stat deviations from baseline. FIXED footprint sized for the largest
+## class (9 stat lines); shorter content pads out instead of shrinking, so
+## switching classes moves nothing around it.
 func _build_class_card() -> void:
 	_class_card = PanelContainer.new()
-	_class_card.custom_minimum_size = Vector2(280, 0)
+	_class_card.custom_minimum_size = Vector2(300, 360)
 	_class_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_class_card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
 		margin.add_theme_constant_override(side, 12)
@@ -180,7 +259,7 @@ func _build_lobby_class_row() -> void:
 	_lobby_class_desc = Label.new()
 	_lobby_class_desc.add_theme_font_size_override("font_size", 13)
 	_lobby_class_desc.add_theme_color_override("font_color", UITheme.TEXT_DIM)
-	var anchor := $Center/LobbyMenu/PlayersLabel.get_index()
+	var anchor := $UI/Root/Center/LobbyMenu/PlayersLabel.get_index()
 	_lobby.add_child(row)
 	_lobby.move_child(row, anchor)
 	_lobby.add_child(_lobby_class_desc)
@@ -212,8 +291,9 @@ func _sync_class_ui() -> void:
 
 ## -- world selection --
 
-## Main menu (single player): one toggle button per world under the class
-## picker, with a dim one-line description. Persists via Settings/Net.
+## NEW GAME view: one FIXED-SIZE toggle button per world under the class
+## card, with a dim one-line description (fixed height so picks never shift
+## the Start button). Persists via Settings/Net.
 func _build_world_picker() -> void:
 	if GameState.WORLDS.is_empty():
 		return
@@ -226,21 +306,24 @@ func _build_world_picker() -> void:
 		button.toggle_mode = true
 		button.button_group = group
 		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(0, 36)
+		button.custom_minimum_size = Vector2(120, 36)
+		button.clip_text = true
 		button.text = GameState.world_title(id)
 		button.add_theme_color_override("font_color", UITheme.TEXT_COLOR.lerp(_world_tint(id), 0.45))
 		button.pressed.connect(_on_world_picked.bind(id))
 		row.add_child(button)
 		_world_buttons[id] = button
 	_world_desc = Label.new()
+	_world_desc.custom_minimum_size = Vector2(0, 22)
 	_world_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_world_desc.add_theme_font_size_override("font_size", 14)
 	_world_desc.add_theme_color_override("font_color", UITheme.TEXT_DIM)
-	var menu := $Center/Menu
+	var menu := _new_game
+	var anchor := $UI/Root/Center/NewGameMenu/Start.get_index()
 	menu.add_child(row)
-	menu.move_child(row, $Center/Menu/Play.get_index())
+	menu.move_child(row, anchor)
 	menu.add_child(_world_desc)
-	menu.move_child(_world_desc, $Center/Menu/Play.get_index())
+	menu.move_child(_world_desc, anchor + 1)
 
 ## Lobby: one shared world, HOST-chosen — a dropdown the host drives; clients
 ## see it read-only. The pick replicates through the host's Net registry entry.
@@ -260,7 +343,7 @@ func _build_lobby_world_row() -> void:
 	_lobby_world.item_selected.connect(_on_lobby_world_picked)
 	row.add_child(_lobby_world)
 	_lobby.add_child(row)
-	_lobby.move_child(row, $Center/LobbyMenu/PlayersLabel.get_index())
+	_lobby.move_child(row, $UI/Root/Center/LobbyMenu/PlayersLabel.get_index())
 
 ## Button tint from the world's accent ground color (lightened so midnight's
 ## near-black still reads on a button face).
@@ -295,6 +378,14 @@ func _sync_world_ui() -> void:
 func _show_settings(show_settings: bool) -> void:
 	_menu.visible = not show_settings
 	_settings.visible = show_settings
+
+## NEW GAME setup view: class/world pickers + Start replace the main column.
+func _show_new_game(show_new_game: bool) -> void:
+	_menu.visible = not show_new_game
+	_new_game.visible = show_new_game
+	if show_new_game:
+		_sync_class_ui()
+		_sync_world_ui()
 
 ## -- co-op lobby --
 
