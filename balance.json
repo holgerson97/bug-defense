@@ -223,6 +223,7 @@
 			"flame_tower_1":      { "cost": { "scrap": 2500},  "effects": {} },
 			"aa_tower_1":         { "cost": { "scrap": 1000},  "effects": {} },
 			"building_walk":      { "cost": { "scrap": 1000}, "effects": {} },
+            "rock_mounts":        { "cost": { "scrap": 1500 }, "effects": {} },
 			"solar_1":            { "cost": { "scrap": 50},   "effects": {} },
 			"command_center_1":   { "cost": { "scrap": 500 },  "effects": {} },
 			"light_pole_1":       { "cost": { "scrap": 28 },   "effects": {} },

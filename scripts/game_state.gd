@@ -44,6 +44,7 @@ const UPGRADE_DEFAULTS := {
 	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Defense", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 320}, "requires": ["walls_1"], "effects": {}},
 	"aa_tower_1": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "branch": "Defense", "desc": "Unlocks the anti-air Flak Cannon", "cost": {"scrap": 450}, "requires": ["mg_tower_1"], "effects": {}},
 	"building_walk": {"icon": "res://assets/icons/wall.svg", "name": "Phase Stride", "branch": "Defense", "desc": "Walk across buildings", "cost": {"scrap": 6000}, "requires": ["walls_1"], "effects": {}},
+	"rock_mounts": {"icon": "res://assets/icons/mg_tower.svg", "name": "Rock Anchors", "branch": "Defense", "desc": "Place turrets on rock formations", "cost": {"scrap": 1500}, "requires": ["mg_tower_1"], "effects": {}},
 	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Electricity", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 35}, "requires": [], "effects": {}},
 	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Resource", "desc": "Unlocks the Command Center", "cost": {"scrap": 500}, "requires": ["miner_1"], "effects": {}},
 	"light_pole_1": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "branch": "Electricity", "desc": "Unlocks the Light Pole", "cost": {"scrap": 28}, "requires": [], "effects": {}},

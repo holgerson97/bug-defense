@@ -173,8 +173,17 @@ func _placement_valid(id: String, pos: Vector2) -> bool:
 	var query: float = BUILDING_FOOTPRINT[id] - PLACE_EPSILON
 	_place_shape.size = Vector2(query, query)
 	_place_params.transform = Transform2D(0.0, pos)
-	var hits: Array = get_world_2d().direct_space_state.intersect_shape(_place_params, 1)
-	return hits.is_empty()
+	var hits: Array = get_world_2d().direct_space_state.intersect_shape(_place_params, 8)
+	if hits.is_empty():
+		return true
+	## Rock Anchors research: turrets may sit ON rock formations — the spot is
+	## valid when every blocker is a rock (deposits/hives/buildings still block).
+	if GameState.is_purchased("rock_mounts") and GameState.BUILDINGS[id].get("tower", false):
+		for hit in hits:
+			if not hit["collider"].is_in_group("rocks"):
+				return false
+		return true
+	return false
 
 ## Right-click a building to sell it for half its cost. The building id is
 ## derived from its scene file name (e.g. mg_tower.tscn -> "mg_tower").
