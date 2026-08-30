@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/background.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/day_night.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/wave_manager.gd" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="6"]
@@ -16,6 +17,9 @@ color = Color(0.06, 0.06, 0.1, 1)
 
 [node name="Background" type="Node2D" parent="."]
 script = ExtResource("2")
+
+[node name="DayNight" type="Node" parent="."]
+script = ExtResource("3")
 
 [node name="SplatterLayer" type="Node2D" parent="."]
 

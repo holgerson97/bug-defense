@@ -60,6 +60,8 @@ var _starter_rects: Array[Rect2] = []
 ## Host: peers whose main scene finished loading (spawning waits for all).
 var _ready_peers: Dictionary = {}
 var _players_spawned := false
+## Rock modulate from the selected world (boulders in grass); white = classic.
+var _rock_tint := Color(1, 1, 1)
 
 @onready var _players: Node2D = $Players
 @onready var _spawner: MultiplayerSpawner = $PlayerSpawner
@@ -73,6 +75,13 @@ func _ready() -> void:
 	_spawner.spawn_function = _spawn_player_node
 	_building_spawner.spawn_function = _spawn_building_node
 	GameState.reset()
+	## World theme: host-chosen online (rode the start RPC / late-join auth),
+	## the menu pick offline; restarts keep it (only the seed rerolls). A
+	## missing "worlds" balance section degrades to the classic midnight look.
+	var world_def: Dictionary = GameState.world_def(Net.world_id())
+	_rock_tint = Util.color_arr(world_def.get("rock_tint"), _rock_tint)
+	$Background.set_world(world_def)
+	$DayNight.setup(world_def, $Darkness, _wave_manager)
 	_wave_manager.wave_started.connect(_hud.update_wave)
 	_wave_manager.enemy_killed.connect(_on_enemy_killed)
 	## Phase 7: intermission revives dead players + lets late joiners in (host).
@@ -183,6 +192,7 @@ func _seed_starter_rock() -> void:
 			rock.free()
 			continue
 		rock.position = anchor
+		rock.modulate = _rock_tint
 		add_child(rock)
 		_starter_rects.append(rect)
 		return
@@ -293,6 +303,7 @@ func _place_rock_formation(chunk: Vector2i, existing: Array[Rect2], cell_scale :
 			rock.free()
 			continue
 		rock.position = anchor
+		rock.modulate = _rock_tint
 		add_child(rock)
 		return rect
 	return Rect2()

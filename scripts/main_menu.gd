@@ -21,12 +21,20 @@ var _class_buttons: Dictionary = {}
 var _class_desc: Label
 var _lobby_class: OptionButton
 var _lobby_class_desc: Label
+## World picker widgets (same pattern; worlds are data-driven from balance).
+## Empty WORLDS section = no pickers at all (midnight fallback everywhere).
+var _world_buttons: Dictionary = {}
+var _world_desc: Label
+var _lobby_world: OptionButton
 
 func _ready() -> void:
 	theme = UITheme.build()
 	_build_class_picker()
 	_build_lobby_class_row()
+	_build_world_picker()
+	_build_lobby_world_row()
 	_sync_class_ui()
+	_sync_world_ui()
 	$Center/Menu/Play.pressed.connect(_on_play)
 	$Center/Menu/Coop.pressed.connect(_show_lobby.bind(true))
 	$Center/Menu/SettingsButton.pressed.connect(_show_settings.bind(true))
@@ -138,6 +146,88 @@ func _sync_class_ui() -> void:
 	_lobby_class.select(maxi(GameState.CLASSES.keys().find(cls), 0))
 	_lobby_class_desc.text = GameState.class_desc(cls)
 
+## -- world selection --
+
+## Main menu (single player): one toggle button per world under the class
+## picker, with a dim one-line description. Persists via Settings/Net.
+func _build_world_picker() -> void:
+	if GameState.WORLDS.is_empty():
+		return
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	var group := ButtonGroup.new()
+	for id in GameState.WORLDS:
+		var button := Button.new()
+		button.toggle_mode = true
+		button.button_group = group
+		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(0, 36)
+		button.text = GameState.world_title(id)
+		button.add_theme_color_override("font_color", UITheme.TEXT_COLOR.lerp(_world_tint(id), 0.45))
+		button.pressed.connect(_on_world_picked.bind(id))
+		row.add_child(button)
+		_world_buttons[id] = button
+	_world_desc = Label.new()
+	_world_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_world_desc.add_theme_font_size_override("font_size", 14)
+	_world_desc.add_theme_color_override("font_color", UITheme.TEXT_DIM)
+	var menu := $Center/Menu
+	menu.add_child(row)
+	menu.move_child(row, $Center/Menu/Play.get_index())
+	menu.add_child(_world_desc)
+	menu.move_child(_world_desc, $Center/Menu/Play.get_index())
+
+## Lobby: one shared world, HOST-chosen — a dropdown the host drives; clients
+## see it read-only. The pick replicates through the host's Net registry entry.
+func _build_lobby_world_row() -> void:
+	if GameState.WORLDS.is_empty():
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var label := Label.new()
+	label.text = "World (host)"
+	row.add_child(label)
+	_lobby_world = OptionButton.new()
+	_lobby_world.focus_mode = Control.FOCUS_NONE
+	_lobby_world.custom_minimum_size = Vector2(160, 32)
+	for id in GameState.WORLDS:
+		_lobby_world.add_item(GameState.world_title(id))
+	_lobby_world.item_selected.connect(_on_lobby_world_picked)
+	row.add_child(_lobby_world)
+	_lobby.add_child(row)
+	_lobby.move_child(row, $Center/LobbyMenu/PlayersLabel.get_index())
+
+## Button tint from the world's accent ground color (lightened so midnight's
+## near-black still reads on a button face).
+func _world_tint(id: String) -> Color:
+	var def: Dictionary = GameState.world_def(id)
+	return Util.color_arr(def.get("ground_detail", def.get("ground_color")), Color.WHITE).lightened(0.35)
+
+func _on_world_picked(id: String) -> void:
+	Net.set_local_world(id)
+	_sync_world_ui()
+
+func _on_lobby_world_picked(index: int) -> void:
+	var ids: Array = GameState.WORLDS.keys()
+	if index >= 0 and index < ids.size():
+		Net.set_local_world(ids[index])
+	_sync_world_ui()
+
+## Reflect the effective world in both pickers: the host's replicated pick
+## while in an online lobby, the local persisted pick otherwise.
+func _sync_world_ui() -> void:
+	if _world_buttons.is_empty():
+		return
+	var wid: String = Net.local_world
+	if Net.is_online() and not Net.is_host():
+		wid = str(Net.players.get(1, {}).get("world", wid))
+	for id in _world_buttons:
+		_world_buttons[id].set_pressed_no_signal(id == wid)
+	_world_desc.text = GameState.world_desc(wid)
+	_lobby_world.select(maxi(GameState.WORLDS.keys().find(wid), 0))
+	_lobby_world.disabled = Net.is_online() and not Net.is_host()
+
 func _show_settings(show_settings: bool) -> void:
 	_menu.visible = not show_settings
 	_settings.visible = show_settings
@@ -150,6 +240,7 @@ func _show_lobby(show_lobby: bool) -> void:
 	if show_lobby:
 		_lobby_status.text = "Host a game or join by IP"
 		_sync_class_ui()
+		_sync_world_ui()
 		_refresh_lobby()
 
 func _on_host() -> void:
@@ -181,6 +272,8 @@ func _on_session_ended(reason: String) -> void:
 	_refresh_lobby()
 
 func _refresh_lobby() -> void:
+	## The host's world pick rides the registry; mirror it into the picker.
+	_sync_world_ui()
 	for child in _player_list.get_children():
 		child.queue_free()
 	for peer_id in Net.players:

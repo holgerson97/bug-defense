@@ -32,6 +32,14 @@ var local_class: String = "assault"
 ## (MP plan Phase 4). Offline runs ignore it (main.gd rolls its own).
 var run_seed: int = 0
 
+## Local world pick (persisted via Settings). HOST-scoped in co-op: only the
+## host's pick matters — it shows in the lobby via the host's registry entry
+## and rides the start RPC / late-join auth as `run_world`.
+var local_world: String = "grasslands"
+## World id for the current online run (set by the start RPC alongside the
+## seed; restarts keep it — _rpc_restart only rerolls the seed). "" offline.
+var run_world: String = ""
+
 ## True from the start RPC until the session drops: gates the late-join hold.
 var game_running := false
 ## Client: joined a running game; main.gd skips the normal ready handshake
@@ -59,6 +67,9 @@ func _ready() -> void:
 	local_class = Settings.player_class
 	if not GameState.CLASSES.has(local_class):
 		local_class = GameState.CLASSES.keys()[0]
+	local_world = Settings.world
+	if not GameState.WORLDS.is_empty() and not GameState.WORLDS.has(local_world):
+		local_world = "grasslands" if GameState.WORLDS.has("grasslands") else GameState.WORLDS.keys()[0]
 
 ## True offline (OfflineMultiplayerPeer acts as server) and when hosting.
 func is_host() -> bool:
@@ -77,7 +88,8 @@ func host(port := DEFAULT_PORT, max_players := MAX_PLAYERS) -> Error:
 	_peer = peer
 	multiplayer.multiplayer_peer = peer
 	var host_name := _os_name()
-	players[1] = {"name": host_name if host_name != "" else "Player 1", "color": PLAYER_COLORS[0], "class": local_class}
+	## "world" only rides the host's entry: the lobby's shared-world display.
+	players[1] = {"name": host_name if host_name != "" else "Player 1", "color": PLAYER_COLORS[0], "class": local_class, "world": local_world}
 	player_list_changed.emit()
 	return OK
 
@@ -102,15 +114,16 @@ func leave() -> void:
 	players.clear()
 	game_running = false
 	late_joining = false
+	run_world = ""
 	_waiting_auth.clear()
 	player_list_changed.emit()
 
 ## Host-only: everyone (host included) switches to the game scene, seeded
-## with one shared world-gen seed.
+## with one shared world-gen seed and the host's world pick.
 func start_game() -> void:
 	if not is_host():
 		return
-	_rpc_start_game.rpc(randi())
+	_rpc_start_game.rpc(randi(), local_world)
 
 ## OS username, "" if unavailable (host substitutes "Player N").
 func _os_name() -> String:
@@ -118,6 +131,30 @@ func _os_name() -> String:
 	if user == "":
 		user = OS.get_environment("USERNAME")
 	return user
+
+## World id for the current run: online the host's pick (rode the start RPC or
+## the late-join auth payload), offline the local menu pick. main.gd resolves
+## it through GameState.world_def at scene start.
+func world_id() -> String:
+	if is_online() and run_world != "":
+		return run_world
+	return local_world
+
+## Menu/lobby world pick. The world is HOST-scoped (one shared world per run):
+## the pick persists locally, and while hosting a pre-game lobby it rides the
+## host's registry entry so every client's lobby shows it. Clients never call
+## this from the lobby (their picker is read-only); their single-player pick
+## still persists for offline runs.
+func set_local_world(id: String) -> void:
+	if not GameState.WORLDS.has(id):
+		return
+	local_world = id
+	Settings.world = id
+	Settings.save_settings()
+	if is_online() and is_host() and not game_running and players.has(1):
+		players[1]["world"] = id
+		_broadcast_players()
+		player_list_changed.emit()
 
 ## Class id for a peer: registry entry when online, the local pick offline
 ## (single player runs with an empty registry). Missing key = assault.
@@ -169,7 +206,7 @@ func release_late_joiners() -> void:
 	if not multiplayer.is_server():
 		return
 	for id in _waiting_auth:
-		multiplayer.send_auth(id, var_to_bytes({"late": true, "seed": run_seed}))
+		multiplayer.send_auth(id, var_to_bytes({"late": true, "seed": run_seed, "world": run_world}))
 	_waiting_auth.clear()
 
 ## -- auth phase (late-join gate) --
@@ -198,6 +235,7 @@ func _on_auth_received(id: int, data: PackedByteArray) -> void:
 	elif msg.get("late", false):
 		late_joining = true
 		run_seed = msg.get("seed", 0)
+		run_world = str(msg.get("world", ""))
 		_finish_late_join()
 	else:
 		## Normal pre-game join: ack immediately.
@@ -288,7 +326,11 @@ func _rpc_sync_players(registry: Dictionary) -> void:
 	player_list_changed.emit()
 
 @rpc("authority", "call_local", "reliable")
-func _rpc_start_game(seed_value: int) -> void:
+func _rpc_start_game(seed_value: int, world_id := "") -> void:
 	run_seed = seed_value
+	## Host-chosen world for the whole run. An id missing from a client's
+	## balance.json degrades to the midnight fallback (world_def -> {}) —
+	## visual-only, same as any other balance divergence.
+	run_world = world_id
 	game_running = true
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
