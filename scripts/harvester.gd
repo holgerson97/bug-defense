@@ -42,13 +42,13 @@ func _physics_process(delta: float) -> void:
 			_to_base()
 
 func _to_mine(delta: float) -> void:
-	# Cached target; only re-scan the group about once a second when we have none.
-	if _target_deposit == null or not is_instance_valid(_target_deposit):
+	# Cached target; dropped when gone OR mined dry, re-scan about once a second.
+	if _target_deposit == null or not is_instance_valid(_target_deposit) or _target_deposit.is_empty():
 		_target_deposit = null
 		_rescan_accum += delta
 		if _rescan_accum >= RESCAN_INTERVAL:
 			_rescan_accum = 0.0
-			_target_deposit = Util.nearest_in_group(self, "gold_deposits", command_center.global_position, SEARCH_RANGE)
+			_target_deposit = _nearest_gold()
 	if _target_deposit == null:
 		_idle_orbit(delta)
 		return
@@ -61,8 +61,9 @@ func _to_mine(delta: float) -> void:
 
 func _mining(delta: float) -> void:
 	velocity = Vector2.ZERO
-	if _target_deposit == null or not is_instance_valid(_target_deposit):
+	if _target_deposit == null or not is_instance_valid(_target_deposit) or _target_deposit.is_empty():
 		_sprite.position = Vector2.ZERO
+		_target_deposit = null
 		_state = State.TO_MINE
 		return
 	_mine_accum += delta
@@ -71,6 +72,9 @@ func _mining(delta: float) -> void:
 	if _mine_accum >= mine_time:
 		_sprite.position = Vector2.ZERO
 		cargo = _target_deposit.extract(mine_amount)
+		# The bite that emptied the block: haul what we got, hunt elsewhere next.
+		if _target_deposit.is_empty():
+			_target_deposit = null
 		_state = State.TO_BASE
 
 func _to_base() -> void:
@@ -85,6 +89,19 @@ func _to_base() -> void:
 		_state = State.TO_MINE
 		return
 	_drive_toward(command_center.global_position)
+
+## Nearest gold block with ore left; empty husks are invisible to harvesters.
+func _nearest_gold():
+	var best = null
+	var best_dist := SEARCH_RANGE
+	for dep in get_tree().get_nodes_in_group("gold_deposits"):
+		if dep.is_empty():
+			continue
+		var dist: float = dep.global_position.distance_to(command_center.global_position)
+		if dist <= best_dist:
+			best_dist = dist
+			best = dep
+	return best
 
 ## No gold in range: slow lazy circle around the command center.
 func _idle_orbit(delta: float) -> void:

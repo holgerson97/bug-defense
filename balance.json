@@ -273,5 +273,24 @@
 		"command_center": {
 			"crew":        { "cost": { "scrap": 200 }, "effects": { "crew": 1.0 } }
 		}
+	},
+
+	"terrain": {
+		"_readme": "Procedural rock formations (deterministic per run seed). rock_cells_* are blob cell budgets - each cell is a 96px lattice square - for the chunk size classes (near chunks roll small/medium, mid medium/large, far large) and the guaranteed starter masses (huge). starter_rock_count huge formations ring the spawn at distinct angles, outside the 500px clearing.",
+		"rock_cells_small": 5,
+		"rock_cells_medium": 10,
+		"rock_cells_large": 28,
+		"rock_cells_huge": 48,
+		"starter_rock_count": 3
+	},
+
+	"resources": {
+		"_readme": "Finite ore. chunk_*_amount is the ore per chunk-seeded deposit block (crystal mineral lines, scattered gold). The starter area guarantees three crystal patches and one gold patch near the spawn - a patch is a tight arc of patch_blocks_min..patch_blocks_max blocks splitting starter_*_patch ore between them. Empty blocks dim to husks and stop yielding; miners on them idle without burning energy and harvesters hunt elsewhere.",
+		"chunk_crystal_amount": 800,
+		"chunk_gold_amount": 500,
+		"starter_crystal_patch": 3000,
+		"starter_gold_patch": 1000,
+		"patch_blocks_min": 4,
+		"patch_blocks_max": 6
 	}
 }

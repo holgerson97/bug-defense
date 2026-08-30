@@ -1,16 +1,25 @@
 extends StaticBody2D
 ## Indestructible organic rock mass: one jagged polygon per formation.
-## Silhouettes come from coarse 96px cell templates (block/L/U/S) traced into
-## a closed outline. Collision uses the raw trace — straight, axis-aligned,
-## every corner on a 32px multiple — so walls snapped to the build lattice
-## butt against rock with zero gap. Visuals subdivide + jitter INWARD only,
-## staying organic without ever crossing the collider.
+## Silhouettes are procedural blobs grown on a coarse 96px cell lattice —
+## seeded accretion with a compactness bias plus an optional carved notch —
+## traced into a closed outline. Collision uses the raw trace — straight,
+## axis-aligned, every corner on a 32px multiple — so walls snapped to the
+## build lattice butt against rock with zero gap. Visuals subdivide + jitter
+## INWARD only, staying organic without ever crossing the collider.
 ## Layer 16, mask 0 — blocks placement, enemies, player and bullets like ore,
 ## but has no health, no mining, and stays out of the "deposits" group.
 
 const CELL := 96.0
 const SUB_LEN := 40.0
 const JITTER := 10.0
+
+## Accretion weighting: frontier candidates score pow(GROW_BIAS, filled
+## neighbors), so pockets fill before tips extend — no long thin strands.
+const GROW_BIAS := 2.6
+## Chance to chew a notch into blobs big enough to take one (concavity).
+const NOTCH_CHANCE := 0.65
+
+const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 ## Palette lifted from assets/sprites/rock.svg (no longer used as a texture).
 const FILL := Color("6b6f78")
@@ -19,69 +28,192 @@ const FACET_LIGHT := Color("8a8f99")
 const FACET_MID := Color("5d616a")
 const FACET_DARK := Color("4c4f56")
 
-## Coarse silhouettes as cell offsets; spun + mirrored per instance. None of
-## these touch diagonally-only, so the boundary trace is a single loop.
-const SHAPES := [
-	[Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)], # 2x2 block
-	[Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)], # 3x2 block
-	[Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2)], # 4x3 block
-	[Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3)], # L
-	[Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(3, 1), Vector2i(3, 0)], # U
-	[Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(1, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)], # S
-]
-## U template index; its opening faces up at spin 0, then right/down/left.
-const SHAPE_U := 4
-
-## Cell-count bbox of a template (before spin/mirror); spawners use it to
-## check which shapes fit a chunk at a given cell_scale.
-static func shape_cell_dims(idx: int) -> Vector2i:
-	var mn := Vector2i(SHAPES[idx][0])
-	var mx := mn
-	for c in SHAPES[idx]:
-		mn = Vector2i(mini(mn.x, c.x), mini(mn.y, c.y))
-		mx = Vector2i(maxi(mx.x, c.x), maxi(mx.y, c.y))
-	return mx - mn + Vector2i.ONE
-
 var outline := PackedVector2Array()
 ## Raw traced silhouette: straight segments, corners on 32px multiples.
 var collider := PackedVector2Array()
-## 32px lattice cell offsets covered by the silhouette (each template cell is
-## an exact (3*cell_scale)^2 block); _register_nav shifts them to world cells.
+## 32px lattice cell offsets covered by the silhouette (each blob cell is an
+## exact 3x3 block); _register_nav shifts them to world cells.
 var nav_local: Array[Vector2i] = []
 ## Local-space bbox of the collider; spawner reads it for placement checks.
 var bounds := Rect2()
 
 ## Spawner calls this before add_child, then checks `bounds` before placing.
-## `shape_index`/`spin` >= 0 force a template and orientation (starter U
-## pocket); a forced spin skips the mirror so the opening maps predictably.
-## `cell_scale` (int, 1 = 96px, 2 = 192px per template cell) grows the whole
-## silhouette; integer multiples keep every corner on a 32px multiple, so the
-## lattice invariant holds at any size. Visual subdivide/jitter is unchanged.
-func generate(shape_index := -1, spin := -1, cell_scale := 1) -> void:
-	cell_scale = maxi(1, cell_scale)
-	var shape: Array = SHAPES[shape_index if shape_index >= 0 else randi() % SHAPES.size()]
-	var mirror := spin < 0 and randf() < 0.5
-	if spin < 0:
-		spin = randi() % 4
-	var cells := {}
-	for c in shape:
-		var v: Vector2i = c
-		if mirror:
-			v = Vector2i(-v.x, v.y)
-		for r in spin:
-			v = Vector2i(-v.y, v.x)
-		cells[v] = true
-	collider = _trace(cells, CELL * cell_scale)
+## `cell_budget` is the number of 96px lattice cells the blob grows toward
+## (the size classes under balance "terrain"). Every draw comes from the
+## GLOBAL RNG, so the caller's seeded stream (main._seed_chunk / the starter
+## seed) makes each blob deterministic per run seed while every rock stays
+## unique. The blob is healed to a single boundary loop (holes filled,
+## diagonal-only contacts bridged — the trace's invariant), and all corners
+## stay on the 96px (a multiple of 32px) lattice, so the wall-butting
+## invariant holds at any size. A bbox span cap of ~sqrt(budget)+2 cells
+## keeps blobs compact enough for the spawner's chunk-fit check.
+func generate(cell_budget := 10) -> void:
+	var cells := _grow_blob(maxi(2, cell_budget))
+	_carve_notch(cells)
+	collider = _trace(cells, CELL)
 	outline = _jitter(_subdivide(collider))
 	nav_local.clear()
-	var lat := 3 * cell_scale
 	for c in cells:
-		for dy in lat:
-			for dx in lat:
-				nav_local.append(Vector2i(c) * lat + Vector2i(dx, dy))
+		for dy in 3:
+			for dx in 3:
+				nav_local.append(Vector2i(c) * 3 + Vector2i(dx, dy))
 	bounds = Rect2(collider[0], Vector2.ZERO)
 	for p in collider:
 		bounds = bounds.expand(p)
+
+## Seeded accretion on the cell lattice: start at the origin and repeatedly
+## claim a frontier cell, weighted toward candidates already hugged by filled
+## neighbors. Candidates that would stretch the bbox past the span cap score
+## zero (kept in place so weight indices stay aligned with the frontier).
+func _grow_blob(budget: int) -> Dictionary:
+	var span := int(ceil(sqrt(float(budget)))) + 2
+	var cells := {Vector2i.ZERO: true}
+	var lo := Vector2i.ZERO
+	var hi := Vector2i.ZERO
+	var frontier: Array[Vector2i] = DIRS.duplicate()
+	while cells.size() < budget:
+		var weights := PackedFloat64Array()
+		var total := 0.0
+		for c in frontier:
+			var w := pow(GROW_BIAS, float(_filled_neighbors(cells, c)))
+			if maxi(hi.x, c.x) - mini(lo.x, c.x) >= span or maxi(hi.y, c.y) - mini(lo.y, c.y) >= span:
+				w = 0.0
+			weights.append(w)
+			total += w
+		if total <= 0.0:
+			break
+		var roll := randf() * total
+		var idx := -1
+		for i in frontier.size():
+			if weights[i] <= 0.0:
+				continue
+			idx = i
+			roll -= weights[i]
+			if roll <= 0.0:
+				break
+		var pick := frontier[idx]
+		frontier.remove_at(idx)
+		cells[pick] = true
+		lo = Vector2i(mini(lo.x, pick.x), mini(lo.y, pick.y))
+		hi = Vector2i(maxi(hi.x, pick.x), maxi(hi.y, pick.y))
+		for d in DIRS:
+			var nb := pick + d
+			if not cells.has(nb) and not frontier.has(nb):
+				frontier.append(nb)
+	_heal(cells)
+	return cells
+
+func _filled_neighbors(cells: Dictionary, c: Vector2i) -> int:
+	var n := 0
+	for d in DIRS:
+		if cells.has(c + d):
+			n += 1
+	return n
+
+## Post-growth repair until stable: bridge diagonal-only contacts and fill
+## enclosed holes — either would split the boundary into multiple loops and
+## break the single-walk trace. Each fix only ADDS cells, so it terminates.
+func _heal(cells: Dictionary) -> void:
+	for i in 4:
+		var changed := _bridge_diagonals(cells)
+		changed = _fill_holes(cells) or changed
+		if not changed:
+			return
+
+func _bridge_diagonals(cells: Dictionary) -> bool:
+	var changed := false
+	var again := true
+	while again:
+		again = false
+		for c in cells.keys():
+			var v: Vector2i = c
+			for d in [Vector2i(1, 1), Vector2i(1, -1)]:
+				if cells.has(v + d) and not cells.has(v + Vector2i(d.x, 0)) and not cells.has(v + Vector2i(0, d.y)):
+					cells[v + Vector2i(d.x, 0)] = true
+					again = true
+					changed = true
+	return changed
+
+## Flood the OUTSIDE of the padded bbox over empty cells; whatever empty cell
+## the flood can't reach is an enclosed hole and gets filled.
+func _fill_holes(cells: Dictionary) -> bool:
+	var lo: Vector2i = cells.keys()[0]
+	var hi := lo
+	for c in cells:
+		lo = Vector2i(mini(lo.x, c.x), mini(lo.y, c.y))
+		hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
+	lo -= Vector2i.ONE
+	hi += Vector2i.ONE
+	var outside := {lo: true}
+	var stack: Array[Vector2i] = [lo]
+	while not stack.is_empty():
+		var c: Vector2i = stack.pop_back()
+		for d in DIRS:
+			var nb := c + d
+			if nb.x < lo.x or nb.y < lo.y or nb.x > hi.x or nb.y > hi.y:
+				continue
+			if cells.has(nb) or outside.has(nb):
+				continue
+			outside[nb] = true
+			stack.append(nb)
+	var changed := false
+	for y in range(lo.y, hi.y + 1):
+		for x in range(lo.x, hi.x + 1):
+			var c := Vector2i(x, y)
+			if not cells.has(c) and not outside.has(c):
+				cells[c] = true
+				changed = true
+	return changed
+
+## Concavity variety: from a random boundary face, chew a straight line of
+## cells inward. Every removal is validated (blob must stay one 4-connected
+## mass with no diagonal-only contacts); an invalid bite reverts and stops.
+func _carve_notch(cells: Dictionary) -> void:
+	if cells.size() < 8 or randf() >= NOTCH_CHANCE:
+		return
+	var dir: Vector2i = DIRS[randi() % DIRS.size()]
+	var faces: Array[Vector2i] = []
+	for c in cells:
+		var v: Vector2i = c
+		if not cells.has(v - dir):
+			faces.append(v)
+	if faces.is_empty():
+		return
+	var cur: Vector2i = faces[randi() % faces.size()]
+	@warning_ignore("integer_division")
+	var depth := maxi(1, cells.size() / 6)
+	for i in depth:
+		if not cells.has(cur):
+			return
+		cells.erase(cur)
+		if not _valid_cells(cells):
+			cells[cur] = true
+			return
+		cur += dir
+
+## Single 4-connected mass with no diagonal-only contact — the invariant the
+## one-loop boundary trace needs.
+func _valid_cells(cells: Dictionary) -> bool:
+	if cells.is_empty():
+		return false
+	var start: Vector2i = cells.keys()[0]
+	var seen := {start: true}
+	var stack: Array[Vector2i] = [start]
+	while not stack.is_empty():
+		var c: Vector2i = stack.pop_back()
+		for d in DIRS:
+			var nb := c + d
+			if cells.has(nb) and not seen.has(nb):
+				seen[nb] = true
+				stack.append(nb)
+	if seen.size() != cells.size():
+		return false
+	for c in cells:
+		var v: Vector2i = c
+		for d in [Vector2i(1, 1), Vector2i(1, -1)]:
+			if cells.has(v + d) and not cells.has(v + Vector2i(d.x, 0)) and not cells.has(v + Vector2i(0, d.y)):
+				return false
+	return true
 
 func _ready() -> void:
 	if outline.is_empty():
@@ -103,7 +235,7 @@ func _ready() -> void:
 	add_child(col)
 	_register_nav()
 
-## Anchors snap to the 32px lattice, so the template's 3x3 lattice blocks map
+## Anchors snap to the 32px lattice, so the blob's 3x3 lattice blocks map
 ## straight onto NavGrid cells — arithmetic, no polygon sampling. One-time per
 ## formation; freed on tree exit so map regens stay clean.
 func _register_nav() -> void:
@@ -125,8 +257,9 @@ func _register_nav() -> void:
 		NavGrid.release_rock_rect(key))
 
 ## Walk the cell-set boundary clockwise; corners tracked in cell-corner space
-## so dictionary keys match exactly. Each corner starts at most one edge.
-## `cell_px` is the world size of one template cell (CELL * cell_scale).
+## so dictionary keys match exactly. Each corner starts at most one edge
+## (guaranteed by _heal: no holes, no diagonal-only contacts).
+## `cell_px` is the world size of one blob cell (CELL).
 func _trace(cells: Dictionary, cell_px: float) -> PackedVector2Array:
 	var next := {}
 	for c in cells:

@@ -1,16 +1,43 @@
 extends StaticBody2D
-## Ore deposit: an infinite mineral block. Crystal chips into the player's
-## stash when shot and feeds Miners; gold ignores bullets and is mined only
-## by Harvesters trained at the Command Center.
+## Ore deposit: a FINITE mineral block. Crystal chips into the shared pool
+## when shot and feeds Miners; gold ignores bullets and is mined only by
+## Harvesters trained at the Command Center. At 0 the block dims to a husk
+## (label "empty"), stops yielding and stays in the world — collision and
+## NavGrid registration unchanged — as visible depletion history.
+##
+## CO-OP: spawn amounts are deterministic world gen (identical on every
+## peer); DEPLETION is runtime state owned by the HOST. Clients never
+## decrement — the host batches remaining amounts through main.gd's
+## position-keyed deposit mirror (mark_deposit_dirty -> _rpc_sync_deposits),
+## and a client bullet chip routes up as a position-keyed intent
+## (main._rpc_chip_deposit). Position-keyed because deposit node paths are
+## chunk-seeding-order dependent and can't carry RPCs themselves — same
+## reasoning as build_controller's miner placement RPC.
 
 @export var kind: String = "crystal"
 @export var chips_on_bullet: bool = true
 
+## Crystal chipped loose per bullet hit.
+const CHIP_AMOUNT := 2
+const EMPTY_TINT := Color(0.42, 0.42, 0.48, 0.9)
+
 var has_miner: bool = false
+## Remaining ore. Spawners may assign a share BEFORE add_child (starter
+## patches); -1 resolves to the per-kind chunk default on ready.
+var amount: int = -1
+## Spawn-time amount; the late-join mirror only replays changed deposits.
+var initial_amount: int = 0
 
 func _ready() -> void:
-	$AmountLabel.text = "∞"
+	if amount < 0:
+		amount = maxi(Balance.inum("resources/chunk_%s_amount" % kind,
+			800 if kind == "crystal" else 500), 1)
+	initial_amount = amount
+	_refresh()
 	_register_nav()
+
+func is_empty() -> bool:
+	return amount <= 0
 
 ## Deposits block enemies physically (layer 16), so their cells must be
 ## impassable in the NavGrid too or A* paths straight through mineral lines.
@@ -23,10 +50,48 @@ func _register_nav() -> void:
 	NavGrid.occupy_cells(cells, NavGrid.KIND_ROCK)
 	tree_exited.connect(func(): NavGrid.release_cells(cells))
 
-func take_damage(_amount: int) -> void:
-	if chips_on_bullet:
-		GameState.add_resource(kind, extract(2))
+## Bullet chipping. Host/offline extracts directly; a client only sends the
+## intent (a local decrement would double-bank and drift off the mirror).
+func take_damage(_damage: int) -> void:
+	if not chips_on_bullet or is_empty():
+		return
+	if Net.is_online() and not Net.is_host():
+		var main = get_tree().current_scene
+		if main != null and main.has_method("_rpc_chip_deposit"):
+			main._rpc_chip_deposit.rpc_id(1, global_position)
+		return
+	GameState.add_resource(kind, extract(CHIP_AMOUNT))
 
-## Infinite for now: always yields the full requested amount.
-func extract(amount: int) -> int:
-	return amount
+## Yields min(requested, remaining). Only the host (or offline) decrements;
+## clients read their mirrored remainder so visuals stay sane between syncs.
+func extract(requested: int) -> int:
+	if is_empty():
+		return 0
+	var taken := mini(requested, amount)
+	if Net.is_online() and not Net.is_host():
+		return taken
+	_set_amount(amount - taken)
+	return taken
+
+func _set_amount(value: int) -> void:
+	value = maxi(value, 0)
+	if value == amount:
+		return
+	amount = value
+	_refresh()
+	## Host: queue this deposit for the batched remaining-amount mirror.
+	if Net.is_online() and Net.is_host():
+		var main = get_tree().current_scene
+		if main != null and main.has_method("mark_deposit_dirty"):
+			main.mark_deposit_dirty(self)
+
+## Client: authoritative remainder from the host's mirror.
+func set_remote_amount(value: int) -> void:
+	amount = maxi(value, 0)
+	_refresh()
+
+## Label + husk dimming. Only the Body sprite dims: an attached miner is a
+## CHILD of this node, so a whole-node modulate would swallow its power tint.
+func _refresh() -> void:
+	$AmountLabel.text = str(amount) if amount > 0 else "empty"
+	$Body.modulate = EMPTY_TINT if amount <= 0 else Color(1, 1, 1)

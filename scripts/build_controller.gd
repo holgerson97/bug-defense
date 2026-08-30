@@ -126,7 +126,7 @@ func tick(selected: String) -> void:
 func _try_place_miner() -> void:
 	var mouse := get_global_mouse_position()
 	var target = Util.nearest_in_group(self, "deposits", mouse, MINER_PLACE_RANGE)
-	if target == null or target.has_miner:
+	if target == null or target.has_miner or target.is_empty():
 		return
 	## Online clients send the deposit POSITION as the intent key: generated
 	## deposits have order-dependent node names (paths differ per peer), but
@@ -139,7 +139,7 @@ func _try_place_miner() -> void:
 ## Host/offline: resolve the deposit by position, pay, attach, replicate.
 func _place_miner_at(deposit_pos: Vector2) -> void:
 	var target = Util.nearest_in_group(self, "deposits", deposit_pos, 16.0)
-	if target == null or target.has_miner:
+	if target == null or target.has_miner or target.is_empty():
 		return
 	if not GameState.spend(GameState.BUILDINGS["miner"]["cost"]):
 		return

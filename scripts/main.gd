@@ -21,10 +21,10 @@ const ROCK_EDGE_MARGIN := 48.0
 const ROCK_ATTEMPTS := 4
 
 ## ---- Distance tiers (chunk center -> PLAYER_SPAWN): farther = bigger + denser.
-## dist        | rock chance | formations   | cell_scale        | crystals | gold
-## < 1500px    | 0.60        | 1            | 1                 | 5-8      | 30%, 1-2
-## 1500-4000px | 0.70        | 2nd @ 25%    | 1 (65%) / 2 (35%) | 5-8      | 30%, 1-2
-## > 4000px    | 0.80        | 1-2          | 2 (~380-800px)    | 7-10     | 45%, pair @ 75%
+## dist        | rock chance | formations   | blob size           | crystals | gold
+## < 1500px    | 0.60        | 1            | small/medium 50/50  | 5-8      | 30%, 1-2
+## 1500-4000px | 0.70        | 2nd @ 25%    | medium / large @35% | 5-8      | 30%, 1-2
+## > 4000px    | 0.80        | 1-2          | large               | 7-10     | 45%, pair @ 75%
 const TIER_MID_DIST := 1500.0
 const TIER_FAR_DIST := 4000.0
 const MID_ROCK_CHANCE := 0.70
@@ -41,14 +41,25 @@ const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const PLAYER_SPAWN := Vector2(1280, 720)
 const SPAWN_SPACING := 56.0
 
-## Guaranteed starter kit (U rock pocket, mineral line, gold) fits in this ring.
-const STARTER_RADIUS := 600.0
+## Guaranteed starter terrain: nothing spawns inside this circle around the
+## spawn fan; three huge rock masses and the starter patches ring it.
+const SPAWN_CLEARING := 500.0
+const STARTER_ROCK_DIST_MIN := 600.0
+const STARTER_ROCK_DIST_MAX := 1000.0
+const STARTER_PATCH_DIST_MIN := 520.0
+const STARTER_PATCH_DIST_MAX := 900.0
+## Starter patches keep this much off rocks and each other (visual identity:
+## three distinct crystal patches, not one smeared field).
+const STARTER_PATCH_CLEARANCE := 120.0
+
+## Host -> clients: batched remaining-amount mirror flush cadence (deposit
+## depletion is host-authoritative runtime state; see deposit.gd header).
+const DEPOSIT_SYNC_INTERVAL := 0.5
 
 var score: int = 0
 var deposit_scene: PackedScene = preload("res://scenes/crystal_deposit.tscn")
 var gold_deposit_scene: PackedScene = preload("res://scenes/gold_deposit.tscn")
 var rock_scene: PackedScene = preload("res://scenes/rock.tscn")
-const Rock := preload("res://scripts/rock.gd")
 const BuildController := preload("res://scripts/build_controller.gd")
 const HiveSite := preload("res://scripts/hive_site.gd")
 
@@ -63,6 +74,10 @@ var _ready_peers: Dictionary = {}
 var _players_spawned := false
 ## Rock modulate from the selected world (boulders in grass); white = classic.
 var _rock_tint := Color(1, 1, 1)
+## Host: deposits with a changed remaining amount, awaiting the next mirror
+## flush (instance id -> deposit node).
+var _dirty_deposits: Dictionary = {}
+var _deposit_sync_accum := 0.0
 
 @onready var _players: Node2D = $Players
 @onready var _spawner: MultiplayerSpawner = $PlayerSpawner
@@ -106,8 +121,9 @@ func _ready() -> void:
 	_seed_starter_area()
 	_spawn_or_report()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_seed_chunks_around_players()
+	_flush_deposit_sync(delta)
 
 ## Offline: one local player, exactly where the old static node sat. Online:
 ## clients report their scene loaded; the host spawns one player per peer once
@@ -174,63 +190,122 @@ func _spawn_building_node(data: Array) -> Node:
 	Sfx.play("place", data[1])
 	return building
 
-## Guaranteed base kit near the spawn: one U rock pocket (opening spun toward
-## the spawn), one crystal mineral line and one gold deposit, inside
-## STARTER_RADIUS and outside the 200px clearance. Runs once in _ready; the
-## affected chunks still seed normally later but respect `_starter_rects`, so
-## nothing stacks. Like all world gen this runs per instance (host and clients
-## independently); deterministic shared gen is MP plan Phase 4.
+## Guaranteed starter terrain near the spawn, all outside the SPAWN_CLEARING
+## circle: three huge fully-random rock masses at distinct angles, three
+## crystal patches (starter_crystal_patch total each) and one gold patch
+## (starter_gold_patch total), none overlapping each other or the clearing.
+## Runs once in _ready inside the run-seed stream; the affected chunks still
+## seed normally later but respect `_starter_rects`, so nothing stacks.
 func _seed_starter_area() -> void:
-	_seed_starter_rock()
-	_seed_starter_crystals()
-	_seed_starter_gold()
+	_seed_starter_rocks()
+	var crystal_total := Balance.inum("resources/starter_crystal_patch", 3000)
+	var gold_total := Balance.inum("resources/starter_gold_patch", 1000)
+	for i in 3:
+		_seed_starter_patch(deposit_scene, crystal_total)
+	_seed_starter_patch(gold_deposit_scene, gold_total)
 
-## Forced U template, anchor snapped to the build lattice like chunk rocks.
-func _seed_starter_rock() -> void:
-	for attempt in 24:
-		var dir := Vector2.from_angle(randf() * TAU)
-		var center := PLAYER_SPAWN + dir * randf_range(430.0, STARTER_RADIUS - 40.0)
-		var rock = rock_scene.instantiate()
-		## Scale 2: a roomy 384px U pocket the starter base actually fits in.
-		rock.generate(rock.SHAPE_U, _u_spin(-dir), 2)
-		var bounds: Rect2 = rock.bounds
-		var anchor := (center - bounds.get_center()).snapped(Vector2(ROCK_TILE, ROCK_TILE))
-		var rect := Rect2(anchor + bounds.position, bounds.size)
-		if rect.grow(DEPOSIT_PLAYER_CLEARANCE).has_point(PLAYER_SPAWN):
-			rock.free()
-			continue
-		rock.position = anchor
-		rock.modulate = _rock_tint
-		add_child(rock)
-		_starter_rects.append(rect)
-		return
-
-## Spin (0-3) that points the U opening (up at spin 0) along `dir`.
-func _u_spin(dir: Vector2) -> int:
-	if absf(dir.x) > absf(dir.y):
-		return 1 if dir.x > 0.0 else 3
-	return 2 if dir.y > 0.0 else 0
-
-func _seed_starter_crystals() -> void:
-	for attempt in 24:
-		var center := PLAYER_SPAWN + Vector2.from_angle(randf() * TAU) \
-			* randf_range(300.0, STARTER_RADIUS - CLUSTER_ARC_RADIUS)
-		var rect := _try_crystal_line(center, [])
-		if rect.has_area():
+## Three "huge"-budget blobs fanned around the spawn at distinct angles
+## (evenly split thirds with jitter), anchors snapped to the build lattice
+## like chunk rocks. Bigger than any chunk formation — early landmarks.
+func _seed_starter_rocks() -> void:
+	var count := maxi(Balance.inum("terrain/starter_rock_count", 3), 0)
+	var base_angle := randf() * TAU
+	for i in count:
+		for attempt in 24:
+			var angle := base_angle + TAU * float(i) / maxf(float(count), 1.0) \
+				+ randf_range(-0.35, 0.35)
+			## Late attempts push the ring outward: a third pointing along the
+			## multiplayer spawn fan can't clear 500px within the base ring.
+			var dist := randf_range(STARTER_ROCK_DIST_MIN, STARTER_ROCK_DIST_MAX) \
+				if attempt < 8 else randf_range(900.0, 1400.0)
+			var center := PLAYER_SPAWN + Vector2.from_angle(angle) * dist
+			var rock = rock_scene.instantiate()
+			rock.generate(_rock_budget("huge", 48))
+			var bounds: Rect2 = rock.bounds
+			var anchor := (center - bounds.get_center()).snapped(Vector2(ROCK_TILE, ROCK_TILE))
+			var rect := Rect2(anchor + bounds.position, bounds.size)
+			if not _clears_spawn(rock, anchor) \
+					or _overlaps_rects(rect.grow(ROCK_DEPOSIT_CLEARANCE), _starter_rects):
+				rock.free()
+				continue
+			rock.position = anchor
+			rock.modulate = _rock_tint
+			add_child(rock)
 			_starter_rects.append(rect)
-			return
+			break
 
-func _seed_starter_gold() -> void:
-	for attempt in 24:
-		var pos := PLAYER_SPAWN + Vector2.from_angle(randf() * TAU) \
-			* randf_range(DEPOSIT_PLAYER_CLEARANCE + 40.0, STARTER_RADIUS)
-		if not _deposit_pos_clear(pos, []):
+## One starter mineral patch: a tight 4-6 block arc (same geometry as chunk
+## mineral lines) whose blocks split `total` ore between them.
+func _seed_starter_patch(scene: PackedScene, total: int) -> void:
+	var blocks := randi_range(Balance.inum("resources/patch_blocks_min", 4),
+		Balance.inum("resources/patch_blocks_max", 6))
+	blocks = maxi(blocks, 1)
+	var base := int(float(total) / float(blocks))
+	var extra := total - base * blocks
+	for attempt in 96:
+		## Graceful degradation when the ring is crowded by the huge rocks:
+		## later attempts widen the ring, then relax the patch separation —
+		## a guaranteed starter patch beats pretty spacing.
+		var dist_max := STARTER_PATCH_DIST_MAX if attempt < 32 else 1100.0
+		var clearance := STARTER_PATCH_CLEARANCE if attempt < 64 else ROCK_DEPOSIT_CLEARANCE
+		var center := PLAYER_SPAWN + Vector2.from_angle(randf() * TAU) \
+			* randf_range(STARTER_PATCH_DIST_MIN, dist_max)
+		var positions := _patch_positions(center, blocks, clearance)
+		if positions.is_empty():
 			continue
-		var deposit = gold_deposit_scene.instantiate()
-		deposit.global_position = pos
-		add_child(deposit)
-		_starter_rects.append(Rect2(pos, Vector2.ZERO).grow(24.0))
+		var rect := Rect2(positions[0], Vector2.ZERO)
+		for j in positions.size():
+			rect = rect.expand(positions[j])
+			var deposit = scene.instantiate()
+			## First `extra` blocks carry the division remainder, so the patch
+			## sums to `total` exactly.
+			deposit.amount = base + (1 if j < extra else 0)
+			deposit.global_position = positions[j]
+			add_child(deposit)
+		_starter_rects.append(rect.grow(16.0))
 		return
+
+## Arc positions for a starter patch (mirrors _try_crystal_line's geometry);
+## empty when any block would land in the clearing or a starter rect.
+func _patch_positions(center: Vector2, count: int, clearance: float) -> Array[Vector2]:
+	var step := CLUSTER_SPACING / CLUSTER_ARC_RADIUS
+	var facing := randf() * TAU
+	var arc_center := center + Vector2.from_angle(facing) * CLUSTER_ARC_RADIUS
+	var out: Array[Vector2] = []
+	for i in count:
+		var a := facing + PI + (float(i) - float(count - 1) / 2.0) * step
+		var pos := arc_center + Vector2.from_angle(a) * CLUSTER_ARC_RADIUS \
+			+ Vector2(randf_range(-CLUSTER_JITTER, CLUSTER_JITTER), randf_range(-CLUSTER_JITTER, CLUSTER_JITTER))
+		if not _starter_pos_clear(pos, clearance):
+			return []
+		out.append(pos)
+	return out
+
+func _starter_pos_clear(pos: Vector2, clearance: float) -> bool:
+	for p in _spawn_fan_points():
+		if pos.distance_to(p) < SPAWN_CLEARING:
+			return false
+	for rect in _starter_rects:
+		if rect.grow(clearance).has_point(pos):
+			return false
+	return true
+
+## True when every spawn-fan point keeps SPAWN_CLEARING px away from the
+## rock's actual silhouette. Polygon distance, not bbox: a huge diagonal
+## blob's bbox corners are empty space and a bbox test would starve the
+## placement ring of valid spots.
+func _clears_spawn(rock, anchor: Vector2) -> bool:
+	var poly: PackedVector2Array = rock.collider
+	var n := poly.size()
+	for p in _spawn_fan_points():
+		var local: Vector2 = p - anchor
+		if Geometry2D.is_point_in_polygon(local, poly):
+			return false
+		for i in n:
+			if Geometry2D.get_closest_point_to_segment(local, poly[i], poly[(i + 1) % n]) \
+					.distance_to(local) < SPAWN_CLEARING:
+				return false
+	return true
 
 ## Endless map: lazily sprinkle crystal blocks into chunks near every player.
 func _seed_chunks_around_players() -> void:
@@ -264,10 +339,12 @@ func _seed_chunk(chunk: Vector2i) -> void:
 		elif mid and randf() < MID_SECOND_ROCK_CHANCE:
 			count = 2
 		for i in count:
-			var rock_scale := 1
+			var budget := _rock_budget("medium", 10)
 			if far or (mid and randf() < MID_SCALE2_CHANCE):
-				rock_scale = 2
-			var rect := _place_rock_formation(chunk, rock_rects, rock_scale)
+				budget = _rock_budget("large", 28)
+			elif not mid and randf() < 0.5:
+				budget = _rock_budget("small", 5)
+			var rect := _place_rock_formation(chunk, rock_rects, budget)
 			if rect.has_area():
 				rock_rects.append(rect)
 	if randf() < CLUSTER_CHUNK_CHANCE:
@@ -324,26 +401,23 @@ func _hive_site_clear(center: Vector2, rock_rects: Array[Rect2]) -> bool:
 			return false
 	return true
 
-## One large organic mass. The rock generates its own outline; we pick an
-## anchor snapped to the 32px build lattice (so walls butt up cleanly) that
-## keeps the outline bbox inside the chunk, and reject on player/starter/rock
-## overlap. `cell_scale` doubles the template cell (96 -> 192px); only shapes
-## whose scaled bbox fits the chunk-with-margins are drawn from, and if none
-## fit the scale clamps back to 1. Returns the world-space outline bbox, or a
-## zero Rect2 if no spot worked.
-func _place_rock_formation(chunk: Vector2i, existing: Array[Rect2], cell_scale := 1) -> Rect2:
+## One large organic mass. The rock grows its own unique blob silhouette
+## (`budget` cells, from the seeded stream); we pick an anchor snapped to the
+## 32px build lattice (so walls butt up cleanly) that keeps the outline bbox
+## inside the chunk, and reject on player/starter/rock overlap. Rock.generate's
+## internal span cap keeps standard budgets chunk-sized; an oversized blob
+## (cranked balance knob) just frees and retries, worst case no rock. Returns
+## the world-space outline bbox, or a zero Rect2 if no spot worked.
+func _place_rock_formation(chunk: Vector2i, existing: Array[Rect2], budget: int) -> Rect2:
 	var origin := Vector2(chunk) * CHUNK_SIZE
 	var chunk_rect := Rect2(origin, Vector2(CHUNK_SIZE, CHUNK_SIZE)).grow(-ROCK_EDGE_MARGIN)
-	var fit := _fitting_shapes(chunk_rect.size, cell_scale)
-	if fit.is_empty():
-		cell_scale = 1
-		fit = _fitting_shapes(chunk_rect.size, cell_scale)
-	if fit.is_empty():
-		return Rect2()
 	for attempt in ROCK_ATTEMPTS:
 		var rock = rock_scene.instantiate()
-		rock.generate(fit.pick_random(), -1, cell_scale)
+		rock.generate(budget)
 		var bounds: Rect2 = rock.bounds
+		if bounds.size.x > chunk_rect.size.x or bounds.size.y > chunk_rect.size.y:
+			rock.free()
+			continue
 		var slack := chunk_rect.size - bounds.size
 		var anchor: Vector2 = chunk_rect.position - bounds.position \
 			+ Vector2(randf() * slack.x, randf() * slack.y)
@@ -359,15 +433,9 @@ func _place_rock_formation(chunk: Vector2i, existing: Array[Rect2], cell_scale :
 		return rect
 	return Rect2()
 
-## Template indices whose scaled bbox fits `avail` in any spin (avail is the
-## square chunk-with-margins, so the longest side is the only thing to check).
-func _fitting_shapes(avail: Vector2, cell_scale: int) -> Array[int]:
-	var out: Array[int] = []
-	for i in Rock.SHAPES.size():
-		var dims: Vector2i = Rock.shape_cell_dims(i)
-		if float(maxi(dims.x, dims.y)) * Rock.CELL * cell_scale <= minf(avail.x, avail.y):
-			out.append(i)
-	return out
+## Blob cell budget for a size class ("terrain" balance section).
+func _rock_budget(size: String, fallback: int) -> int:
+	return maxi(Balance.inum("terrain/rock_cells_%s" % size, fallback), 2)
 
 func _overlaps_rects(rect: Rect2, rects: Array[Rect2]) -> bool:
 	for r in rects:
@@ -569,6 +637,7 @@ func spawn_late_joiner(peer_id: int) -> void:
 		_wave_manager._remaining_dirty = true
 	_sync_building_hp(peer_id)
 	_replay_miners(peer_id)
+	_replay_deposit_amounts(peer_id)
 
 ## Late join: spawner catch-up rebuilds buildings at FULL health (the spawn
 ## payload is fixed at spawn time), so pre-damaged HP ships as one batched RPC.
@@ -603,3 +672,70 @@ func _replay_miners(peer_id: int) -> void:
 	for deposit in get_tree().get_nodes_in_group("deposits"):
 		if deposit.has_miner:
 			controller._rpc_spawn_miner.rpc_id(peer_id, deposit.global_position)
+
+## -- Finite deposits: host-authoritative depletion mirror --
+## World-gen amounts are deterministic on every peer; only the host mutates
+## them afterwards (miners/harvesters/chips run their real extraction on the
+## host). Changed deposits queue here and flush as one position-keyed batch
+## every DEPOSIT_SYNC_INTERVAL — positions because deposit node paths are
+## seeding-order dependent (same key scheme as the miner placement RPC).
+
+## Called by deposits on the host whenever their remaining amount changes.
+func mark_deposit_dirty(deposit) -> void:
+	_dirty_deposits[deposit.get_instance_id()] = deposit
+
+func _flush_deposit_sync(delta: float) -> void:
+	if _dirty_deposits.is_empty():
+		return
+	_deposit_sync_accum += delta
+	if _deposit_sync_accum < DEPOSIT_SYNC_INTERVAL:
+		return
+	_deposit_sync_accum = 0.0
+	var batch: Array = []
+	for id in _dirty_deposits:
+		var deposit = _dirty_deposits[id]
+		if is_instance_valid(deposit):
+			batch.append([deposit.global_position, deposit.amount])
+	_dirty_deposits.clear()
+	if not batch.is_empty():
+		_rpc_sync_deposits.rpc(batch)
+
+## Host -> clients: [position, remaining] per changed deposit.
+@rpc("authority", "call_remote", "reliable")
+func _rpc_sync_deposits(batch: Array) -> void:
+	for entry in batch:
+		var deposit = _deposit_at(entry[0])
+		if deposit != null:
+			deposit.set_remote_amount(int(entry[1]))
+
+func _deposit_at(pos: Vector2):
+	var deposit = Util.nearest_in_group(self, "deposits", pos, 16.0)
+	if deposit == null:
+		deposit = Util.nearest_in_group(self, "gold_deposits", pos, 16.0)
+	return deposit
+
+## Client bullet chipped a crystal block: position-keyed intent up to the
+## host, which extracts + banks; the depletion mirror carries the remainder
+## back. (A client extracting locally would double-bank and drift.)
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_chip_deposit(pos: Vector2) -> void:
+	if not multiplayer.is_server():
+		return
+	var deposit = Util.nearest_in_group(self, "deposits", pos, 16.0)
+	if deposit == null or deposit.is_empty() or not deposit.chips_on_bullet:
+		return
+	GameState.add_resource(deposit.kind, deposit.extract(deposit.CHIP_AMOUNT))
+
+## Late join: the joiner regenerated every deposit at its spawn amount, so
+## only drained ones need catching up. Same chunk-gen grace as the miners.
+func _replay_deposit_amounts(peer_id: int) -> void:
+	await get_tree().create_timer(1.0, false).timeout
+	if not Net.players.has(peer_id):
+		return
+	var batch: Array = []
+	for group in ["deposits", "gold_deposits"]:
+		for deposit in get_tree().get_nodes_in_group(group):
+			if deposit.amount != deposit.initial_amount:
+				batch.append([deposit.global_position, deposit.amount])
+	if not batch.is_empty():
+		_rpc_sync_deposits.rpc_id(peer_id, batch)
