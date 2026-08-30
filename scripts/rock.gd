@@ -218,11 +218,18 @@ func _valid_cells(cells: Dictionary) -> bool:
 func _ready() -> void:
 	if outline.is_empty():
 		generate()
+	## Per-rock grey variety: each formation leans a shade lighter/darker and
+	## faintly warmer/cooler, so a field of rocks reads as varied stone, not
+	## copies. Deterministic — drawn from the same seeded stream as the shape.
+	var shade := randf_range(0.82, 1.14)
+	var warm := randf_range(-0.03, 0.03)
+	self_modulate = Color(shade + warm, shade, shade - warm, 1.0)
 	var poly := Polygon2D.new()
 	poly.polygon = outline
 	poly.color = FILL
 	add_child(poly)
 	_add_facets()
+	_add_detail()
 	var edge := Line2D.new()
 	edge.points = outline
 	edge.closed = true
@@ -340,6 +347,37 @@ func _add_facets() -> void:
 		crack.default_color = EDGE
 		crack.default_color.a = 0.6
 		add_child(crack)
+
+## Surface detail: speckle chips and small shade blotches scattered inside
+## the silhouette (deterministic; counts scale with rock size).
+func _add_detail() -> void:
+	var rect := bounds
+	var count := clampi(int(rect.get_area() / 9000.0), 3, 14)
+	for i in count:
+		var p := Vector2(randf_range(rect.position.x + 14.0, rect.end.x - 14.0),
+			randf_range(rect.position.y + 14.0, rect.end.y - 14.0))
+		if not Geometry2D.is_point_in_polygon(p, outline):
+			continue
+		if i % 2 == 0:
+			## Shade blotch: irregular dark patch.
+			var blotch := Polygon2D.new()
+			var pts := PackedVector2Array()
+			var r := randf_range(7.0, 16.0)
+			for k in 6:
+				pts.append(p + Vector2.from_angle(TAU * k / 6.0) * r * randf_range(0.6, 1.3))
+			blotch.polygon = pts
+			blotch.color = FACET_DARK
+			blotch.color.a = randf_range(0.25, 0.45)
+			add_child(blotch)
+		else:
+			## Chip fleck: tiny light triangle.
+			var fleck := Polygon2D.new()
+			var fr := randf_range(2.5, 5.0)
+			fleck.polygon = PackedVector2Array([
+				p + Vector2(-fr, fr * 0.6), p + Vector2(fr, fr * 0.3), p + Vector2(0, -fr)])
+			fleck.color = FACET_LIGHT
+			fleck.color.a = randf_range(0.5, 0.8)
+			add_child(fleck)
 
 ## Band between an outline arc and its normal-inset copy — follows concave
 ## shapes, so U/L interiors never get stray patches.

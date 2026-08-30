@@ -26,7 +26,7 @@
 		"assault":  { "name": "Assault",  "desc": "Balanced frontline fighter", "tint": [1.0, 1.0, 1.0], "sprite": "res://assets/sprites/player_marine.svg",
 			"stats": { "max_health": 1.0, "damage": 1.0, "speed": 1.0, "fire_cooldown": 1.0, "auto_attack_range": 1.0, "light_radius": 1.0, "build_range": 1.0 } },
 		"heavy":    { "name": "Heavy",    "desc": "Slow tank spraying a piercing flame stream", "tint": [1.0, 0.45, 0.3], "sprite": "res://assets/sprites/player_heavy.svg", "weapon": "flamethrower",
-			"stats": { "max_health": 2.0, "damage": 1.0, "speed": 0.75 } },
+			"stats": { "max_health": 2.0, "damage": 0.5, "speed": 0.75 } },
 		"scout":    { "name": "Scout",    "desc": "Fragile speedster with a piercing sniper rifle", "tint": [0.75, 1.0, 0.35], "sprite": "res://assets/sprites/player_scout.svg", "weapon": "sniper",
 			"stats": { "speed": 0.6, "fire_cooldown": 0.7, "auto_attack_range": 1.3, "light_radius": 1.25, "max_health": 0.65, "damage": 0.75 } },
 		"engineer": { "name": "Engineer", "desc": "Builds far, powers and heals the base; strides over buildings", "tint": [0.35, 0.95, 1.0], "sprite": "res://assets/sprites/player_engineer.svg", "building_walk": true,
@@ -61,7 +61,7 @@
 	},
 
 	"towers": {
-		"mg_tower":      { "hp": 120, "damage": 1, "range": 350.0, "arc": 90.0,  "burst_size": 30, "shot_interval": 0.05, "cooldown": 0.5, "energy_per_burst": 5 },
+		"mg_tower":      { "hp": 120, "damage": 1, "range": 350.0, "arc": 90.0,  "burst_size": 30, "shot_interval": 0.05, "cooldown": 1.2, "energy_per_burst": 5 },
 		"grenade_tower": { "hp": 120, "range": 450.0, "arc": 120.0, "interval": 2.5, "energy_per_lob": 2, "blast_radius": 90.0, "blast_damage": 3 },
 		"repair_tower":  { "hp": 100, "range": 250.0, "interval": 1.0, "heal_amount": 3, "energy_per_pulse": 1 },
 		"tesla_tower":   { "hp": 100, "damage": 2, "range": 360.0, "interval": 1.1, "energy_per_zap": 2, "chain_range": 130.0, "max_chains": 3 },
@@ -83,7 +83,7 @@
 		"battery":        { "cost": { "crystal": 45 },  "hp": 60, "cap_bonus": 100 },
 		"power_pole":     { "cost": { "crystal": 10 },  "hp": 40, "range": 160.0 },
 		"power_grid":     { "link_range": 250.0, "source_cover": 120.0 },
-		"command_center": { "cost": { "crystal": 160 }, "hp": 200, "train_interval": 4.0, "train_cost": { "crystal": 12 }, "train_energy": 2, "max_workers": 5 },
+		"command_center": { "cost": { "crystal": 160 }, "hp": 200, "range": 600.0, "train_interval": 4.0, "train_cost": { "crystal": 12 }, "train_energy": 2, "max_workers": 5 },
 		"harvester":      { "speed": 120.0, "mine_time": 2.0, "mine_amount": 10 },
 		"light_pole":     { "cost": { "crystal": 8 },   "hp": 30, "radius": 300.0 },
 		"searchlight":    { "cost": { "crystal": 70, "gold": 10 }, "hp": 80, "range": 500.0, "cone": 36.0, "sweep": 140.0, "sweep_speed": 0.5, "energy_interval": 2.0, "energy_per_interval": 1 },
@@ -279,7 +279,8 @@
 			"range":       { "cost": { "scrap": 70 },  "effects": { "range_mult": 0.1 } }
 		},
 		"command_center": {
-			"crew":        { "cost": { "scrap": 200 }, "effects": { "crew": 1.0 } }
+			"crew":        { "cost": { "scrap": 200 }, "effects": { "crew": 1.0 } },
+            "cargo":       { "cost": { "scrap": 800 }, "effects": { "cargo": 5.0 } }
 		}
 	},
 
@@ -289,7 +290,7 @@
 		"rock_cells_medium": 10,
 		"rock_cells_large": 28,
 		"rock_cells_huge": 48,
-		"starter_rock_count": 3
+		"starter_rock_count": 3, "starter_small_rocks": 5, "scatter_chance": 0.7, "scatter_min": 1, "scatter_max": 2
 	},
 
 	"resources": {
