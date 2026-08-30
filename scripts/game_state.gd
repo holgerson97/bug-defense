@@ -43,14 +43,6 @@ const UPGRADE_DEFAULTS := {
 	"flame_tower_1": {"icon": "res://assets/icons/flame_tower.svg", "name": "Flamethrower Tower", "branch": "Defense", "desc": "Unlocks the Flamethrower Tower", "cost": {"scrap": 320}, "requires": ["walls_1"], "effects": {}},
 	"aa_tower_1": {"icon": "res://assets/icons/aa_tower.svg", "name": "AA Flak Cannon", "branch": "Defense", "desc": "Unlocks the anti-air Flak Cannon", "cost": {"scrap": 450}, "requires": ["mg_tower_1"], "effects": {}},
 	"building_walk": {"icon": "res://assets/icons/wall.svg", "name": "Phase Stride", "branch": "Defense", "desc": "Walk across buildings", "cost": {"scrap": 6000}, "requires": ["walls_1"], "effects": {}},
-	# Building stats: flat repeatable categories like player stats above.
-	"building_hp": {"icon": "res://assets/icons/wall.svg", "name": "Reinforced Structures", "branch": "Engineering", "desc": "+25% building health", "cost": {"scrap": 70}, "requires": [], "effects": {"building_hp_mult": 0.25}},
-	"tower_damage": {"icon": "res://assets/icons/mg_tower.svg", "name": "Heavy Ordnance", "branch": "Engineering", "desc": "+1 tower damage", "cost": {"scrap": 175}, "requires": [], "effects": {"tower_damage": 1.0}},
-	"miner_yield": {"icon": "res://assets/icons/miner.svg", "name": "Efficient Drills", "branch": "Engineering", "desc": "+1 crystal per mining cycle", "cost": {"scrap": 115}, "requires": [], "effects": {"miner_yield": 1.0}},
-	"tower_speed": {"icon": "res://assets/icons/mg_tower.svg", "name": "Rapid Servos", "branch": "Engineering", "desc": "+15% tower attack speed", "cost": {"scrap": 160}, "requires": [], "effects": {"tower_speed": 0.15}},
-	"tower_range": {"icon": "res://assets/icons/mg_tower.svg", "name": "Extended Barrels", "branch": "Engineering", "desc": "+10% tower range", "cost": {"scrap": 200}, "requires": [], "effects": {"tower_range": 0.1}},
-	"tower_crit_chance": {"icon": "res://assets/icons/crit.svg", "name": "Targeting Optics", "branch": "Engineering", "desc": "+5% tower crit chance", "cost": {"scrap": 225}, "requires": [], "effects": {"tower_crit_chance": 0.05}},
-	"tower_crit_damage": {"icon": "res://assets/icons/crit.svg", "name": "Overcharged Cells", "branch": "Engineering", "desc": "+50% tower crit damage", "cost": {"scrap": 285}, "requires": [], "effects": {"tower_crit_mult": 0.5}},
 	"solar_1": {"icon": "res://assets/icons/solar_panel.svg", "name": "Solar Panel", "branch": "Electricity", "desc": "Unlocks the Solar Panel", "cost": {"scrap": 35}, "requires": [], "effects": {}},
 	"command_center_1": {"icon": "res://assets/icons/command_center.svg", "name": "Command Center", "branch": "Resource", "desc": "Unlocks the Command Center", "cost": {"scrap": 500}, "requires": ["miner_1"], "effects": {}},
 	"light_pole_1": {"icon": "res://assets/icons/light_pole.svg", "name": "Light Pole", "branch": "Electricity", "desc": "Unlocks the Light Pole", "cost": {"scrap": 28}, "requires": [], "effects": {}},
@@ -59,6 +51,67 @@ const UPGRADE_DEFAULTS := {
 	"power_pole_1": {"icon": "res://assets/icons/power_pole.svg", "name": "Power Pole", "branch": "Electricity", "desc": "Unlocks the Power Pole (carries grid power)", "cost": {"scrap": 50}, "requires": ["solar_1"], "effects": {}},
 	"intake_station_1": {"icon": "res://assets/icons/intake_station.svg", "name": "Intake Station", "branch": "Electricity", "desc": "Unlocks the crystal-burning Intake Station", "cost": {"scrap": 410}, "requires": ["battery_1"], "effects": {}},
 	"cooling_tower_1": {"icon": "res://assets/icons/cooling_tower.svg", "name": "Cooling Tower", "branch": "Electricity", "desc": "Unlocks the Cooling Tower (boosts the Intake Station)", "cost": {"scrap": 100}, "requires": ["battery_1"], "effects": {}},
+}
+
+## Per-building repeatable upgrade sets (the "Building Stats" tab). Shipped
+## defaults; costs and effects are overlaid from balance.json
+## ("building_upgrades/<building>/<key>") in _init like the research table.
+## Each entry becomes a normal UPGRADES row under the id "b/<building>/<key>"
+## with branch "Buildings" (repeatable unless "once"), requiring the
+## building's unlock research; effect keys are LOCAL to the building and read
+## back through building_stat(). "once" marks one-time unlocks (Wall Lanterns).
+const BUILDING_UPGRADE_DEFAULTS := {
+	"wall": {
+		"hp": {"name": "Hardened Plating", "desc": "+25% wall health", "cost": {"scrap": 45}, "effects": {"hp_mult": 0.25}},
+		"regen": {"name": "Self-Sealing", "desc": "+1 HP/s wall regen", "cost": {"scrap": 90}, "effects": {"regen": 1.0}},
+		"lanterns": {"name": "Wall Lanterns", "desc": "Lamps mount on wall corners and runs", "cost": {"scrap": 260}, "effects": {}, "once": true, "icon": "res://assets/icons/light_pole.svg"},
+	},
+	"mg_tower": {
+		"hp": {"name": "Life", "desc": "+25% tower health", "cost": {"scrap": 50}, "effects": {"hp_mult": 0.25}},
+		"damage": {"name": "Damage", "desc": "+1 bullet damage", "cost": {"scrap": 70}, "effects": {"damage": 1.0}},
+		"range": {"name": "Attack Range", "desc": "+10% attack range", "cost": {"scrap": 80}, "effects": {"range_mult": 0.1}},
+		"crit_chance": {"name": "Crit Chance", "desc": "+5% crit chance", "cost": {"scrap": 110}, "effects": {"crit_chance": 0.05}, "icon": "res://assets/icons/crit.svg"},
+		"crit_damage": {"name": "Crit Damage", "desc": "+25% crit damage", "cost": {"scrap": 130}, "effects": {"crit_mult": 0.25}, "icon": "res://assets/icons/crit.svg"},
+	},
+	"tesla_tower": {
+		"hp": {"name": "Life", "desc": "+25% tower health", "cost": {"scrap": 55}, "effects": {"hp_mult": 0.25}},
+		"damage": {"name": "Damage", "desc": "+1 zap damage", "cost": {"scrap": 90}, "effects": {"damage": 1.0}},
+		"chain": {"name": "Chain Jump", "desc": "+1 lightning jump", "cost": {"scrap": 300}, "effects": {"chain": 1.0}},
+	},
+	"grenade_tower": {
+		"hp": {"name": "Life", "desc": "+25% tower health", "cost": {"scrap": 55}, "effects": {"hp_mult": 0.25}},
+		"blast_radius": {"name": "Explosion Radius", "desc": "+10% blast radius", "cost": {"scrap": 85}, "effects": {"blast_radius": 0.1}},
+		"blast_damage": {"name": "Explosion Damage", "desc": "+1 blast damage", "cost": {"scrap": 80}, "effects": {"blast_damage": 1.0}},
+		"range": {"name": "Range", "desc": "+10% targeting range", "cost": {"scrap": 80}, "effects": {"range_mult": 0.1}},
+		"bombs": {"name": "Extra Bomb", "desc": "+1 grenade per volley", "cost": {"scrap": 400}, "effects": {"bombs": 1.0}},
+	},
+	"flame_tower": {
+		"damage": {"name": "Damage", "desc": "+1 flame damage", "cost": {"scrap": 75}, "effects": {"damage": 1.0}},
+		"speed": {"name": "Attack Speed", "desc": "+15% attack speed", "cost": {"scrap": 70}, "effects": {"speed": 0.15}},
+		"range": {"name": "Range", "desc": "+10% attack range", "cost": {"scrap": 70}, "effects": {"range_mult": 0.1}},
+	},
+	"aa_tower": {
+		"damage": {"name": "Damage", "desc": "+1 flak damage", "cost": {"scrap": 90}, "effects": {"damage": 1.0}},
+		"speed": {"name": "Attack Speed", "desc": "+15% attack speed", "cost": {"scrap": 80}, "effects": {"speed": 0.15}},
+		"range": {"name": "Range", "desc": "+10% attack range", "cost": {"scrap": 95}, "effects": {"range_mult": 0.1}},
+	},
+	"repair_tower": {
+		"heal": {"name": "Heal Amount", "desc": "+1 heal per pulse", "cost": {"scrap": 60}, "effects": {"heal": 1.0}},
+		"range": {"name": "Range", "desc": "+10% heal range", "cost": {"scrap": 65}, "effects": {"range_mult": 0.1}},
+		"targets": {"name": "Targets", "desc": "+1 heal target per pulse", "cost": {"scrap": 350}, "effects": {"targets": 1.0}},
+	},
+	"miner": {
+		"yield": {"name": "Yield", "desc": "+1 crystal per cycle", "cost": {"scrap": 60}, "effects": {"yield": 1.0}},
+	},
+	"solar_panel": {
+		"output": {"name": "Output", "desc": "+1 energy per cycle", "cost": {"scrap": 55}, "effects": {"output": 1.0}},
+	},
+	"searchlight": {
+		"range": {"name": "Reach", "desc": "+10% beam reach", "cost": {"scrap": 70}, "effects": {"range_mult": 0.1}},
+	},
+	"command_center": {
+		"crew": {"name": "Crew", "desc": "+1 max harvester", "cost": {"scrap": 200}, "effects": {"crew": 1.0}},
+	},
 }
 
 # Single source of truth per placeable: per-placement cost, unlocking research,
@@ -103,6 +156,9 @@ var SCRAP_GAIN_MULT: float = Balance.num("upgrades/economy/scrap_gain_mult", 1.2
 ## Balance-fed live tables (same shape as the *_DEFAULTS consts above).
 var UPGRADES: Dictionary = {}
 var BUILDINGS: Dictionary = {}
+## Index of per-building upgrades: building id -> Array of "b/<bid>/<key>"
+## UPGRADES ids (table order). Feeds building_stat() and the panel rows.
+var BUILDING_UPGRADES: Dictionary = {}
 ## Player classes, purely from balance.json "classes" (data-driven: the owner
 ## adds/tunes classes there). Missing/empty section degrades to a lone neutral
 ## Assault, so everyone keeps today's baseline stats.
@@ -144,6 +200,29 @@ func _init() -> void:
 			if b.has(key):
 				b[key] = Balance.num("%s/%s" % [sec, key], b[key])
 		BUILDINGS[id] = b
+	## Per-building upgrades: registered as regular UPGRADES rows under
+	## namespaced ids ("b/wall/hp") so purchase/cost/level/sync all reuse the
+	## research plumbing unchanged. Requires = the building's unlock research;
+	## icon defaults to the building's own.
+	for bid in BUILDING_UPGRADE_DEFAULTS:
+		var ids: Array = []
+		for key in BUILDING_UPGRADE_DEFAULTS[bid]:
+			var uid := "b/%s/%s" % [bid, key]
+			var bup: Dictionary = BUILDING_UPGRADE_DEFAULTS[bid][key].duplicate(true)
+			bup["icon"] = bup.get("icon", BUILDING_DEFAULTS[bid]["icon"])
+			bup["branch"] = "Buildings"
+			bup["requires"] = [BUILDING_DEFAULTS[bid]["research"]]
+			bup["building"] = bid
+			bup["cost"] = Balance.cost_dict("building_upgrades/%s/%s/cost" % [bid, key], bup["cost"])
+			var beff: Dictionary = Balance.dict("building_upgrades/%s/%s/effects" % [bid, key], bup.get("effects", {}))
+			var beffects := {}
+			for ekey in beff:
+				if beff[ekey] is float or beff[ekey] is int:
+					beffects[ekey] = float(beff[ekey])
+			bup["effects"] = beffects
+			UPGRADES[uid] = bup
+			ids.append(uid)
+		BUILDING_UPGRADES[bid] = ids
 	## Classes: "stats" values are MULTIPLIERS over the "player" bases (1.0 =
 	## unchanged); keys ending in "_add" are flat adds. Underscore keys
 	## ("_readme") are documentation, not classes.
@@ -341,10 +420,14 @@ func selected_item_id() -> String:
 	var item = hotbar[selected_slot]
 	return item["id"] if item != null else ""
 
-## Stat upgrades (Offense/Pilot/Engineering) can be bought forever; unlock
-## branches (Defense/Resource/Electricity) are one-time.
+## Stat upgrades (Offense/Pilot/Buildings) can be bought forever; unlock
+## branches (Defense/Resource/Electricity) and "once" entries (Wall Lanterns)
+## are one-time.
 func is_repeatable(id: String) -> bool:
-	return not UPGRADES[id]["branch"] in UNLOCK_BRANCHES
+	var up: Dictionary = UPGRADES[id]
+	if up.get("once", false):
+		return false
+	return not up["branch"] in UNLOCK_BRANCHES
 
 func upgrade_level(id: String) -> int:
 	return int(purchased.get(id, 0))
@@ -510,35 +593,45 @@ func class_add(id: String, key: String) -> float:
 	var v = _class_stat(id, key)
 	return float(v) if (v is float or v is int) else 0.0
 
-# Building stats (Engineering research).
-func building_hp_mult() -> float:
-	return 1.0 + stat("building_hp_mult")
+# Building stats: per-building upgrade sums (the "Building Stats" tab).
+## Sum of one LOCAL effect key across the given building's purchased upgrades
+## (effect x level). Buildings without that upgrade key read 0.0.
+func building_stat(bid: String, key: String) -> float:
+	var total := 0.0
+	for id in BUILDING_UPGRADES.get(bid, []):
+		var effects: Dictionary = UPGRADES[id]["effects"]
+		if effects.has(key):
+			total += effects[key] * upgrade_level(id)
+	return total
 
-func tower_damage_bonus() -> int:
-	return int(stat("tower_damage"))
+func building_hp_mult(bid: String) -> float:
+	return 1.0 + building_stat(bid, "hp_mult")
 
-func miner_yield_bonus() -> int:
-	return int(stat("miner_yield"))
+func tower_damage_bonus(bid: String) -> int:
+	return int(building_stat(bid, "damage"))
 
-## Attack towers fire faster per Rapid Servos level (diminishing returns).
-func tower_interval(base_interval: float) -> float:
-	return base_interval / (1.0 + stat("tower_speed"))
+## Towers with an Attack Speed upgrade fire faster per level (diminishing).
+func tower_interval(bid: String, base_interval: float) -> float:
+	return base_interval / (1.0 + building_stat(bid, "speed"))
 
-## Attack and repair towers reach further per Extended Barrels level.
-func tower_range_mult() -> float:
-	return 1.0 + stat("tower_range")
+## Range/Reach upgrades: attack, heal and beam ranges scale per level.
+func tower_range_mult(bid: String) -> float:
+	return 1.0 + building_stat(bid, "range_mult")
 
-func tower_crit_chance() -> float:
-	return minf(stat("tower_crit_chance"), _tower_crit_cap)
+## Crit only exists where a building's set includes crit upgrades (MG tower);
+## everyone else reads 0 chance and never crits.
+func tower_crit_chance(bid: String) -> float:
+	return minf(building_stat(bid, "crit_chance"), _tower_crit_cap)
 
-func tower_crit_mult() -> float:
-	return _tower_crit_mult_base + stat("tower_crit_mult")
+func tower_crit_mult(bid: String) -> float:
+	return _tower_crit_mult_base + building_stat(bid, "crit_mult")
 
-## Tower hit: base + flat damage bonus, then a crit roll.
-func tower_damage_roll(base_damage: int) -> int:
-	var dmg := base_damage + tower_damage_bonus()
-	if randf() < tower_crit_chance():
-		dmg = int(ceil(dmg * tower_crit_mult()))
+## Tower hit: base + that building's flat damage bonus, then its crit roll.
+func tower_damage_roll(bid: String, base_damage: int) -> int:
+	var dmg := base_damage + tower_damage_bonus(bid)
+	var chance := tower_crit_chance(bid)
+	if chance > 0.0 and randf() < chance:
+		dmg = int(ceil(dmg * tower_crit_mult(bid)))
 	return dmg
 
 ## -- MP RPCs (Phase 3): client intents up, host state broadcast down. --

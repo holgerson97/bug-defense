@@ -12,8 +12,37 @@ const COST_ICONS := {"scrap": "res://assets/icons/bug_heart.svg"}
 const TAB_DEFS := [
 	{"title": "Player Stats", "branches": ["Offense", "Pilot"], "sheet": true},
 	{"title": "Unlocks", "branches": ["Defense", "Resource", "Electricity"]},
-	{"title": "Building Stats", "branches": ["Engineering"]},
+	{"title": "Building Stats", "branches": ["Buildings"], "buildings": true},
 ]
+
+## -- Building Stats tab --
+## One row per building type: a framed building sprite (the actual in-game
+## art, not the hotbar icon) with the name under it on the left, that
+## building's upgrade cards laid out horizontally on the right. Only
+## buildings whose unlock research is OWNED show their row; the rest stay
+## hidden until researched. Scrollable in whole-row steps via a VScrollBar +
+## mouse wheel: a windowed row list instead of a ScrollContainer, because
+## ScrollContainer's clip rect drifts upward under the panel's fractional
+## auto-fit scale (content bled into the tab strip) — row visibility needs
+## no clipping and renders correctly at any scale.
+const ROW_SPRITE_SIZE := 72.0
+const ROW_PORTRAIT_WIDTH := 118.0
+const ROW_HEIGHT := 100.0
+const ROW_SEPARATION := 10
+const VISIBLE_ROWS := 5
+const BUILDING_SPRITES := {
+	"wall": "res://assets/sprites/buildings/wall.svg",
+	"mg_tower": "res://assets/sprites/buildings/mg_tower_base.svg",
+	"tesla_tower": "res://assets/sprites/buildings/tesla_tower_base.svg",
+	"grenade_tower": "res://assets/sprites/buildings/grenade_tower_base.svg",
+	"flame_tower": "res://assets/sprites/buildings/flame_tower_base.svg",
+	"aa_tower": "res://assets/sprites/buildings/aa_tower_base.svg",
+	"repair_tower": "res://assets/sprites/buildings/repair_tower_base.svg",
+	"miner": "res://assets/sprites/buildings/miner.svg",
+	"solar_panel": "res://assets/sprites/buildings/solar_panel.svg",
+	"searchlight": "res://assets/sprites/buildings/searchlight_base.svg",
+	"command_center": "res://assets/sprites/buildings/command_center.svg",
+}
 
 ## -- Character sheet ("Player Stats" tab) --
 ## Big rotated class sprite in the middle, one compact card per stat upgrade
@@ -48,6 +77,13 @@ const SPARE_ANCHOR := Vector2(0.5, 0.55)
 
 var _buttons: Dictionary = {}
 var _button_ui: Dictionary = {}
+## Building Stats rows: building id -> row container (visibility follows the
+## unlock research AND the scroll window), plus the scrollbar and the
+## "nothing unlocked yet" hint label.
+var _building_rows: Dictionary = {}
+var _building_row_order: Array = []
+var _building_scroll: VScrollBar = null
+var _building_hint: Label = null
 var _sheet: Control = null
 var _sheet_sprite: TextureRect = null
 var _sheet_lines: Control = null
@@ -104,6 +140,9 @@ func _build_tree() -> void:
 		if tab.get("sheet", false):
 			_build_character_sheet(tab)
 			continue
+		if tab.get("buildings", false):
+			_build_building_rows(tab)
+			continue
 		var tab_root := HBoxContainer.new()
 		tab_root.name = tab["title"]
 		tab_root.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -132,6 +171,101 @@ func _build_tree() -> void:
 						btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 						col.add_child(btn)
 			tab_root.add_child(col)
+
+## Building Stats tab: a windowed vertical list with one row per building
+## type — framed sprite + name left, that building's upgrade cards right.
+## Cards come from _make_upgrade_button, so purchase / affordability / Lv N /
+## _refresh restyling work exactly like everywhere else. VISIBLE_ROWS rows
+## show at a time; wheel / scrollbar move the window in whole-row steps.
+func _build_building_rows(tab: Dictionary) -> void:
+	var window_h := VISIBLE_ROWS * ROW_HEIGHT + (VISIBLE_ROWS - 1) * ROW_SEPARATION
+	var tab_wrap := CenterContainer.new()
+	tab_wrap.name = tab["title"]
+	_tabs.add_child(tab_wrap)
+	var wrap := HBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 8)
+	wrap.gui_input.connect(_on_building_rows_input)
+	tab_wrap.add_child(wrap)
+	var list := VBoxContainer.new()
+	list.alignment = BoxContainer.ALIGNMENT_BEGIN
+	list.custom_minimum_size = Vector2(0, window_h)
+	list.add_theme_constant_override("separation", ROW_SEPARATION)
+	wrap.add_child(list)
+	_building_scroll = VScrollBar.new()
+	_building_scroll.custom_minimum_size = Vector2(10, window_h)
+	_building_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_building_scroll.step = 1
+	_building_scroll.value_changed.connect(func(_v): _apply_building_window())
+	wrap.add_child(_building_scroll)
+	_building_hint = Label.new()
+	_building_hint.text = "Unlock buildings in the Unlocks tab to upgrade them here."
+	_building_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_building_hint.add_theme_color_override("font_color", UITheme.TEXT_DIM)
+	_building_hint.custom_minimum_size = Vector2(560, 80)
+	_building_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	list.add_child(_building_hint)
+	for bid in GameState.BUILDING_UPGRADES:
+		var row := HBoxContainer.new()
+		row.custom_minimum_size = Vector2(0, ROW_HEIGHT)
+		row.add_theme_constant_override("separation", 14)
+		# Portrait: UITheme-framed panel with the in-game sprite + name.
+		var frame := PanelContainer.new()
+		frame.custom_minimum_size = Vector2(ROW_PORTRAIT_WIDTH, 0)
+		frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var pv := VBoxContainer.new()
+		pv.add_theme_constant_override("separation", 3)
+		frame.add_child(pv)
+		var sprite := TextureRect.new()
+		sprite.custom_minimum_size = Vector2(ROW_SPRITE_SIZE, ROW_SPRITE_SIZE)
+		sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sprite.texture = _icon(BUILDING_SPRITES.get(bid, GameState.BUILDINGS[bid]["icon"]))
+		pv.add_child(sprite)
+		var name_label := Label.new()
+		name_label.text = GameState.BUILDINGS[bid]["name"]
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.clip_text = true
+		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_label.add_theme_font_size_override("font_size", 12)
+		name_label.add_theme_color_override("font_color", UITheme.ACCENT)
+		pv.add_child(name_label)
+		row.add_child(frame)
+		# Upgrade cards, laid out horizontally.
+		var cards := HBoxContainer.new()
+		cards.add_theme_constant_override("separation", 8)
+		cards.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		for id in GameState.BUILDING_UPGRADES[bid]:
+			cards.add_child(_make_upgrade_button(id))
+		row.add_child(cards)
+		list.add_child(row)
+		_building_rows[bid] = row
+		_building_row_order.append(bid)
+
+## Mouse wheel over the rows area steps the window (buttons don't consume
+## wheel events, so they bubble up here).
+func _on_building_rows_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_building_scroll.value -= 1
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_building_scroll.value += 1
+
+## Row visibility: research-owned rows only, windowed to VISIBLE_ROWS
+## starting at the scrollbar's value.
+func _apply_building_window() -> void:
+	var owned: Array = []
+	for bid in _building_row_order:
+		if GameState.is_purchased(GameState.BUILDINGS[bid]["research"]):
+			owned.append(bid)
+	_building_hint.visible = owned.is_empty()
+	var overflow: int = maxi(owned.size() - VISIBLE_ROWS, 0)
+	_building_scroll.visible = overflow > 0
+	_building_scroll.max_value = owned.size()
+	_building_scroll.page = mini(VISIBLE_ROWS, owned.size())
+	var first: int = clampi(int(_building_scroll.value), 0, overflow)
+	for bid in _building_rows:
+		var idx: int = owned.find(bid)
+		_building_rows[bid].visible = idx >= first and idx < first + VISIBLE_ROWS
 
 ## Character sheet tab: fixed-size Control centered in the tab, holding
 ## (bottom to top) a glow layer, the rotated class sprite, the connector-line
@@ -337,6 +471,9 @@ func _refresh() -> void:
 	_update_sheet_sprite()
 	_scrap_value.text = str(GameState.resources.get("scrap", 0))
 	_crystal_value.text = str(GameState.resources.get("crystal", 0))
+	# Building rows only show once their building's research is owned.
+	if _building_scroll != null:
+		_apply_building_window()
 	for id in _buttons:
 		var up: Dictionary = GameState.UPGRADES[id]
 		var btn: Button = _buttons[id]
@@ -366,11 +503,11 @@ func _refresh() -> void:
 			ui["icon"].modulate = Color(1, 1, 1, 1.0 if not btn.disabled else 0.75)
 			ui["name"].modulate = Color(1, 1, 1, 1)
 			var lvl := GameState.upgrade_level(id)
-			# Sheet cards are narrower than tree buttons and clip the sub label's
-			# tail — put the level FIRST there so it never truncates away.
+			# Sheet and building cards clip the sub label's tail — put the
+			# level FIRST there so it never truncates away.
 			if lvl == 0:
 				ui["sub"].text = up["desc"]
-			elif _sheet_anchors.has(id):
+			elif _sheet_anchors.has(id) or up.has("building"):
 				ui["sub"].text = "Lv %d — %s" % [lvl, up["desc"]]
 			else:
 				ui["sub"].text = "%s  —  Lv %d" % [up["desc"], lvl]

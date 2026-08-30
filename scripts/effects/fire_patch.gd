@@ -157,10 +157,11 @@ func _physics_process(delta: float) -> void:
 ## fire (DoT keeps ticking after they waddle out).
 func _tick_damage() -> void:
 	@warning_ignore("integer_division")
-	var damage := maxi(tick_damage_base + GameState.tower_damage_bonus() / 4, 1)
-	if randf() < GameState.tower_crit_chance():
-		damage = int(ceil(damage * GameState.tower_crit_mult()))
+	var damage := maxi(tick_damage_base + GameState.tower_damage_bonus("flame_tower") / 4, 1)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
+		## Ground fire never burns flyers (air is AA-only).
+		if enemy.is_in_group("air_enemies"):
+			continue
 		if enemy.global_position.distance_to(global_position) <= radius and enemy.has_method("take_damage"):
 			enemy.take_damage(damage)
 			if enemy.has_method("ignite"):

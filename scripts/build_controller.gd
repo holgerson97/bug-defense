@@ -303,11 +303,9 @@ func _update_tooltip(id: String, pos: Vector2, valid: bool) -> void:
 func _update_range_ring(id: String) -> void:
 	var b: Dictionary = GameState.BUILDINGS[id]
 	var radius: float = b.get("range", 0.0)
-	## Extended Barrels scales tower attack/heal ranges only — not the
-	## searchlight cone or power coverage radii. The "tower" capability flag
-	## in BUILDINGS marks combat towers; never sniff the id string.
-	if b.get("tower", false):
-		radius *= GameState.tower_range_mult()
+	## Per-building Range/Reach upgrades scale the previewed radius; buildings
+	## without one (power pole, intake station) read a neutral 1.0.
+	radius *= GameState.tower_range_mult(id)
 	if radius <= 0.0:
 		_ghost_range_poly.polygon = PackedVector2Array()
 		_ghost_range_line.points = PackedVector2Array()

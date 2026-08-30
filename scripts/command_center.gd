@@ -20,7 +20,13 @@ func _ready() -> void:
 	super._ready()
 	energy_consumer = true
 	PowerGrid.register_source(self)
+	## The Crew building upgrade raises the cap live — refresh the label.
+	GameState.upgrades_changed.connect(_update_worker_label)
 	_update_worker_label()
+
+## Worker cap: base plus the Crew building upgrade.
+func _max_workers() -> int:
+	return max_workers + int(GameState.building_stat("command_center", "crew"))
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
@@ -28,7 +34,7 @@ func _physics_process(delta: float) -> void:
 	_train_accum += delta
 	if _train_accum >= train_interval:
 		_train_accum = 0.0
-		if _harvesters.size() < max_workers:
+		if _harvesters.size() < _max_workers():
 			_train_harvester()
 
 ## Drop freed/dead harvesters so their slots open up again.
@@ -42,7 +48,7 @@ func _prune_harvesters() -> void:
 		_update_worker_label()
 
 func _update_worker_label() -> void:
-	_worker_label.text = "%d/%d" % [_harvesters.size(), max_workers]
+	_worker_label.text = "%d/%d" % [_harvesters.size(), _max_workers()]
 
 func _train_harvester() -> void:
 	if not GameState.can_afford(train_cost):

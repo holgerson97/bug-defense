@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://scripts/building.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/wall.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/buildings/wall.svg" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]

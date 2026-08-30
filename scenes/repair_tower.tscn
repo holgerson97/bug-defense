@@ -26,11 +26,6 @@ health_bar_offset = Vector2(-22, -36)
 scale = Vector2(0.575, 0.575)
 texture = ExtResource("2")
 
-[node name="Beam" type="Line2D" parent="."]
-visible = false
-width = 3.0
-default_color = Color(0.35, 1, 0.55, 0.85)
-
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_rep")
 

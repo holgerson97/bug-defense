@@ -21,17 +21,18 @@ func _physics_process(delta: float) -> void:
 	## Phase 5: combat is host-only; client copies idle (fire events = Phase 6).
 	if Net.is_online() and not Net.is_host():
 		return
-	## Extended Barrels research scales range live.
-	fire_range = base_range * GameState.tower_range_mult()
+	## (No range upgrade for the tesla coil; base range stays.)
+	fire_range = base_range
 	_fire_accum += delta
-	if _fire_accum >= GameState.tower_interval(fire_interval):
+	if _fire_accum >= fire_interval:
 		_fire_accum = 0.0
 		_zap()
 
 func _zap() -> void:
 	var victims: Array = []
-	# The 360° coil arcs to any lit enemy in sight; chains hop freely.
-	var first = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, victims, true)
+	# The 360° coil arcs to any lit GROUND enemy in sight; chains hop freely
+	# between ground targets (air is the AA cannon's job).
+	var first = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, victims, true, 0.0, PI, "air_enemies")
 	if first == null:
 		return
 	if not grid_powered() or not GameState.try_spend_energy(energy_per_zap):
@@ -40,15 +41,16 @@ func _zap() -> void:
 	set_powered(true)
 	victims.append(first)
 	var link = first
-	for i in max_chains:
-		var next = Util.nearest_in_group(self, "enemies", link.global_position, chain_range, victims)
+	## Chain Jump upgrade: each level adds one more hop (same falloff/range).
+	for i in max_chains + int(GameState.building_stat("tesla_tower", "chain")):
+		var next = Util.nearest_in_group(self, "enemies", link.global_position, chain_range, victims, false, 0.0, PI, "air_enemies")
 		if next == null:
 			break
 		victims.append(next)
 		link = next
 	# Capture positions before dealing damage; a kill frees the victim node.
 	var points: Array = [global_position]
-	var damage := GameState.tower_damage_roll(zap_damage)
+	var damage := GameState.tower_damage_roll("tesla_tower", zap_damage)
 	for victim in victims:
 		points.append(victim.global_position)
 		if victim.has_method("take_damage"):

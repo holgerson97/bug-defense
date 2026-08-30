@@ -37,8 +37,8 @@ func _physics_process(delta: float) -> void:
 	## Phase 5: combat is host-only; client copies idle (fire events = Phase 6).
 	if Net.is_online() and not Net.is_host():
 		return
-	## Extended Barrels research scales range live.
-	fire_range = base_range * GameState.tower_range_mult()
+	## The Attack Range building upgrade scales range live.
+	fire_range = base_range * GameState.tower_range_mult("mg_tower")
 	if _target != null and is_instance_valid(_target):
 		_head.rotation = (_target.global_position - global_position).angle()
 	else:
@@ -54,7 +54,7 @@ func _physics_process(delta: float) -> void:
 		_shots_since_retarget += 1
 		if _target == null or _shots_since_retarget >= RETARGET_EVERY:
 			_shots_since_retarget = 0
-			_target = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, [], true, facing, half_arc)
+			_target = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, [], true, facing, half_arc, "air_enemies")
 		if _target == null:
 			# Nothing left to shoot: cut the burst, keep the cooldown honest.
 			_end_burst()
@@ -67,13 +67,13 @@ func _physics_process(delta: float) -> void:
 		return
 	# Between bursts: wait out the cooldown (research speeds it up), then a
 	# new burst starts only with a lit target and one energy payment upfront.
-	if _accum < GameState.tower_interval(cooldown):
+	if _accum < GameState.tower_interval("mg_tower", cooldown):
 		return
-	_target = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, [], true, facing, half_arc)
+	_target = Util.nearest_visible_in_group(self, "enemies", global_position, fire_range, [], true, facing, half_arc, "air_enemies")
 	if _target == null:
 		# Failed acquisition: back the accumulator off so the lit-target scan
 		# retries ~10x/s instead of every frame while the tower sits idle.
-		_accum = GameState.tower_interval(cooldown) - 0.1
+		_accum = GameState.tower_interval("mg_tower", cooldown) - 0.1
 		return
 	if grid_powered() and GameState.try_spend_energy(energy_per_burst):
 		set_powered(true)
@@ -88,14 +88,15 @@ func _fire() -> void:
 	var bullet = bullet_scene.instantiate()
 	bullet.global_position = _muzzle.global_position
 	bullet.rotation = _head.global_rotation + randf_range(-SPRAY, SPRAY)
-	var dmg := damage_base + GameState.tower_damage_bonus()
-	if randf() < GameState.tower_crit_chance():
-		dmg = int(ceil(dmg * GameState.tower_crit_mult()))
+	var dmg := damage_base + GameState.tower_damage_bonus("mg_tower")
+	if randf() < GameState.tower_crit_chance("mg_tower"):
+		dmg = int(ceil(dmg * GameState.tower_crit_mult("mg_tower")))
 		bullet.crit = true
 	bullet.damage = dmg
 	# Tower bullets fly over deposits (mask without 16) — otherwise an ore
-	# block in the firing line eats shots and mints free crystal.
-	bullet.collision_mask = 2 | 64
+	# block in the firing line eats shots and mints free crystal — and skip
+	# air (layer 64): only the AA flak cannon engages air units.
+	bullet.collision_mask = 2
 	get_tree().current_scene.add_child(bullet)
 	Effects.muzzle_flash(self, _muzzle.global_position, _head.global_rotation)
 	# Burst shape: heavy first-round thump, quieter rattle behind it.

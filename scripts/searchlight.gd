@@ -18,6 +18,8 @@ var _energy_accum: float = 0.0
 var _sweep_dir := 1.0
 var _cone: PointLight2D
 var _darkness := 1.0
+## Reach upgrade multiplier over beam_reach (cone light + covers()).
+var _reach_mult := 1.0
 
 @onready var _head: Node2D = $Head
 
@@ -26,6 +28,9 @@ func _ready() -> void:
 	energy_consumer = true
 	_head.rotation = facing
 	_build_cone_light()
+	## The Reach building upgrade stretches the beam live.
+	GameState.upgrades_changed.connect(_apply_reach)
+	_apply_reach()
 	add_to_group("light_sources")
 	var dn = get_tree().get_first_node_in_group("day_night")
 	set_darkness(dn.darkness_factor() if dn != null else 1.0)
@@ -37,6 +42,14 @@ func set_darkness(f: float) -> void:
 	if _cone:
 		_cone.energy = f
 		_cone.visible = _powered and f > 0.02
+
+## Rescale the cone light to the upgraded reach (texture stays; only the
+## scale and the apex offset change).
+func _apply_reach() -> void:
+	_reach_mult = GameState.tower_range_mult("searchlight")
+	if _cone:
+		_cone.texture_scale = beam_reach * _reach_mult / float(CONE_TEX_SIZE)
+		_cone.position = Vector2(beam_reach * _reach_mult / 2.0, 0.0)
 
 func _is_daytime() -> bool:
 	return _darkness < 0.5
@@ -88,7 +101,7 @@ func covers(pos: Vector2) -> bool:
 	if not _powered:
 		return false
 	var to := pos - global_position
-	if to.length() > beam_reach:
+	if to.length() > beam_reach * _reach_mult:
 		return false
 	return absf(wrapf(to.angle() - _head.global_rotation, -PI, PI)) <= beam_half_angle
 

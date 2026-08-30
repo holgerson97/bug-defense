@@ -18,7 +18,11 @@ var facing: float = 0.0
 var energy_consumer := false
 
 var health: int
+## Building id (scene file basename, e.g. "wall") — keys per-building
+## upgrades (GameState.building_stat) and the balance overrides below.
+var building_id: String = ""
 var _gnaw_accum: float = 0.0
+var _regen_accum: float = 0.0
 var _destroyed: bool = false
 var _powered: bool = true
 var _grid_ok: bool = true
@@ -31,15 +35,15 @@ func _ready() -> void:
 	## Balance hp override by building id (scene file basename — the same
 	## trick the sell code uses): towers live under "towers/<id>", the rest
 	## under "buildings/<id>". Falls back to the scene's exported max_health.
-	var balance_id := scene_file_path.get_file().get_basename()
-	if balance_id != "":
-		var sec := Balance.section("towers/" + balance_id)
+	building_id = scene_file_path.get_file().get_basename()
+	if building_id != "":
+		var sec := Balance.section("towers/" + building_id)
 		if sec.is_empty():
-			sec = Balance.section("buildings/" + balance_id)
+			sec = Balance.section("buildings/" + building_id)
 		var hp = sec.get("hp")
 		if hp is float or hp is int:
 			max_health = int(hp)
-	max_health = int(ceil(max_health * GameState.building_hp_mult()))
+	max_health = int(ceil(max_health * GameState.building_hp_mult(building_id)))
 	health = max_health
 	_update_health_bar()
 	_register_nav()
@@ -74,6 +78,17 @@ func _physics_process(delta: float) -> void:
 	## _rpc_set_health (their local enemy sims must not double-gnaw).
 	if Net.is_online() and not Net.is_host():
 		return
+	## Self-repair ("regen" building upgrade — walls): host-side, delta
+	## accumulated so fractional HP/s banks up and pause freezes it for free
+	## (_physics_process stops with the tree).
+	if health < max_health and not _destroyed:
+		var regen := GameState.building_stat(building_id, "regen")
+		if regen > 0.0:
+			_regen_accum += regen * delta
+			if _regen_accum >= 1.0:
+				var whole := int(_regen_accum)
+				_regen_accum -= whole
+				heal(whole)
 	# Each touching enemy gnaws gnaw_dps HP per second.
 	var gnawers := 0
 	for body in _sense.get_overlapping_bodies():
